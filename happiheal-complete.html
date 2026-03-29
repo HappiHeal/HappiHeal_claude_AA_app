@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HappiHeal — Hair Recovery Companion</title>
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2d3a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HappiHeal">
+<meta name="description" content="Your daily companion for natural hair recovery. AI coach, routines, tracker and remedies.">
+
+<!-- Social sharing preview (for Reddit/Instagram links) -->
+<meta property="og:title" content="HappiHeal — Natural Hair Recovery App">
+<meta property="og:description" content="AI hair coach trained on a 20-year alopecia recovery journey. Free to start.">
+<meta property="og:type" content="website">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   EDIT GUIDE — Search for "EDIT:" comments to find values
+   you can change without breaking anything.
+   ============================================================ */
+
+:root {
+  /* EDIT: Brand colors */
+  --cream: #faf6f0;
+  --warm-white: #fffdf9;
+  --sage: #8aab8a;
+  --sage-light: #c4d9c4;
+  --sage-dark: #5a7a5a;
+  --terracotta: #c17b5a;
+  --terracotta-light: #e8c4ae;
+  --gold: #c9a96e;
+  --deep: #2d3a2e;
+  --mid: #5a6b5b;
+  --soft: #8a9b8a;
+  --border: rgba(138,171,138,0.25);
+  --shadow: 0 4px 24px rgba(45,58,46,0.08);
+  --shadow-lg: 0 12px 40px rgba(45,58,46,0.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #1a1a1a;
+  color: var(--deep);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone {
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  background: var(--warm-white);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.status-bar {
+  background: var(--deep);
+  color: rgba(255,255,255,0.75);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 10px 20px 8px;
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+/* ===== SCREENS ===== */
+.screen { display:none; flex-direction:column; flex:1; animation: fadeUp 0.3s ease; }
+.screen.active { display:flex; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.scroll { overflow-y:auto; flex:1; scrollbar-width:none; padding-bottom:80px; }
+.scroll::-webkit-scrollbar { display:none; }
+
+/* ===== NAV ===== */
+.nav {
+  position:sticky; bottom:0;
+  background:white;
+  border-top:1px solid var(--border);
+  display:flex;
+  padding:8px 0 16px;
+  flex-shrink:0;
+  z-index:100;
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  background:none; border:none; cursor:pointer; padding:6px 4px;
+  transition:transform 0.15s;
+}
+.nav-btn:active { transform:scale(0.88); }
+.nav-icon { font-size:20px; line-height:1; }
+.nav-label { font-size:9px; font-weight:600; color:var(--soft); letter-spacing:0.05em; text-transform:uppercase; }
+.nav-btn.active .nav-label { color:var(--sage-dark); }
+.nav-dot {
+  width:4px; height:4px; border-radius:50%;
+  background:var(--sage-dark); margin-top:2px;
+  opacity:0; transition:opacity 0.2s;
+}
+.nav-btn.active .nav-dot { opacity:1; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  border:none; border-radius:100px; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-weight:600;
+  transition:transform 0.15s, box-shadow 0.15s;
+  letter-spacing:0.01em;
+}
+.btn:active { transform:scale(0.96); }
+.btn-green {
+  background:linear-gradient(135deg,var(--sage) 0%,var(--sage-dark) 100%);
+  color:white; box-shadow:0 6px 20px rgba(90,122,90,0.35);
+}
+.btn-green:hover { box-shadow:0 10px 28px rgba(90,122,90,0.45); transform:translateY(-1px); }
+.btn-terra {
+  background:linear-gradient(135deg,var(--terracotta) 0%,#a05a3a 100%);
+  color:white; box-shadow:0 6px 20px rgba(193,123,90,0.35);
+}
+.btn-dark { background:var(--deep); color:white; }
+.btn-outline {
+  background:transparent; border:1.5px solid var(--border); color:var(--mid);
+}
+.btn-full { width:100%; padding:16px 24px; font-size:15px; border-radius:14px; }
+.btn-sm { padding:10px 20px; font-size:13px; }
+.btn-gold {
+  background:linear-gradient(135deg,var(--gold) 0%,#a8803a 100%);
+  color:white; box-shadow:0 6px 20px rgba(201,169,110,0.4);
+}
+
+/* ===== SECTION HEADER ===== */
+.sec-label {
+  font-size:10px; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--soft); font-weight:600; margin-bottom:12px;
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position:fixed; top:60px; left:50%;
+  transform:translateX(-50%) translateY(-120px);
+  background:var(--deep); color:white;
+  padding:11px 20px; border-radius:100px;
+  font-size:13px; font-weight:500;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:9999; white-space:nowrap;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  max-width:85%;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ============================================================
+   SPLASH SCREEN
+   ============================================================ */
+#splash {
+  background:var(--deep);
+  align-items:center; justify-content:center;
+  text-align:center; padding:40px 28px;
+  position:relative; overflow:hidden;
+}
+#splash.active { display:flex; flex-direction:column; }
+.orb {
+  position:absolute; border-radius:50%;
+  filter:blur(70px); pointer-events:none;
+}
+.orb1 { width:280px;height:280px;background:var(--sage);opacity:0.25;top:-100px;right:-80px; }
+.orb2 { width:220px;height:220px;background:var(--terracotta);opacity:0.2;bottom:80px;left:-80px; }
+.orb3 { width:160px;height:160px;background:var(--gold);opacity:0.2;top:45%;left:25%; }
+
+.logo-mark {
+  width:80px;height:80px;border-radius:24px;
+  background:linear-gradient(135deg,var(--sage) 0%,var(--sage-dark) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;margin:0 auto 20px;
+  box-shadow:0 12px 40px rgba(90,122,90,0.4);
+  position:relative;z-index:1;
+  animation:logoFloat 3s ease-in-out infinite;
+}
+@keyframes logoFloat {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-8px); }
+}
+
+.splash-brand {
+  font-family:'Cormorant Garamond',serif;
+  font-size:44px;font-weight:700;color:var(--cream);
+  line-height:1;position:relative;z-index:1;margin-bottom:6px;
+}
+.splash-by {
+  font-size:11px;letter-spacing:0.35em;text-transform:uppercase;
+  color:var(--sage-light);margin-bottom:32px;
+  position:relative;z-index:1;
+}
+.splash-tagline {
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;font-style:italic;
+  color:rgba(250,246,240,0.7);
+  line-height:1.55;margin-bottom:48px;
+  position:relative;z-index:1;
+}
+
+/* ============================================================
+   HOME SCREEN
+   ============================================================ */
+.home-header {
+  background:var(--deep);padding:20px 20px 28px;
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.home-header::before {
+  content:'';position:absolute;
+  width:200px;height:200px;border-radius:50%;
+  background:var(--sage);opacity:0.12;
+  top:-80px;right:-50px;filter:blur(40px);
+}
+.home-header::after {
+  content:'';position:absolute;
+  width:120px;height:120px;border-radius:50%;
+  background:var(--gold);opacity:0.1;
+  bottom:-40px;left:40px;filter:blur(30px);
+}
+.header-top { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;position:relative;z-index:1; }
+.greeting-txt { font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--sage-light);margin-bottom:3px; }
+/* EDIT: Change the user name here */
+.user-name { font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--cream); }
+.notif-btn {
+  background:rgba(255,255,255,0.1);border:none;color:white;
+  width:38px;height:38px;border-radius:50%;font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.2s;
+}
+.notif-btn:hover { background:rgba(255,255,255,0.2); }
+
+.streak-row { display:flex;gap:8px;position:relative;z-index:1; }
+.pill {
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:100px;padding:5px 12px;font-size:11px;font-weight:600;
+}
+.pill-fire { background:rgba(201,169,110,0.2);border:1px solid rgba(201,169,110,0.3);color:var(--gold); }
+.pill-sage { background:rgba(138,171,138,0.2);border:1px solid rgba(138,171,138,0.3);color:var(--sage-light); }
+
+.home-pad { padding:16px 16px 0; }
+
+.progress-card {
+  background:white;border-radius:20px;padding:18px;
+  margin-bottom:14px;box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  display:flex;align-items:center;gap:18px;
+  cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;
+}
+.progress-card:hover { transform:translateY(-2px);box-shadow:var(--shadow-lg); }
+
+.ring { position:relative;width:68px;height:68px;flex-shrink:0; }
+.ring svg { transform:rotate(-90deg); }
+.ring-bg { fill:none;stroke:var(--sage-light);stroke-width:5; }
+.ring-fill {
+  fill:none;stroke:var(--sage);stroke-width:5;stroke-linecap:round;
+  /* EDIT: stroke-dasharray=188, offset = 188*(1-progress). 75% = 47 */
+  stroke-dasharray:188;stroke-dashoffset:47;
+  transition:stroke-dashoffset 1.2s ease;
+}
+.ring-pct { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:15px;font-weight:700;color:var(--deep); }
+.progress-info h3 { font-size:15px;font-weight:600;margin-bottom:3px; }
+.progress-info p { font-size:12px;color:var(--soft);line-height:1.4;margin-bottom:6px; }
+.week-badge {
+  background:var(--terracotta-light);color:var(--terracotta);
+  font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;
+  display:inline-block;
+}
+
+.quick-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px; }
+.qcard {
+  background:white;border-radius:18px;padding:16px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;
+}
+.qcard:hover { transform:translateY(-2px);box-shadow:var(--shadow-lg); }
+.qcard:active { transform:scale(0.96); }
+.qcard-icon { font-size:26px;margin-bottom:8px; }
+.qcard-title { font-size:13px;font-weight:600;margin-bottom:2px; }
+.qcard-sub { font-size:11px;color:var(--soft); }
+.qcard.dark { background:var(--deep);border-color:transparent; }
+.qcard.dark .qcard-title { color:var(--cream); }
+.qcard.dark .qcard-sub { color:var(--sage-light); }
+.qcard.terra { background:linear-gradient(135deg,var(--terracotta),#a05a3a);border-color:transparent; }
+.qcard.terra .qcard-title,.qcard.terra .qcard-sub { color:rgba(255,255,255,0.9); }
+.qcard.terra .qcard-sub { color:rgba(255,255,255,0.65); }
+
+.routine-item {
+  background:white;border-radius:14px;padding:13px 14px;
+  margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  border:1px solid var(--border);cursor:pointer;transition:all 0.2s;
+}
+.routine-item.done { opacity:0.55; }
+.routine-item.done .ri-title { text-decoration:line-through; }
+.check-circle {
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all 0.25s;font-size:12px;color:transparent;
+}
+.routine-item.done .check-circle { background:var(--sage);border-color:var(--sage);color:white; }
+.ri-info { flex:1; }
+.ri-title { font-size:13px;font-weight:500;margin-bottom:2px; }
+.ri-meta { font-size:11px;color:var(--soft); }
+.ri-emoji { font-size:18px;flex-shrink:0; }
+
+/* ============================================================
+   AI CHAT SCREEN
+   ============================================================ */
+.chat-header {
+  background:var(--deep);padding:16px 18px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.back { background:rgba(255,255,255,0.1);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s; }
+.back:hover { background:rgba(255,255,255,0.2); }
+.chat-title { font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--cream); }
+.chat-sub { font-size:10px;color:var(--sage-light);margin-top:1px; }
+.online-dot { width:8px;height:8px;border-radius:50%;background:#4caf50;margin-left:auto;box-shadow:0 0 8px #4caf50; }
+
+.chips { display:flex;gap:8px;padding:12px 14px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:1px solid var(--border); }
+.chips::-webkit-scrollbar { display:none; }
+.chip {
+  background:white;border:1px solid var(--border);border-radius:100px;
+  padding:7px 13px;font-size:11px;color:var(--mid);white-space:nowrap;
+  cursor:pointer;transition:all 0.2s;flex-shrink:0;font-weight:500;
+}
+.chip:hover { background:var(--sage-light);border-color:var(--sage);color:var(--deep); }
+
+.chat-area { flex:1;overflow-y:auto;padding:14px;scrollbar-width:none; }
+.chat-area::-webkit-scrollbar { display:none; }
+
+.msg { margin-bottom:14px;display:flex;gap:8px;align-items:flex-end; }
+.msg.user { flex-direction:row-reverse; }
+.av {
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:white;margin-bottom:2px;
+}
+.av-ai { background:linear-gradient(135deg,var(--sage),var(--sage-dark)); }
+.av-user { background:linear-gradient(135deg,var(--terracotta),#a05a3a); }
+
+.bubble {
+  max-width:80%;background:white;border-radius:18px 18px 18px 4px;
+  padding:11px 14px;font-size:13px;line-height:1.65;color:var(--deep);
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.msg.user .bubble {
+  background:var(--deep);color:rgba(250,246,240,0.92);
+  border-radius:18px 18px 4px 18px;border-color:transparent;
+}
+
+.typing { display:flex;gap:4px;align-items:center;padding:2px 0; }
+.td { width:7px;height:7px;border-radius:50%;background:var(--sage);animation:tb 1.2s infinite; }
+.td:nth-child(2) { animation-delay:0.2s; }
+.td:nth-child(3) { animation-delay:0.4s; }
+@keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
+
+.chat-input-row {
+  padding:12px 14px;display:flex;gap:9px;background:white;
+  border-top:1px solid var(--border);flex-shrink:0;
+}
+.chat-input {
+  flex:1;background:var(--cream);border:1.5px solid var(--border);
+  border-radius:100px;padding:11px 16px;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--deep);outline:none;
+  transition:border-color 0.2s;
+}
+.chat-input:focus { border-color:var(--sage); }
+.send {
+  background:var(--sage-dark);border:none;border-radius:50%;
+  width:42px;height:42px;color:white;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform 0.2s,background 0.2s;
+}
+.send:hover { background:var(--sage);transform:scale(1.08); }
+
+/* ============================================================
+   TRACKER SCREEN
+   ============================================================ */
+.tracker-header {
+  background:linear-gradient(160deg,var(--deep) 0%,#1a2a1b 100%);
+  padding:18px 18px 22px;flex-shrink:0;
+}
+.tracker-title { font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--cream);margin-bottom:3px; }
+.tracker-sub { font-size:11px;color:var(--sage-light); }
+
+.week-strip { display:flex;gap:7px;padding:14px 14px 0;overflow-x:auto;scrollbar-width:none; }
+.week-strip::-webkit-scrollbar { display:none; }
+.day-pill {
+  display:flex;flex-direction:column;align-items:center;
+  background:white;border:1px solid var(--border);border-radius:12px;
+  padding:9px 12px;min-width:44px;cursor:pointer;transition:all 0.2s;gap:3px;
+}
+.day-pill.today { background:var(--deep);border-color:transparent; }
+.day-pill.logged { border-color:var(--sage); }
+.dn { font-size:9px;text-transform:uppercase;letter-spacing:0.05em;color:var(--soft);font-weight:600; }
+.day-pill.today .dn { color:var(--sage-light); }
+.dd { font-size:15px;font-weight:700;color:var(--deep); }
+.day-pill.today .dd { color:white; }
+.dd-dot { width:4px;height:4px;border-radius:50%;background:var(--sage); }
+
+.metrics { display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 0; }
+.mcard {
+  background:white;border:1px solid var(--border);
+  border-radius:16px;padding:16px;box-shadow:var(--shadow);
+}
+.micon { font-size:20px;margin-bottom:6px; }
+.mval { font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--deep);line-height:1; }
+.munit { font-size:11px;color:var(--soft);margin-left:2px; }
+.mlabel { font-size:11px;color:var(--soft);margin-top:3px; }
+.mtrend { font-size:10px;font-weight:600;margin-top:4px; }
+.mtrend.up { color:var(--sage-dark); }
+.mtrend.stable { color:var(--gold); }
+
+.photo-section { padding:14px 14px 0; }
+.photo-row { display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px; }
+.photo-row::-webkit-scrollbar { display:none; }
+.photo-thumb {
+  width:76px;height:76px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;border:1px solid var(--border);
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform 0.2s;
+}
+.photo-thumb:hover { transform:scale(1.05); }
+.wk-lbl {
+  position:absolute;bottom:0;left:0;right:0;text-align:center;
+  font-size:9px;font-weight:700;color:var(--deep);
+  background:rgba(255,255,255,0.8);padding:3px 0;
+}
+.add-ph { background:var(--cream);border:2px dashed var(--sage-light);color:var(--soft);font-size:24px; }
+
+.symptom-section { padding:14px; }
+.sym-chips { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px; }
+.sym-chip {
+  background:white;border:1.5px solid var(--border);border-radius:100px;
+  padding:7px 14px;font-size:12px;color:var(--mid);cursor:pointer;
+  transition:all 0.2s;font-weight:500;
+}
+.sym-chip.selected { background:var(--sage-light);border-color:var(--sage);color:var(--deep); }
+
+/* ============================================================
+   CHECKLIST SCREEN
+   ============================================================ */
+.checklist-header {
+  background:linear-gradient(135deg,#8a5a3a 0%,var(--terracotta) 50%,#c17b5a 100%);
+  padding:18px 18px 22px;flex-shrink:0;
+}
+.cl-title { font-family:'Cormorant Garamond',serif;font-size:24px;color:white;margin-bottom:3px; }
+.cl-sub { font-size:11px;color:rgba(255,255,255,0.7); }
+.cl-progress { margin-top:12px; }
+.cl-bar-bg { background:rgba(255,255,255,0.2);border-radius:100px;height:5px; }
+.cl-bar-fill { background:white;border-radius:100px;height:5px;width:40%;transition:width 0.5s ease; }
+.cl-bar-txt { font-size:10px;color:rgba(255,255,255,0.7);margin-top:5px;font-weight:500; }
+
+.tabs { display:flex;gap:7px;padding:13px 14px 0; }
+.tab {
+  flex:1;text-align:center;padding:9px 6px;border-radius:10px;
+  font-size:11px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--border);background:white;color:var(--soft);
+  transition:all 0.2s;letter-spacing:0.02em;
+}
+.tab.active { background:var(--deep);color:white;border-color:transparent; }
+
+.cl-body { padding:13px 14px 0; }
+.cl-item {
+  background:white;border-radius:14px;padding:13px 14px;margin-bottom:9px;
+  display:flex;align-items:flex-start;gap:11px;
+  border:1.5px solid var(--border);cursor:pointer;transition:all 0.2s;
+}
+.cl-item.checked { border-color:var(--sage);background:rgba(138,171,138,0.06); }
+.cbox {
+  width:22px;height:22px;border-radius:6px;border:2px solid var(--sage-light);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:transparent;flex-shrink:0;transition:all 0.25s;margin-top:1px;
+}
+.cl-item.checked .cbox { background:var(--sage);border-color:var(--sage);color:white; }
+.ci-title { font-size:13px;font-weight:600;margin-bottom:3px; }
+.ci-desc { font-size:11px;color:var(--soft);line-height:1.5; }
+.ci-tag {
+  display:inline-block;font-size:10px;font-weight:600;
+  padding:2px 9px;border-radius:100px;margin-top:6px;
+}
+.tag-morning { background:#fff3cd;color:#856404; }
+.tag-evening { background:#e8d5f0;color:#6a3d8a; }
+.tag-internal { background:#d4edda;color:#155724; }
+.tag-detox { background:#cce5f0;color:#1a6a8a; }
+.tag-track { background:var(--terracotta-light);color:var(--terracotta); }
+
+/* ============================================================
+   PRICING / PAYWALL SCREEN
+   ============================================================ */
+#pricing { background:var(--cream); }
+.pricing-header {
+  background:var(--deep);padding:18px 18px 24px;
+  text-align:center;position:relative;overflow:hidden;flex-shrink:0;
+}
+.pricing-header::before {
+  content:'';position:absolute;width:200px;height:200px;
+  border-radius:50%;background:var(--gold);opacity:0.1;
+  top:-80px;left:50%;transform:translateX(-50%);filter:blur(50px);
+}
+.pricing-h { font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--cream);margin-bottom:5px;position:relative;z-index:1; }
+.pricing-sub { font-size:12px;color:var(--sage-light);position:relative;z-index:1; }
+
+/* EDIT: Founding member counter — change foundingLeft variable in JS */
+.founder-bar {
+  background:linear-gradient(135deg,var(--gold),#a8803a);
+  padding:11px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.founder-icon { font-size:18px; }
+.founder-txt { flex:1; }
+.founder-txt strong { font-size:13px;font-weight:700;color:white;display:block; }
+.founder-txt span { font-size:11px;color:rgba(255,255,255,0.8); }
+.founder-count {
+  background:white;color:var(--terracotta);
+  font-size:13px;font-weight:800;padding:5px 11px;border-radius:100px;
+}
+
+.toggle-row {
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;padding:16px 18px;flex-shrink:0;
+}
+.toggle-label { font-size:13px;font-weight:500;color:var(--soft); }
+.toggle-label.active { color:var(--deep);font-weight:600; }
+.toggle-switch {
+  width:48px;height:26px;background:var(--sage);border-radius:100px;
+  position:relative;cursor:pointer;transition:background 0.3s;border:none;
+}
+.toggle-switch::after {
+  content:'';position:absolute;width:20px;height:20px;
+  border-radius:50%;background:white;top:3px;left:3px;
+  transition:transform 0.3s;box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+.toggle-switch.monthly::after { transform:translateX(22px); }
+.save-badge {
+  background:var(--terracotta-light);color:var(--terracotta);
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;
+}
+
+.plan-cards { padding:0 14px;display:flex;flex-direction:column;gap:12px; }
+
+.plan-card {
+  background:white;border-radius:20px;padding:20px;
+  border:2px solid var(--border);box-shadow:var(--shadow);
+  position:relative;overflow:hidden;transition:transform 0.2s;
+}
+.plan-card:hover { transform:translateY(-2px); }
+.plan-card.popular {
+  border-color:var(--sage);
+  box-shadow:0 8px 32px rgba(90,122,90,0.2);
+}
+.plan-card.premium-card {
+  background:var(--deep);border-color:var(--gold);
+  box-shadow:0 8px 32px rgba(201,169,110,0.25);
+}
+
+.popular-badge {
+  position:absolute;top:14px;right:14px;
+  background:var(--sage);color:white;
+  font-size:9px;font-weight:700;padding:3px 10px;border-radius:100px;
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+.premium-badge {
+  position:absolute;top:14px;right:14px;
+  background:var(--gold);color:white;
+  font-size:9px;font-weight:700;padding:3px 10px;border-radius:100px;
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+
+.plan-icon { font-size:28px;margin-bottom:10px; }
+.plan-name { font-size:18px;font-weight:700;margin-bottom:3px; }
+.plan-tagline { font-size:11px;color:var(--soft);margin-bottom:14px; }
+.plan-card.premium-card .plan-name { color:var(--cream); }
+.plan-card.premium-card .plan-tagline { color:rgba(196,217,196,0.7); }
+
+.plan-price { display:flex;align-items:baseline;gap:4px;margin-bottom:4px; }
+.price-amt { font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:700;color:var(--deep);line-height:1; }
+.plan-card.premium-card .price-amt { color:var(--gold); }
+.price-period { font-size:13px;color:var(--soft); }
+.plan-card.premium-card .price-period { color:rgba(196,217,196,0.7); }
+.plan-orig { font-size:11px;color:var(--soft);text-decoration:line-through;margin-bottom:14px; }
+.plan-card.premium-card .plan-orig { color:rgba(196,217,196,0.5); }
+
+.plan-features { list-style:none;margin-bottom:16px; }
+.plan-features li {
+  font-size:12px;color:var(--mid);padding:4px 0;
+  display:flex;align-items:center;gap:7px;
+}
+.plan-card.premium-card .plan-features li { color:rgba(250,246,240,0.8); }
+.plan-features li::before { content:'✓';font-weight:700;color:var(--sage);flex-shrink:0; }
+.plan-features li.locked::before { content:'🔒';font-size:10px; }
+.plan-features li.locked { opacity:0.45; }
+
+.plan-divider { height:1px;background:var(--border);margin:14px 0; }
+.plan-card.premium-card .plan-divider { background:rgba(255,255,255,0.1); }
+
+.compare-link {
+  text-align:center;padding:14px 18px;font-size:12px;color:var(--soft);
+  cursor:pointer;text-decoration:underline;flex-shrink:0;
+}
+
+.guarantee {
+  margin:0 14px 14px;background:white;border-radius:16px;
+  padding:14px 16px;border:1px solid var(--border);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.guarantee-icon { font-size:24px;flex-shrink:0; }
+.guarantee-title { font-size:13px;font-weight:600;margin-bottom:3px; }
+.guarantee-txt { font-size:11px;color:var(--soft);line-height:1.5; }
+
+/* ============================================================
+   PROFILE SCREEN
+   ============================================================ */
+.profile-header {
+  background:var(--deep);padding:24px 18px 28px;
+  text-align:center;position:relative;overflow:hidden;flex-shrink:0;
+}
+.profile-avatar {
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,var(--sage),var(--sage-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 12px;
+  border:3px solid rgba(255,255,255,0.2);
+}
+.profile-name { font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--cream);margin-bottom:3px; }
+.profile-plan { font-size:11px;color:var(--sage-light); }
+
+.profile-stats { display:flex;border-bottom:1px solid var(--border);flex-shrink:0; }
+.pstat { flex:1;padding:14px;text-align:center;border-right:1px solid var(--border); }
+.pstat:last-child { border-right:none; }
+.pstat-val { font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--deep); }
+.pstat-label { font-size:10px;color:var(--soft);margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em; }
+
+.settings-list { padding:14px; }
+.settings-item {
+  background:white;border-radius:14px;padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;border:1px solid var(--border);
+  cursor:pointer;transition:all 0.2s;
+}
+.settings-item:hover { border-color:var(--sage-light); }
+.si-icon { font-size:20px;width:36px;height:36px;background:var(--cream);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.si-info { flex:1; }
+.si-title { font-size:14px;font-weight:500;margin-bottom:1px; }
+.si-sub { font-size:11px;color:var(--soft); }
+.si-arrow { color:var(--soft);font-size:16px; }
+
+/* EDIT: Version number */
+.version-txt { text-align:center;padding:14px;font-size:11px;color:var(--soft); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41 AM</span>
+    <!-- EDIT: Change app name in status bar -->
+    <span>HappiHeal</span>
+    <span>●●● 100%</span>
+  </div>
+
+  <!-- ===================== SPLASH ===================== -->
+  <div id="splash" class="screen active">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="logo-mark">🌿</div>
+    <!-- EDIT: App name and tagline -->
+    <div class="splash-brand">HappiHeal</div>
+    <div class="splash-by">by HappiLoot</div>
+    <div class="splash-tagline">"Your daily companion for<br>natural hair recovery"</div>
+    <button class="btn btn-green" style="padding:16px 48px;font-size:15px;border-radius:100px;position:relative;z-index:1" onclick="goTo('home')">
+      Begin Your Journey →
+    </button>
+    <p style="font-size:11px;color:rgba(196,217,196,0.5);margin-top:16px;position:relative;z-index:1">
+      Based on Harshitha's 20-year recovery journey
+    </p>
+  </div>
+
+  <!-- ===================== HOME ===================== -->
+  <div id="home" class="screen">
+    <div class="home-header">
+      <div class="header-top">
+        <div>
+          <div class="greeting-txt">Good Morning</div>
+          <!-- EDIT: User name -->
+          <div class="user-name">Harshitha ✨</div>
+        </div>
+        <button class="notif-btn" onclick="showToast('🔔 No new notifications')">🔔</button>
+      </div>
+      <div class="streak-row">
+        <div class="pill pill-fire">🔥 28 Day Streak</div>
+        <!-- EDIT: Current phase -->
+        <div class="pill pill-sage">Phase 2 Active</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="home-pad">
+        <div class="sec-label" style="margin-top:16px">Your Recovery Journey</div>
+        <div class="progress-card" onclick="goTo('tracker')">
+          <div class="ring">
+            <svg width="68" height="68" viewBox="0 0 68 68">
+              <circle class="ring-bg" cx="34" cy="34" r="29"/>
+              <!-- EDIT: stroke-dashoffset = 182*(1-progress%). 75% done = 46 -->
+              <circle class="ring-fill" cx="34" cy="34" r="29" style="stroke-dasharray:182;stroke-dashoffset:46"/>
+            </svg>
+            <div class="ring-pct">75%</div>
+          </div>
+          <div class="progress-info">
+            <h3>Phase 2 Complete</h3>
+            <p>Scalp detox & circulation boost in progress</p>
+            <!-- EDIT: Current week -->
+            <span class="week-badge">📅 Week 4 of 20</span>
+          </div>
+        </div>
+
+        <div class="sec-label">Quick Access</div>
+        <div class="quick-grid">
+          <div class="qcard dark" onclick="goTo('chat')">
+            <div class="qcard-icon">🤖</div>
+            <div class="qcard-title">Ask HappiAI</div>
+            <div class="qcard-sub">Your 24/7 hair coach</div>
+          </div>
+          <div class="qcard" onclick="goTo('tracker')">
+            <div class="qcard-icon">📸</div>
+            <div class="qcard-title">Log Progress</div>
+            <div class="qcard-sub">Photos + symptoms</div>
+          </div>
+          <div class="qcard" onclick="goTo('checklist')">
+            <div class="qcard-icon">✅</div>
+            <div class="qcard-title">Today's Routine</div>
+            <div class="qcard-sub" id="taskCount">5 tasks remaining</div>
+          </div>
+          <div class="qcard terra" onclick="goTo('pricing')">
+            <div class="qcard-icon">⭐</div>
+            <div class="qcard-title">Upgrade Plan</div>
+            <div class="qcard-sub">Unlock full ebook</div>
+          </div>
+        </div>
+
+        <div class="sec-label">Today's Routine</div>
+        <div id="homeRoutine">
+          <div class="routine-item done" onclick="toggleRoutine(this)">
+            <div class="check-circle">✓</div>
+            <div class="ri-info">
+              <div class="ri-title">Morning scalp massage</div>
+              <div class="ri-meta">7:00 AM · 10 mins · Done ✓</div>
+            </div>
+            <div class="ri-emoji">💆‍♀️</div>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="check-circle"></div>
+            <div class="ri-info">
+              <div class="ri-title">Fresh ginger juice on patches ⭐</div>
+              <div class="ri-meta">8:00 AM · Leave 20–30 mins</div>
+            </div>
+            <div class="ri-emoji">🫚</div>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="check-circle"></div>
+            <div class="ri-info">
+              <div class="ri-title">Onion juice application</div>
+              <div class="ri-meta">6:00 PM · Leave 30–45 mins</div>
+            </div>
+            <div class="ri-emoji">🧅</div>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="check-circle"></div>
+            <div class="ri-info">
+              <div class="ri-title">Supplements with lunch 💊</div>
+              <div class="ri-meta">1:00 PM · Biotin, Zinc, B12, D3</div>
+            </div>
+            <div class="ri-emoji">💊</div>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="check-circle"></div>
+            <div class="ri-info">
+              <div class="ri-title">Bhringraj oil + inversion</div>
+              <div class="ri-meta">9:00 PM · Oil + 5 min inversion</div>
+            </div>
+            <div class="ri-emoji">🌿</div>
+          </div>
+          <div class="routine-item" onclick="toggleRoutine(this)">
+            <div class="check-circle"></div>
+            <div class="ri-info">
+              <div class="ri-title">Amla + Ashwagandha tonic</div>
+              <div class="ri-meta">8:00 PM · With dinner</div>
+            </div>
+            <div class="ri-emoji">🫙</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn active" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('chat')"><span class="nav-icon">💬</span><span class="nav-label">Ask AI</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('tracker')"><span class="nav-icon">📈</span><span class="nav-label">Track</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('checklist')"><span class="nav-icon">✅</span><span class="nav-label">Routine</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span><div class="nav-dot"></div></button>
+    </div>
+  </div>
+
+  <!-- ===================== AI CHAT ===================== -->
+  <div id="chat" class="screen">
+    <div class="chat-header">
+      <button class="back" onclick="goBack()">←</button>
+      <div style="flex:1">
+        <div class="chat-title">HappiAI Coach 🌿</div>
+        <!-- EDIT: AI subtitle -->
+        <div class="chat-sub">Trained on Harshitha's 20-year recovery journey</div>
+      </div>
+      <div class="online-dot"></div>
+    </div>
+
+    <div class="chips">
+      <div class="chip" onclick="sendSug('Why is my hair falling in patches?')">🔍 Patchy loss</div>
+      <div class="chip" onclick="sendSug('Best oils for alopecia?')">🧴 Best oils</div>
+      <div class="chip" onclick="sendSug('What foods help hair growth?')">🥗 Foods</div>
+      <div class="chip" onclick="sendSug('How long until I see regrowth?')">⏳ Timeline</div>
+      <div class="chip" onclick="sendSug('What causes alopecia areata?')">🧬 Causes</div>
+      <div class="chip" onclick="sendSug('How to do scalp massage correctly?')">💆 Massage</div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="msg">
+        <div class="av av-ai">H</div>
+        <div class="bubble">Namaste! 🌸 I'm HappiAI, trained on Harshitha's 20-year natural hair recovery journey. Ask me anything about hair loss, alopecia, oils, remedies, nutrition or your daily routine. I'm here to guide you naturally! 💚</div>
+      </div>
+    </div>
+
+    <div class="chat-input-row">
+      <input class="chat-input" id="chatInput" placeholder="Ask about your hair health..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="send" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+
+  <!-- ===================== TRACKER ===================== -->
+  <div id="tracker" class="screen">
+    <div class="tracker-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="tracker-title">Progress Tracker</div>
+          <div class="tracker-sub">Your hair recovery journey, visualised</div>
+        </div>
+        <button class="back" onclick="goBack()" style="background:rgba(255,255,255,0.1);margin-top:2px">←</button>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="week-strip" style="padding-bottom:14px">
+        <div class="day-pill logged"><div class="dn">Mon</div><div class="dd">18</div><div class="dd-dot"></div></div>
+        <div class="day-pill logged"><div class="dn">Tue</div><div class="dd">19</div><div class="dd-dot"></div></div>
+        <div class="day-pill logged"><div class="dn">Wed</div><div class="dd">20</div><div class="dd-dot"></div></div>
+        <div class="day-pill logged"><div class="dn">Thu</div><div class="dd">21</div><div class="dd-dot"></div></div>
+        <div class="day-pill today"><div class="dn">Fri</div><div class="dd">22</div></div>
+        <div class="day-pill"><div class="dn">Sat</div><div class="dd">23</div></div>
+        <div class="day-pill"><div class="dn">Sun</div><div class="dd">24</div></div>
+      </div>
+
+      <div class="metrics">
+        <div class="mcard">
+          <div class="micon">💧</div>
+          <!-- EDIT: Metric values -->
+          <div><span class="mval">73</span><span class="munit">%</span></div>
+          <div class="mlabel">Scalp hydration</div>
+          <div class="mtrend up">↑ +8% this week</div>
+        </div>
+        <div class="mcard">
+          <div class="micon">🌱</div>
+          <div><span class="mval">12</span><span class="munit">new</span></div>
+          <div class="mlabel">Baby hairs logged</div>
+          <div class="mtrend up">↑ Up from 7</div>
+        </div>
+        <div class="mcard">
+          <div class="micon">😴</div>
+          <div><span class="mval">7.2</span><span class="munit">hrs</span></div>
+          <div class="mlabel">Avg sleep</div>
+          <div class="mtrend stable">→ Stable</div>
+        </div>
+        <div class="mcard">
+          <div class="micon">🔥</div>
+          <div><span class="mval">28</span><span class="munit">days</span></div>
+          <div class="mlabel">Routine streak</div>
+          <div class="mtrend up">🏆 Personal best!</div>
+        </div>
+      </div>
+
+      <div class="photo-section">
+        <div class="sec-label" style="margin-bottom:10px">Progress Photos</div>
+        <div class="photo-row">
+          <div class="photo-thumb" style="background:linear-gradient(135deg,#d4e8d4,#c4d9c4)">🌿<div class="wk-lbl">Week 1</div></div>
+          <div class="photo-thumb" style="background:linear-gradient(135deg,#c4d9c4,#aacaaa)">🌿<div class="wk-lbl">Week 2</div></div>
+          <div class="photo-thumb" style="background:linear-gradient(135deg,#aacaaa,#8aab8a)">🌱<div class="wk-lbl">Week 3</div></div>
+          <div class="photo-thumb" style="background:linear-gradient(135deg,#8aab8a,#6a9b6a)">🌱<div class="wk-lbl">Week 4</div></div>
+          <div class="photo-thumb add-ph" onclick="showToast('📸 Camera opens on your real phone!')">+</div>
+        </div>
+      </div>
+
+      <div class="symptom-section">
+        <div class="sec-label">Log Today's Symptoms</div>
+        <div class="sym-chips">
+          <div class="sym-chip" onclick="toggleSym(this)">🔴 Itching</div>
+          <div class="sym-chip" onclick="toggleSym(this)">🟡 Shedding</div>
+          <div class="sym-chip selected" onclick="toggleSym(this)">🟢 Less fall</div>
+          <div class="sym-chip" onclick="toggleSym(this)">💧 Dry scalp</div>
+          <div class="sym-chip selected" onclick="toggleSym(this)">✨ New growth!</div>
+          <div class="sym-chip" onclick="toggleSym(this)">😴 Fatigue</div>
+          <div class="sym-chip" onclick="toggleSym(this)">🍽️ Poor appetite</div>
+          <div class="sym-chip" onclick="toggleSym(this)">😰 Stress high</div>
+        </div>
+        <button class="btn btn-green btn-full" style="margin-top:14px" onclick="showToast('✅ Symptoms saved for today!')">Save Today's Log</button>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('chat')"><span class="nav-icon">💬</span><span class="nav-label">Ask AI</span><div class="nav-dot"></div></button>
+      <button class="nav-btn active" onclick="goTo('tracker')"><span class="nav-icon">📈</span><span class="nav-label">Track</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('checklist')"><span class="nav-icon">✅</span><span class="nav-label">Routine</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span><div class="nav-dot"></div></button>
+    </div>
+  </div>
+
+  <!-- ===================== CHECKLIST ===================== -->
+  <div id="checklist" class="screen">
+    <div class="checklist-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="cl-title">My Routines</div>
+          <div class="cl-sub">Remedies, oils & healing rituals</div>
+        </div>
+        <button class="back" onclick="goBack()" style="background:rgba(255,255,255,0.15)">←</button>
+      </div>
+      <div class="cl-progress">
+        <div class="cl-bar-bg"><div class="cl-bar-fill" id="clBar"></div></div>
+        <div class="cl-bar-txt" id="clBarTxt">1 of 6 tasks complete</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'daily')">Daily</div>
+      <div class="tab" onclick="switchTab(this,'weekly')">Weekly</div>
+      <div class="tab" onclick="switchTab(this,'monthly')">Monthly</div>
+    </div>
+
+    <div class="scroll">
+      <div class="cl-body" id="clBody">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('chat')"><span class="nav-icon">💬</span><span class="nav-label">Ask AI</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('tracker')"><span class="nav-icon">📈</span><span class="nav-label">Track</span><div class="nav-dot"></div></button>
+      <button class="nav-btn active" onclick="goTo('checklist')"><span class="nav-icon">✅</span><span class="nav-label">Routine</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span><div class="nav-dot"></div></button>
+    </div>
+  </div>
+
+  <!-- ===================== PRICING ===================== -->
+  <div id="pricing" class="screen">
+    <div class="pricing-header">
+      <button class="back" onclick="goBack()" style="position:absolute;top:16px;left:16px">←</button>
+      <div class="pricing-h">Choose Your Plan</div>
+      <!-- EDIT: Pricing subtitle -->
+      <div class="pricing-sub">Start free. Upgrade when ready. Cancel anytime.</div>
+    </div>
+
+    <!-- EDIT: foundingLeft = spots remaining. Change in JS below too -->
+    <div class="founder-bar">
+      <div class="founder-icon">👑</div>
+      <div class="founder-txt">
+        <strong>Founding Member Offer</strong>
+        <span>Special pricing — limited time only</span>
+      </div>
+      <div class="founder-count" id="founderCount">23 left</div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label active" id="annualLabel">Annual</span>
+      <button class="toggle-switch" id="billingToggle" onclick="toggleBilling()"></button>
+      <span class="toggle-label" id="monthlyLabel">Monthly</span>
+      <span class="save-badge" id="saveBadge">Save 45%</span>
+    </div>
+
+    <div class="scroll" style="padding-bottom:20px">
+      <div class="plan-cards">
+
+        <!-- FREE PLAN -->
+        <div class="plan-card">
+          <div class="plan-icon">🌱</div>
+          <div class="plan-name">Free Starter</div>
+          <div class="plan-tagline">Taste the journey</div>
+          <div class="plan-price">
+            <span class="price-amt">$0</span>
+            <span class="price-period">/forever</span>
+          </div>
+          <div style="margin-bottom:14px"></div>
+          <ul class="plan-features">
+            <li>Freebie PDF guide (full access)</li>
+            <li>3 AI questions per month</li>
+            <li>Day 1 checklist sample</li>
+            <li class="locked">Progress tracker</li>
+            <li class="locked">Unlimited AI coach</li>
+            <li class="locked">Full ebook access</li>
+          </ul>
+          <button class="btn btn-outline btn-full" onclick="showToast('✅ You are on the Free plan!')">Current Plan</button>
+        </div>
+
+        <!-- BASIC PLAN -->
+        <div class="plan-card popular">
+          <div class="popular-badge">MOST POPULAR</div>
+          <div class="plan-icon">🌿</div>
+          <div class="plan-name">Basic</div>
+          <div class="plan-tagline">Your daily recovery companion</div>
+          <div class="plan-price">
+            <!-- EDIT: Basic prices -->
+            <span class="price-amt" id="basicPrice">$29</span>
+            <span class="price-period" id="basicPeriod">/year</span>
+          </div>
+          <div class="plan-orig" id="basicOrig">Normal price $48/year • Founding offer</div>
+          <ul class="plan-features">
+            <li>Everything in Free</li>
+            <li>Unlimited AI coach questions</li>
+            <li>Full daily checklist & routines</li>
+            <li>Progress tracker & photo log</li>
+            <li>Oil & massage reminders</li>
+            <li>Weekly & monthly routines</li>
+            <li class="locked">Full 260-page ebook</li>
+            <li class="locked">Personalised weekly plan</li>
+          </ul>
+          <button class="btn btn-green btn-full" id="basicPayBtn" onclick="handlePayment('basic')">
+            <span id="basicPayLabel">Get Basic →</span>
+          </button>
+        </div>
+
+        <!-- PREMIUM PLAN -->
+        <div class="plan-card premium-card">
+          <div class="premium-badge">BEST VALUE</div>
+          <div class="plan-icon">⭐</div>
+          <div class="plan-name">Premium</div>
+          <div class="plan-tagline">The complete healing system</div>
+          <div class="plan-price">
+            <!-- EDIT: Premium prices -->
+            <span class="price-amt" id="premiumPrice">$57</span>
+            <span class="price-period" id="premiumPeriod">/year</span>
+          </div>
+          <div class="plan-orig" id="premiumOrig">Normal price $108/year • Founding offer</div>
+          <ul class="plan-features">
+            <li>Everything in Basic</li>
+            <li>Full 260-page ebook (all 20 modules)</li>
+            <li>Modules unlock week by week</li>
+            <li>Weekly personalised routine</li>
+            <li>Priority AI responses</li>
+            <li>Founding member badge 👑</li>
+            <li>Future features free forever</li>
+          </ul>
+          <div class="plan-divider"></div>
+          <button class="btn btn-gold btn-full" id="premiumPayBtn" onclick="handlePayment('premium')">
+            <span id="premiumPayLabel">Get Premium →</span>
+          </button>
+        </div>
+
+      </div>
+
+      <div class="guarantee">
+        <div class="guarantee-icon">🛡️</div>
+        <div>
+          <!-- EDIT: Guarantee text -->
+          <div class="guarantee-title">30-Day Money Back Guarantee</div>
+          <div class="guarantee-txt">If you don't see improvement in your routine consistency within 30 days, we'll refund you fully. No questions asked.</div>
+        </div>
+      </div>
+
+      <div class="compare-link" onclick="showToast('📊 Comparison table coming soon!')">Compare all features →</div>
+    </div>
+  </div>
+
+  <!-- ===================== PROFILE ===================== -->
+  <div id="profile" class="screen">
+    <div class="profile-header">
+      <div class="profile-avatar">🌿</div>
+      <!-- EDIT: Profile name and plan -->
+      <div class="profile-name">Harshitha</div>
+      <div class="profile-plan">🌱 Free Plan · Upgrade to unlock more</div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="pstat">
+        <div class="pstat-val">28</div>
+        <div class="pstat-label">Day Streak</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">4</div>
+        <div class="pstat-label">Weeks Active</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-val">12</div>
+        <div class="pstat-label">Baby Hairs</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="settings-list">
+        <div class="sec-label" style="padding:0 2px;margin-top:2px">Account</div>
+
+        <div class="settings-item" onclick="goTo('pricing')">
+          <div class="si-icon">⭐</div>
+          <div class="si-info">
+            <div class="si-title">Upgrade Plan</div>
+            <div class="si-sub">Unlock AI coach + full ebook</div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <div class="settings-item" onclick="showToast('🔔 Reminders setting opens here')">
+          <div class="si-icon">🔔</div>
+          <div class="si-info">
+            <div class="si-title">Reminders</div>
+            <!-- EDIT: Reminder time -->
+            <div class="si-sub">Oil at 6 PM · Massage at 7 AM</div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <div class="settings-item" onclick="showToast('👤 Edit profile opens here')">
+          <div class="si-icon">👤</div>
+          <div class="si-info">
+            <div class="si-title">Edit Profile</div>
+            <div class="si-sub">Name, photo, hair type</div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <div class="sec-label" style="padding:0 2px;margin-top:14px">Support</div>
+
+        <div class="settings-item" onclick="showToast('📖 Ebook opens here')">
+          <div class="si-icon">📖</div>
+          <div class="si-info">
+            <div class="si-title">My Ebook</div>
+            <div class="si-sub">From Hair Loss to Hair Growth</div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <div class="settings-item" onclick="showToast('📧 Support email opens')">
+          <div class="si-icon">💬</div>
+          <div class="si-info">
+            <div class="si-title">Contact Support</div>
+            <!-- EDIT: Support email -->
+            <div class="si-sub"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="325a5342425b5a57535e725a5342425b5e5d5d461c515d5f">[email&#160;protected]</a></div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <div class="settings-item" onclick="showToast('⭐ Rate us on the App Store!')">
+          <div class="si-icon">⭐</div>
+          <div class="si-info">
+            <div class="si-title">Rate HappiHeal</div>
+            <div class="si-sub">Help others find natural recovery</div>
+          </div>
+          <div class="si-arrow">›</div>
+        </div>
+
+        <!-- EDIT: Version number -->
+        <div class="version-txt">HappiHeal v1.0 · by HappiLoot · Made with 💚 in India</div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('chat')"><span class="nav-icon">💬</span><span class="nav-label">Ask AI</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('tracker')"><span class="nav-icon">📈</span><span class="nav-label">Track</span><div class="nav-dot"></div></button>
+      <button class="nav-btn" onclick="goTo('checklist')"><span class="nav-icon">✅</span><span class="nav-label">Routine</span><div class="nav-dot"></div></button>
+      <button class="nav-btn active" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span><div class="nav-dot"></div></button>
+    </div>
+  </div>
+
+</div><!-- end phone -->
+
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ============================================================
+// EDIT: Core configuration — change these values
+// ============================================================
+// ============================================================
+// SMART PAYMENT ROUTING
+// Detects user country → sends Indians to Razorpay, 
+// everyone else to Stripe. One button, two gateways.
+// ============================================================
+
+const PAYMENT = {
+  // ── RAZORPAY (India) ────────────────────────────────────────
+  // EDIT: Paste your Razorpay payment page links here
+  // Get them from: razorpay.com → Payment Links → Create
+  razorpay: {
+    basic_annual:   "https://rzp.io/rzp/YOUR_BASIC_ANNUAL_LINK",   // EDIT
+    basic_monthly:  "https://rzp.io/rzp/YOUR_BASIC_MONTHLY_LINK",  // EDIT
+    premium_annual: "https://rzp.io/rzp/YOUR_PREMIUM_ANNUAL_LINK", // EDIT — your existing link works!
+    premium_monthly:"https://rzp.io/rzp/YOUR_PREMIUM_MONTHLY_LINK",// EDIT
+  },
+  // ── STRIPE (International) ──────────────────────────────────
+  // EDIT: Paste your Stripe payment links here
+  // Get them from: dashboard.stripe.com → Payment Links → Create
+  stripe: {
+    basic_annual:   "https://buy.stripe.com/YOUR_BASIC_ANNUAL",    // EDIT
+    basic_monthly:  "https://buy.stripe.com/YOUR_BASIC_MONTHLY",   // EDIT
+    premium_annual: "https://buy.stripe.com/YOUR_PREMIUM_ANNUAL",  // EDIT
+    premium_monthly:"https://buy.stripe.com/YOUR_PREMIUM_MONTHLY", // EDIT
+  },
+  // Countries that use Razorpay (India only)
+  indiaCountryCodes: ["IN"],
+};
+
+// Detect country via free API, cache result
+let userCountry = null;
+async function detectCountry() {
+  if (userCountry) return userCountry;
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    userCountry = data.country_code || "US";
+  } catch {
+    userCountry = "US"; // fallback to international
+  }
+  return userCountry;
+}
+
+// Called when user clicks Get Basic / Get Premium
+async function handlePayment(plan) {
+  const btn = document.getElementById(plan + 'PayBtn');
+  const label = document.getElementById(plan + 'PayLabel');
+  label.textContent = "Detecting location... 🌍";
+  btn.disabled = true;
+
+  const country = await detectCountry();
+  const isIndia = PAYMENT.indiaCountryCodes.includes(country);
+  const billing = billingAnnual ? 'annual' : 'monthly';
+  const key = plan + '_' + billing;
+
+  let url;
+  if (isIndia) {
+    url = PAYMENT.razorpay[key];
+    showToast('🇮🇳 Redirecting to Razorpay...');
+  } else {
+    url = PAYMENT.stripe[key];
+    showToast('🌍 Redirecting to Stripe...');
+  }
+
+  label.textContent = plan === 'basic' ? 'Get Basic →' : 'Get Premium →';
+  btn.disabled = false;
+
+  // If links are not set yet, show setup message
+  if (url.includes('YOUR_')) {
+    showToast('⚙️ Payment link not set up yet — see EDIT comments');
+    return;
+  }
+  window.open(url, '_blank');
+}
+
+// Pre-load country detection in background when pricing screen opens
+function preloadCountry() { detectCountry(); }
+
+const CONFIG = {
+  userName: "Harshitha",          // User's name
+  streakDays: 28,                  // Current streak
+  foundingTotal: 50,               // Total founding spots
+  foundingLeft: 23,                // Spots remaining — UPDATE as people join
+  // EDIT: Prices — annual (default shown) and monthly
+  prices: {
+    basicAnnual: "$29",  basicMonthly: "$4",
+    premiumAnnual: "$57", premiumMonthly: "$7",
+    basicOrigAnnual: "Normal price $48/year • Founding offer",
+    basicOrigMonthly: "Billed monthly • Save 45% with annual",
+    premiumOrigAnnual: "Normal price $108/year • Founding offer",
+    premiumOrigMonthly: "Billed monthly • Save 47% with annual",
+  },
+  // EDIT: AI responses — add/change answers here
+  aiResponses: {
+    "Why is my hair falling in patches?": "Patchy hair loss (alopecia areata) is often triggered by stress, nutritional deficiencies, or an autoimmune response. 🌿\n\nFrom my personal experience, key first steps are:\n\n• Reduce cortisol with ashwagandha daily\n• Check ferritin & B12 levels (very common cause!)\n• Start scalp massage with rosemary oil every morning\n• Remove inflammatory foods for 2 weeks\n\nPatches can heal — I'm living proof! 💚",
+    "Best oils for alopecia?": "After 20 years of experimentation, my top 3 oils are:\n\n🧅 Onion oil — highest sulphur content, proven in clinical studies. Apply 3x weekly.\n\n🌿 Rosemary oil — blocks DHT naturally, stimulates dormant follicles. Use diluted daily.\n\n🥥 Castor oil — thickens and strengthens roots. Best for density.\n\nMix all three with coconut carrier oil + massage for 10 minutes for best results!",
+    "What foods help hair growth?": "These foods made the biggest difference in my recovery:\n\n🥚 Eggs — biotin + complete protein for follicle strength\n🌰 Pumpkin seeds — zinc for DHT balance (life changing!)\n🐟 Salmon — omega-3 reduces scalp inflammation\n🫛 Lentils — iron + folate, essential for women\n🫐 Amla — highest vitamin C, boosts collagen\n\n❌ Avoid: refined sugar, dairy, processed foods. These trigger inflammation that worsens hair loss.",
+    "How long until I see regrowth?": "Based on my journey and hundreds of followers:\n\n📅 Week 1–4: Scalp environment improves, shedding reduces\n📅 Week 6–8: Baby hairs start appearing (keep logging in tracker!)\n📅 Month 3–4: Visible fuzz and new growth patches\n📅 Month 6+: Measurable density change in photos\n\nConsistency is everything. Even one missed week can reset progress. That's why I built the streak tracker — use it every day! 🔥",
+    "What causes alopecia areata?": "Alopecia areata is an autoimmune condition where your immune system mistakenly attacks hair follicles. Key triggers include:\n\n• Chronic stress (biggest trigger in my case)\n• Gut dysbiosis and leaky gut\n• Nutritional deficiencies (iron, zinc, B12, D3)\n• Hormonal imbalances\n• Genetics (family history)\n\nThe good news: it's reversible with the right approach! My 20-year journey proved that natural healing works. 🌿",
+    "How to do scalp massage correctly?": "Here's my exact technique from the ebook:\n\n1. Use your fingertips (never nails) in small circular motions\n2. Start from temples, work to crown, then nape\n3. Apply medium pressure — you should feel warmth\n4. 10 minutes minimum daily for results\n5. Best with rosemary + carrier oil, slightly warm\n\n💡 Tip: Do it every morning before shower. The increased blood flow feeds your follicles nutrients all day. I saw results in 6 weeks! 💆‍♀️",
+  },
+  defaultAIResponse: "That's a wonderful question! 🌿 Based on my 20-year natural recovery journey, the answer is always rooted in patience, consistency and listening to your body.\n\nI'd recommend starting with the basics: daily scalp massage, onion oil blend, and tracking your symptoms in the app. Small consistent habits create real transformation.\n\nFeel free to ask me about specific symptoms, oils, foods or routines — I'm here to guide you! 💚",
+};
+
+// ============================================================
+// EDIT: Checklist items — add or change tasks here
+// ============================================================
+const checklistData = {
+  daily: [
+    // ── MORNING ──────────────────────────────────────────
+    { title: "Morning scalp massage (10 min)", desc: "Fingertips in circular motions. Boosts blood circulation to follicles. The single most important daily habit!", tag: "tag-morning", tagTxt: "🌅 Morning", done: true },
+    { title: "Fresh ginger juice application 🫚", desc: "Harshitha's signature remedy! Grate fresh ginger, squeeze out juice, apply directly to new patches. Leave 20–30 mins. Stimulates follicles powerfully.", tag: "tag-morning", tagTxt: "⭐ Signature" },
+    { title: "Rosemary oil scalp massage 🌹", desc: "Mix 3–4 drops rosemary oil with coconut carrier oil. Massage into scalp for 5 mins. Clinically shown to block DHT and stimulate regrowth.", tag: "tag-morning", tagTxt: "🌅 Morning" },
+
+    // ── AFTERNOON ────────────────────────────────────────
+    { title: "High protein meal 🍳", desc: "Hair is made of keratin (protein). Eat eggs, lentils, chicken, paneer or fish at lunch. Log what you had below.", tag: "tag-internal", tagTxt: "🍽️ Nutrition" },
+    { title: "Supplements with food 💊", desc: "Take biotin (5000mcg), zinc (15mg), B12, iron (if deficient) and vitamin D3 with your meal. Never on empty stomach.", tag: "tag-internal", tagTxt: "💊 Supplements" },
+    { title: "Drink 3L water + herbal tea 💧", desc: "Scalp hydration starts from inside. Sip water throughout the day. Add hibiscus, brahmi or nettle tea for extra hair benefits.", tag: "tag-detox", tagTxt: "💧 Hydration" },
+
+    // ── EVENING ──────────────────────────────────────────
+    { title: "Onion juice application 🧅", desc: "Blend half an onion, strain the juice, apply to scalp. Leave 30–45 mins before washing. Highest sulphur content of any remedy. Use 3–4x per week.", tag: "tag-evening", tagTxt: "🌙 Evening" },
+    { title: "Bhringraj or Brahmi oil 🌿", desc: "Warm the oil slightly, apply to scalp and hair roots. Massage 5 mins. Leave overnight or 2 hours. Bhringraj is Ayurveda's #1 hair tonic.", tag: "tag-evening", tagTxt: "🌙 Evening" },
+    { title: "Amla + Ashwagandha tonic", desc: "1 tsp amla powder + ½ tsp ashwagandha in warm water or juice. Take after dinner. Reduces cortisol, strengthens immunity, boosts keratin.", tag: "tag-internal", tagTxt: "🌿 Internal" },
+
+    // ── BEDTIME ──────────────────────────────────────────
+    { title: "Inversion method (5 min) 🙃", desc: "Hang head below heart level — on bed edge or child's pose in yoga. 5 mins sends blood rushing to scalp. Do every night.", tag: "tag-evening", tagTxt: "🌙 Bedtime" },
+    { title: "Sleep 7–8 hours 😴", desc: "Hair grows during deep sleep. Poor sleep raises cortisol which directly causes hair loss. Non-negotiable for recovery!", tag: "tag-evening", tagTxt: "😴 Sleep" },
+    { title: "Log today's hair shedding 📊", desc: "Count strands on pillow + shower drain. Note it in tracker. This is how you spot improvement before you can see it visually.", tag: "tag-track", tagTxt: "📊 Tracker" },
+  ],
+
+  weekly: [
+    { title: "Egg protein hair mask 🥚", desc: "2 eggs + 1 tbsp honey + 1 tbsp coconut oil. Apply to scalp and hair. Leave 30 mins under shower cap. Deep protein treatment.", tag: "tag-morning", tagTxt: "🥚 Weekly" },
+    { title: "Castor oil overnight treatment 🧴", desc: "Thick application of cold-pressed castor oil to scalp. Leave overnight with a shower cap. Washes out with 2 rounds of shampoo. Densifies roots.", tag: "tag-evening", tagTxt: "🌙 Overnight" },
+    { title: "Fenugreek seed paste 🌿", desc: "Soak 2 tbsp fenugreek overnight, grind to paste. Apply 30 mins before wash. Rich in proteins and nicotinic acid — reduces fallout significantly.", tag: "tag-internal", tagTxt: "🌿 Remedy" },
+    { title: "Apple cider vinegar scalp detox 💆", desc: "Mix 1 part ACV + 3 parts water. Pour on scalp after shampooing, leave 2 mins, rinse. Removes product buildup, restores scalp pH.", tag: "tag-detox", tagTxt: "💆 Detox" },
+    { title: "Progress photo log 📸", desc: "Same angle, same lighting, same spot every week. This is your evidence. You will NOT see day-to-day changes — but week 4 vs week 1 will amaze you.", tag: "tag-track", tagTxt: "📸 Track" },
+    { title: "Meditation or breathwork 🧘", desc: "30 mins of guided meditation or deep breathing. Stress is the #1 alopecia trigger. This is as important as any oil or remedy. Use Insight Timer app (free).", tag: "tag-evening", tagTxt: "🧘 Wellness" },
+    { title: "Nutrition + protein review 📊", desc: "Review this week's meals. Did you hit protein goals (0.8g per kg bodyweight daily)? Low protein = hair loss. Adjust next week's meals accordingly.", tag: "tag-track", tagTxt: "📊 Nutrition" },
+  ],
+
+  monthly: [
+    { title: "Blood test check-in 🩸", desc: "Test ferritin (should be 70+), B12, vitamin D3, thyroid (TSH), zinc. Low ferritin is the most common hidden cause of hair loss in women.", tag: "tag-track", tagTxt: "🩸 Health" },
+    { title: "Review full progress photo journey 📸", desc: "Compare Month 1 vs now. Look at patch size, density, baby hairs, overall coverage. Write down 3 improvements you notice no matter how small.", tag: "tag-track", tagTxt: "📊 Review" },
+    { title: "Reassess supplement stack 💊", desc: "Based on blood results and progress, adjust dosages. Add saw palmetto if DHT-related loss. Increase iron if ferritin still low. Consult doctor for dosages.", tag: "tag-internal", tagTxt: "💊 Supplements" },
+    { title: "Deep scalp exfoliation ✨", desc: "Mix brown sugar + coconut oil + few drops tea tree oil. Gently scrub scalp in circular motions. Removes dead skin, unblocks follicles.", tag: "tag-detox", tagTxt: "✨ Detox" },
+    { title: "Weight + overall health review 📊", desc: "Significant weight changes affect hair. Review sleep averages, stress levels, energy. Hair health is a mirror of overall body health.", tag: "tag-track", tagTxt: "📊 Wellness" },
+  ],
+};
+
+// ============================================================
+// APP LOGIC — No need to edit below unless you're technical
+// ============================================================
+
+let prevScreen = 'home';
+let currentScreen = 'splash';
+let billingAnnual = true;
+let isTyping = false;
+
+// EDIT: Update founding member count
+document.getElementById('founderCount').textContent = CONFIG.foundingLeft + ' left';
+
+function goTo(screen) {
+  prevScreen = currentScreen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screen).classList.add('active');
+  currentScreen = screen;
+  updateNav(screen);
+  if (screen === 'checklist') renderChecklist('daily');
+  if (screen === 'pricing') preloadCountry();
+}
+
+function goBack() { goTo(prevScreen === currentScreen ? 'home' : prevScreen); }
+
+function updateNav(screen) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const map = { home:0, chat:1, tracker:2, checklist:3, profile:4 };
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    if(i === map[screen]) b.classList.add('active');
+  });
+}
+
+// ---- TOAST ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ---- HOME ROUTINE ----
+function toggleRoutine(el) {
+  el.classList.toggle('done');
+  updateTaskCount();
+  if (el.classList.contains('done')) showToast('✅ Task complete! Keep going!');
+}
+function updateTaskCount() {
+  const items = document.querySelectorAll('#homeRoutine .routine-item');
+  const done = document.querySelectorAll('#homeRoutine .routine-item.done').length;
+  const left = items.length - done;
+  document.getElementById('taskCount').textContent = left === 0 ? '🎉 All done!' : left + ' tasks remaining';
+}
+
+// ---- TRACKER SYMPTOMS ----
+function toggleSym(el) {
+  el.classList.toggle('selected');
+  showToast('📝 Symptom ' + (el.classList.contains('selected') ? 'logged' : 'removed'));
+}
+
+// ---- PRICING TOGGLE ----
+function toggleBilling() {
+  billingAnnual = !billingAnnual;
+  const tog = document.getElementById('billingToggle');
+  tog.classList.toggle('monthly', !billingAnnual);
+  document.getElementById('annualLabel').classList.toggle('active', billingAnnual);
+  document.getElementById('monthlyLabel').classList.toggle('active', !billingAnnual);
+  document.getElementById('saveBadge').style.display = billingAnnual ? 'inline-block' : 'none';
+  const p = CONFIG.prices;
+  if (billingAnnual) {
+    document.getElementById('basicPrice').textContent = p.basicAnnual;
+    document.getElementById('basicPeriod').textContent = '/year';
+    document.getElementById('basicOrig').textContent = p.basicOrigAnnual;
+    document.getElementById('premiumPrice').textContent = p.premiumAnnual;
+    document.getElementById('premiumPeriod').textContent = '/year';
+    document.getElementById('premiumOrig').textContent = p.premiumOrigAnnual;
+  } else {
+    document.getElementById('basicPrice').textContent = p.basicMonthly;
+    document.getElementById('basicPeriod').textContent = '/month';
+    document.getElementById('basicOrig').textContent = p.basicOrigMonthly;
+    document.getElementById('premiumPrice').textContent = p.premiumMonthly;
+    document.getElementById('premiumPeriod').textContent = '/month';
+    document.getElementById('premiumOrig').textContent = p.premiumOrigMonthly;
+  }
+}
+
+// ---- CHECKLIST ----
+function renderChecklist(type) {
+  const body = document.getElementById('clBody');
+  const items = checklistData[type];
+  body.innerHTML = items.map((item, i) => `
+    <div class="cl-item ${item.done?'checked':''}" onclick="toggleCheck(this)">
+      <div class="cbox">${item.done?'✓':''}</div>
+      <div>
+        <div class="ci-title">${item.title}</div>
+        <div class="ci-desc">${item.desc}</div>
+        <span class="ci-tag ${item.tag}">${item.tagTxt}</span>
+      </div>
+    </div>
+  `).join('');
+  updateClProgress();
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  const cbox = el.querySelector('.cbox');
+  cbox.textContent = el.classList.contains('checked') ? '✓' : '';
+  if (el.classList.contains('checked')) showToast('✅ Healing habit logged!');
+  updateClProgress();
+}
+
+function updateClProgress() {
+  const all = document.querySelectorAll('#clBody .cl-item');
+  const done = document.querySelectorAll('#clBody .cl-item.checked').length;
+  const pct = all.length ? (done/all.length*100) : 0;
+  document.getElementById('clBar').style.width = pct + '%';
+  document.getElementById('clBarTxt').textContent = done + ' of ' + all.length + ' tasks complete';
+}
+
+function switchTab(el, type) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderChecklist(type);
+}
+
+// ---- AI CHAT ----
+function sendSug(text) {
+  document.getElementById('chatInput').value = text;
+  sendMsg();
+}
+
+function sendMsg() {
+  if (isTyping) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const area = document.getElementById('chatArea');
+
+  const userEl = document.createElement('div');
+  userEl.className = 'msg user';
+  userEl.innerHTML = `<div class="av av-user">Y</div><div class="bubble">${text}</div>`;
+  area.appendChild(userEl);
+  input.value = '';
+  isTyping = true;
+
+  const typingEl = document.createElement('div');
+  typingEl.className = 'msg';
+  typingEl.innerHTML = `<div class="av av-ai">H</div><div class="bubble"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+  area.appendChild(typingEl);
+  area.scrollTop = area.scrollHeight;
+
+  const delay = 1500 + Math.random() * 800;
+  setTimeout(() => {
+    typingEl.remove();
+    const resp = CONFIG.aiResponses[text] || CONFIG.defaultAIResponse;
+    const aiEl = document.createElement('div');
+    aiEl.className = 'msg';
+    aiEl.innerHTML = `<div class="av av-ai">H</div>    aiEl.innerHTML = `<div class="av av-ai">H</div><div class="bubble">${resp.replace(/\n/g,'<br>')}</div>`;
+    area.appendChild(aiEl);
+    area.scrollTop = area.scrollHeight;
+    isTyping = false;
+  }, delay);
+}
+
+// ---- INIT ----
+renderChecklist('daily');
+
+// ---- PWA SERVICE WORKER ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('HappiHeal PWA ready ✅'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>
