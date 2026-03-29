@@ -6,8 +6,8 @@
 <title>HappiHeal — Hair Recovery Companion</title>
 
 <!-- PWA Meta Tags -->
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2d3a2e">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HappiHeal">
@@ -1193,7 +1193,7 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ============================================================
 // EDIT: Core configuration — change these values
 // ============================================================
@@ -1502,7 +1502,7 @@ function sendMsg() {
     const resp = CONFIG.aiResponses[text] || CONFIG.defaultAIResponse;
     const aiEl = document.createElement('div');
     aiEl.className = 'msg';
-    aiEl.innerHTML = `<div class="av av-ai">H</div>    aiEl.innerHTML = `<div class="av av-ai">H</div><div class="bubble">${resp.replace(/\n/g,'<br>')}</div>`;
+    aiEl.innerHTML = `<div class="av av-ai">H</div><div class="bubble">${resp.replace(/\n/g,'<br>')}</div>`;
     area.appendChild(aiEl);
     area.scrollTop = area.scrollHeight;
     isTyping = false;
@@ -1511,15 +1511,6 @@ function sendMsg() {
 
 // ---- INIT ----
 renderChecklist('daily');
-
-// ---- PWA SERVICE WORKER ----
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log('HappiHeal PWA ready ✅'))
-      .catch(err => console.log('SW error:', err));
-  });
-}
 </script>
 </body>
 </html>
