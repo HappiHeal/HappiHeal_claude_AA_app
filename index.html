@@ -10,6 +10,241 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+// ── SUPABASE CONFIG ──────────────────────────────────────────
+const SUPABASE_URL = 'https://crvimiehvetdfqdhrnwd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ns3INY97RT8U3q32Nazv9A_EcXLmNEY';
+let _supabaseClient = null;
+function getSupabase() {
+  if (!_supabaseClient) {
+    _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return _supabaseClient;
+}
+
+// ── AUTH STATE ───────────────────────────────────────────────
+let currentUser = null;
+let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
+
+// ── RAZORPAY CONFIG ──────────────────────────────────────────
+// 👈 Replace with your actual Razorpay Key ID from razorpay.com dashboard
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
+
+// Plan amounts in paise (INR × 100)
+const PLAN_PRICES = {
+  basic_monthly:   { amount: 49900,  label: 'Basic Monthly — ₹499/month' },
+  basic_annual:    { amount: 249900, label: 'Basic Annual — ₹2,499/year' },
+  premium_monthly: { amount: 74900,  label: 'Premium Monthly — ₹749/month' },
+  premium_annual:  { amount: 499900, label: 'Premium Annual — ₹4,999/year' },
+  ebook_free:      { amount: 249900, label: 'Recovery Ebook — ₹2,499' },
+  ebook_basic:     { amount: 119900, label: 'Recovery Ebook — ₹1,199 (Member Price)' },
+};
+
+// Google Drive ebook link (for Premium users — free access)
+const EBOOK_DRIVE_LINK = 'https://drive.google.com/file/d/1lDlryQ6vrxQyCITjYuTat3a3M7T91pX6/view?usp=drivesdk';
+
+// ── AUTH FUNCTIONS ───────────────────────────────────────────
+async function signUp(email, password, name) {
+  const { data, error } = await getSupabase().auth.signUp({
+    email, password,
+    options: { data: { full_name: name } }
+  });
+  if (error) return { error: error.message };
+  // Create user profile in DB
+  if (data.user) {
+    await getSupabase().from('profiles').upsert({
+      id: data.user.id,
+      email: email,
+      full_name: name,
+      plan: 'free',
+      created_at: new Date().toISOString()
+    });
+  }
+  return { data };
+}
+
+async function signIn(email, password) {
+  const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
+  if (error) return { error: error.message };
+  await loadUserPlan(data.user);
+  return { data };
+}
+
+async function signOut() {
+  await getSupabase().auth.signOut();
+  currentUser = null;
+  currentPlan = 'free';
+  showAuthModal('signin');
+}
+
+async function loadUserPlan(user) {
+  currentUser = user;
+  const { data } = await getSupabase().from('profiles').select('plan').eq('id', user.id).single();
+  if (data) currentPlan = data.plan || 'free';
+}
+
+async function initAuth() {
+  try {
+    const { data: { session } } = await getSupabase().auth.getSession();
+    if (session?.user) {
+      // Silently restore session — no popup, user stays logged in
+      await loadUserPlan(session.user);
+    }
+    // NOT logged in → do nothing. Modal only appears when user tries to pay.
+  } catch(e) {
+    console.log('Auth init error:', e);
+  }
+}
+
+// ── RAZORPAY PAYMENT ─────────────────────────────────────────
+function payWithRazorpay(planKey, planName) {
+  if (!currentUser) { showAuthModal('signin'); return; }
+  const price = PLAN_PRICES[planKey];
+  const options = {
+    key: RAZORPAY_KEY,
+    amount: price.amount,
+    currency: 'INR',
+    name: 'HappiHeal',
+    description: price.label,
+    prefill: {
+      email: currentUser.email,
+      name: currentUser.user_metadata?.full_name || ''
+    },
+    theme: { color: '#3d6b4f' },
+    handler: async function(response) {
+      // Payment successful — update plan in Supabase
+      const newPlan = planName; // 'basic' or 'premium'
+      const expiry = new Date();
+      expiry.setMonth(expiry.getMonth() + (planKey.includes('annual') ? 12 : 1));
+      await getSupabase().from('profiles').update({
+        plan: newPlan,
+        plan_expiry: expiry.toISOString(),
+        razorpay_payment_id: response.razorpay_payment_id
+      }).eq('id', currentUser.id);
+      currentPlan = newPlan;
+      showToast('Payment successful! Welcome to ' + newPlan + ' plan 🎉');
+      goTo('home');
+      renderHome();
+    }
+  };
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+// ── AUTH MODAL HTML ──────────────────────────────────────────
+function showAuthModal(mode) {
+  const existing = document.getElementById('auth-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'auth-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px;padding:32px 24px;width:100%;max-width:380px;animation:fadeUp 0.3s ease">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:40px;margin-bottom:8px">🌿</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#1a2e22">HappiHeal</div>
+        <div style="font-size:13px;color:#6b8577;margin-top:4px">Your alopecia recovery companion</div>
+      </div>
+
+      <div id="auth-tabs" style="display:flex;background:#edf7f0;border-radius:12px;padding:4px;margin-bottom:20px">
+        <button id="tab-signin" onclick="switchAuthTab('signin')"
+          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:white;color:#2d5a3d;transition:all 0.2s">
+          Sign In
+        </button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')"
+          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:none;color:#9db5a6;transition:all 0.2s">
+          Sign Up
+        </button>
+      </div>
+
+      <div id="auth-form-signin">
+        <input id="signin-email" type="email" placeholder="Email address"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+        <input id="signin-password" type="password" placeholder="Password"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#1a2e22"/>
+        <div id="signin-error" style="color:#c0392b;font-size:12px;margin-bottom:10px;display:none"></div>
+        <button onclick="handleSignIn()"
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+          Sign In →
+        </button>
+      </div>
+
+      <div id="auth-form-signup" style="display:none">
+        <input id="signup-name" type="text" placeholder="Your name"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+        <input id="signup-email" type="email" placeholder="Email address"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+        <input id="signup-password" type="password" placeholder="Password (min 6 chars)"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#1a2e22"/>
+        <div id="signup-error" style="color:#c0392b;font-size:12px;margin-bottom:10px;display:none"></div>
+        <button onclick="handleSignUp()"
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+          Create Account →
+        </button>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:#9db5a6">
+        Your healing journey starts here 🌱
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  if (mode === 'signup') switchAuthTab('signup');
+}
+
+function hideAuthModal() {
+  const m = document.getElementById('auth-modal');
+  if (m) m.remove();
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('auth-form-signin').style.display = tab === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('tab-signin').style.background = tab === 'signin' ? 'white' : 'none';
+  document.getElementById('tab-signin').style.color = tab === 'signin' ? '#2d5a3d' : '#9db5a6';
+  document.getElementById('tab-signup').style.background = tab === 'signup' ? 'white' : 'none';
+  document.getElementById('tab-signup').style.color = tab === 'signup' ? '#2d5a3d' : '#9db5a6';
+}
+
+async function handleSignIn() {
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  const errEl = document.getElementById('signin-error');
+  errEl.style.display = 'none';
+  if (!email || !password) { errEl.textContent = 'Please fill in all fields'; errEl.style.display = 'block'; return; }
+  const { error } = await signIn(email, password);
+  if (error) { errEl.textContent = error; errEl.style.display = 'block'; return; }
+  hideAuthModal();
+  renderHome();
+  showToast('Welcome back! 🌿');
+}
+
+async function handleSignUp() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const errEl = document.getElementById('signup-error');
+  errEl.style.display = 'none';
+  if (!name || !email || !password) { errEl.textContent = 'Please fill in all fields'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.style.display = 'block'; return; }
+  const { error } = await signUp(email, password, name);
+  if (error) { errEl.textContent = error; errEl.style.display = 'block'; return; }
+  hideAuthModal();
+  renderHome();
+  showToast('Welcome to HappiHeal! 🌿 Check your email to verify.');
+}
+
+// ── PLAN CHECK HELPERS ───────────────────────────────────────
+function getUserPlan() { return currentPlan; }
+function isUserPremium() { return currentPlan === 'premium'; }
+function isUserBasicOrAbove() { return currentPlan === 'basic' || currentPlan === 'premium'; }
+</script>
+
 <!-- ============================================================
      ✏️  EDIT YOUR CONTENT HERE — No coding needed!
      Change text, prices, links below. Don't touch anything else.
@@ -167,10 +402,9 @@ const CONTENT = {
   foundingUsersCount: 47,            // 👈 Update this number manually as users grow
 
   // ── EBOOK LINKS ────────────────────────────────────────────
-  // 👈 Replace these with your actual Razorpay / payment links
-  ebookLinkFreeUser:  "#razorpay-ebook-29",   // $29 / ₹2,499 for free users
-  ebookLinkBasic:     "#razorpay-ebook-14",   // $14 / ₹1,199 for basic users
-  ebookLinkPremium:   "#your-drive-link",     // Free download for premium users
+  ebookLinkFreeUser:  "razorpay:ebook_free",
+  ebookLinkBasic:     "razorpay:ebook_basic",
+  ebookLinkPremium:   "drive:free",
 
   // ── PRICING ────────────────────────────────────────────────
   // isFounding: true = show founding prices, false = show new prices
@@ -224,8 +458,8 @@ const CONTENT = {
         "Personalized recovery plan",
       ],
       cta: "Start Basic",
-      link: "#razorpay-basic",    // 👈 Replace with your Razorpay link
-      linkInt: "#paypal-basic",   // 👈 Replace with your PayPal link
+      link: "razorpay:basic_monthly",
+      linkInt: "razorpay:basic_monthly",
       highlight: true,
     },
     {
@@ -245,8 +479,8 @@ const CONTENT = {
       ],
       locked: [],
       cta: "Go Premium",
-      link: "#razorpay-premium",  // 👈 Replace with your Razorpay link
-      linkInt: "#paypal-premium", // 👈 Replace with your PayPal link
+      link: "razorpay:premium_monthly",
+      linkInt: "razorpay:premium_monthly",
       highlight: false,
     },
   ],
@@ -1306,6 +1540,7 @@ IMPORTANT RULES:
       <div class="card" style="border-left:4px solid var(--green-mid)">
         <div class="section-title">⭐ My Plan</div>
         <div id="plan-status-card"></div>
+        <div id="profile-auth-btn" style="margin-top:12px"></div>
         <div style="margin-top:16px;display:flex;gap:10px">
           <button class="btn btn-primary" onclick="goTo('pricing')" style="font-size:13px;padding:11px">View All Plans</button>
         </div>
@@ -2480,33 +2715,28 @@ function renderPricing() {
         ${p.features.map(f => `<div class="feature-item"><span class="fi-icon">✅</span>${f}</div>`).join('')}
         ${p.locked.map(f  => `<div class="feature-item locked-f"><span class="fi-icon">🔒</span>${f}</div>`).join('')}
       </div>
-      <a href="${intl && p.linkInt ? p.linkInt : p.link}" class="plan-btn ${p.highlight ? 'plan-btn-primary' : 'plan-btn-outline'}">${p.cta}</a>
+      <a href="#" onclick="handlePlanClick('${intl && p.linkInt ? p.linkInt : p.link}','${p.name.toLowerCase()}')" class="plan-btn ${p.highlight ? 'plan-btn-primary' : 'plan-btn-outline'}">${p.cta}</a>
     </div>`;
   }).join('');
 }
 
 /* ── EBOOK DOWNLOAD ───────────────────────────────────────── */
 function handleEbookDownload() {
-  const { plan, isPaid } = getTrialInfo();
+  const plan = getUserPlan();
 
   if (plan === 'premium') {
-    // Free for Premium — open download link
-    if (CONTENT.ebookLinkPremium === '#your-drive-link') {
-      showToast('Download link coming soon! 📖');
-    } else {
-      window.open(CONTENT.ebookLinkPremium, '_blank');
-    }
+    // Free for Premium — open Google Drive
+    window.open(EBOOK_DRIVE_LINK, '_blank');
     return;
   }
 
   if (plan === 'basic') {
-    // Show basic member price overlay
-    showEbookOffer('Basic Member Price', '₹1,199', '$14', CONTENT.ebookLinkBasic, 'You save 53% as a Basic member!');
+    showEbookOffer('Basic Member Price', '₹1,199', '$14', 'razorpay:ebook_basic', 'You save 53% as a Basic member!');
     return;
   }
 
-  // Free / trial user — full price
-  showEbookOffer('Full Recovery Guide', '₹2,499', '$29', CONTENT.ebookLinkFreeUser, 'Upgrade to Basic for 53% off, or Premium to get it FREE 🌿');
+  // Free user — full price
+  showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free', 'Upgrade to Basic for 53% off, or Premium to get it FREE 🌿');
 }
 
 function showEbookOffer(title, inrPrice, usdPrice, link, note) {
@@ -2534,7 +2764,7 @@ function showEbookOffer(title, inrPrice, usdPrice, link, note) {
         </div>
         <div style="font-size:12px;color:var(--green-soft);margin-bottom:20px">${note}</div>
       </div>
-      <a href="${link}" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:15px;font-weight:700;text-align:center;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('ebook-overlay').remove()">Buy Now →</a>
+      <button onclick="handleEbookBuy('${link}')" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:15px;font-weight:700;text-align:center;cursor:pointer;margin-bottom:10px">Buy Now →</button>
       <button onclick="document.getElementById('ebook-overlay').remove()" style="display:block;width:100%;padding:12px;background:none;color:var(--text-muted);font-size:14px;cursor:pointer;font-family:var(--font-body)">Maybe later</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -2602,6 +2832,19 @@ function renderProfile() {
         <div style="font-size:12px;color:var(--text-soft);margin-top:6px">Enjoying the app? Upgrade before your trial ends to keep your streak going! 🌿</div>
       </div>`;
   }
+
+  // Show sign in / sign out button in profile
+  const authBtnContainer = document.getElementById('profile-auth-btn');
+  if (authBtnContainer) {
+    if (currentUser) {
+      authBtnContainer.innerHTML = `
+        <div style="margin-top:4px;font-size:12px;color:var(--text-soft);margin-bottom:8px">Signed in as <b>${currentUser.email}</b></div>
+        <button onclick="signOut()" style="width:100%;padding:12px;background:#fde8e8;color:#a33;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer">Sign Out</button>`;
+    } else {
+      authBtnContainer.innerHTML = `
+        <button onclick="showAuthModal('signin')" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer">Sign In / Create Account 🌿</button>`;
+    }
+  }
 }
 
 function clearAllData() {
@@ -2643,17 +2886,48 @@ function startApp() {
   setTimeout(() => splash.style.display = 'none', 400);
   save('seen_splash', true);
   renderHome();
+  // Show auth modal only if user is NOT already logged in
+  if (!currentUser) {
+    setTimeout(() => showAuthModal('signup'), 600);
+  }
+}
+
+/* ── PLAN & EBOOK CLICK HANDLERS ──────────────────────────── */
+function handlePlanClick(link, planName) {
+  if (planName === 'free') { showToast('You are already on the free plan 🌿'); return; }
+  if (!currentUser) { showAuthModal('signin'); return; }
+  const annual = state.billingMode === 'annual';
+  const planKey = planName + '_' + (annual ? 'annual' : 'monthly');
+  payWithRazorpay(planKey, planName);
+}
+
+function handleEbookBuy(link) {
+  document.getElementById('ebook-overlay')?.remove();
+  if (link.startsWith('razorpay:')) {
+    const planKey = link.replace('razorpay:', '');
+    payWithRazorpay(planKey, 'ebook');
+  } else if (link.startsWith('drive:')) {
+    window.open(EBOOK_DRIVE_LINK, '_blank');
+  } else {
+    window.open(link, '_blank');
+  }
 }
 
 /* ── INIT ─────────────────────────────────────────────────── */
 initTrial();
-// Show splash only on first ever visit
+
+// Always show splash on first visit
 if (!load('seen_splash', false)) {
-  // splash stays visible
+  // splash stays visible until Begin Journey clicked
 } else {
   document.getElementById('screen-splash').style.display = 'none';
 }
 renderHome();
+
+// Silently restore session in background — no popup
+window.addEventListener('load', function() {
+  initAuth();
+});
 </script>
 </body>
 </html>
