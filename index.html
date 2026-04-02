@@ -204,8 +204,8 @@ const CONTENT = {
     },
     {
       name: "Basic",
-      foundingMonthly:    { inr: "₹349",  usd: "$4"  },
-      newMonthly:         { inr: "₹599",  usd: "$7"  },
+      foundingMonthly:    { inr: "₹499",  usd: "$6"  },
+      newMonthly:         { inr: "₹749",  usd: "$9"  },
       foundingAnnual:     { inr: "₹2,499", usd: "$29" },
       newAnnual:          { inr: "₹3,999", usd: "$49" },
       tag: "🌿 Most Popular",
@@ -946,8 +946,8 @@ IMPORTANT RULES:
       <div style="position:absolute;bottom:-30px;left:-20px;font-size:160px;opacity:0.05;transform:rotate(-15deg)">🌱</div>
     </div>
 
-    <!-- Logo -->
-    <div style="width:90px;height:90px;background:rgba(255,255,255,0.12);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:28px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);animation:splashLogo 0.6s ease both">🌿</div>
+    <!-- No icon at top - clean look -->
+    <div style="height:20px"></div>
 
     <!-- Title -->
     <div style="font-family:var(--font-display);font-size:48px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:6px;animation:splashTitle 0.7s ease 0.15s both">HappiHeal</div>
@@ -961,42 +961,22 @@ IMPORTANT RULES:
       Begin Your Journey →
     </button>
 
-    <!-- Sub text — no personal name on cover -->
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:16px;animation:splashTitle 0.7s ease 0.55s both">Based on a real 20-year natural recovery journey</div>
+    <!-- Sub text -->
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:16px;animation:splashTitle 0.7s ease 0.55s both">A 20-year natural recovery journey — distilled into your daily companion</div>
 
-    <style>
-      @keyframes splashLogo  { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
-      @keyframes splashTitle { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-    </style>
-  </div>
-
-  <!-- ════════ DISCLAIMER MODAL ════════ -->
-  <div id="disclaimer-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.65);align-items:flex-end;justify-content:center">
-    <div style="background:var(--white);border-radius:28px 28px 0 0;padding:28px 24px 44px;width:100%;max-width:430px;animation:fadeUp 0.35s ease">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:36px;margin-bottom:10px">📋</div>
-        <div style="font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--text-dark);margin-bottom:6px">Before You Begin</div>
-        <div style="width:40px;height:3px;background:var(--green-pale);border-radius:99px;margin:0 auto"></div>
-      </div>
-      <div style="background:var(--green-mist);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;border-left:4px solid var(--green-mid)">
-        <div style="font-size:13px;font-weight:700;color:var(--green-deep);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">⚠️ Personal Experience Disclaimer</div>
-        <div style="font-size:13px;color:var(--text-mid);line-height:1.7">
-          HappiHeal is built on one person's <strong>real, lived experience</strong> with alopecia areata over 20+ years — not on medical qualifications.<br><br>
-          The content in this app — including remedies, nutrition tips, routines, and advice — represents a <strong>personal recovery journey and is not medical advice</strong>.<br><br>
-          I am <strong>not a doctor, dermatologist, or healthcare professional</strong>. Always consult a qualified medical professional for diagnosis, treatment, or if your condition is severe or worsening.<br><br>
-          <em>Take what resonates. Leave what doesn't. Your body knows best.</em>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:18px">By continuing, you acknowledge this is personal experience content, not medical advice.</div>
-      <button onclick="acceptDisclaimer()" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-body)">I Understand — Let's Begin 🌿</button>
+    <!-- HappiLoot brand logo - centered at bottom -->
+    <div style="position:absolute;bottom:36px;left:0;right:0;display:flex;flex-direction:column;align-items:center;animation:splashTitle 0.7s ease 0.7s both">
+      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:8px;text-transform:uppercase">Brought to you by</div>
+      <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACHAfQDASIAAhEBAxEB/8QAHQABAAMAAwEBAQAAAAAAAAAAAAYHCAMEBQkCAf/EAE8QAAEDAwEEBgUGBw8CBwAAAAEAAgMEBREGBxIhMQgTQVFhkTJScYGhFBUiorHBCUJykrKzwhYjMzY3YmRlc3SCo9Hh8CZjFyQ0Q1NUg//EABsBAQACAwEBAAAAAAAAAAAAAAAFBgMEBwIB/8QAPREAAQMCBAIIAwcDAwUBAAAAAQACAwQRBQYhMRLBQVFhcYGRobETctEiIyQ0QuHwFDJiFRY1M0NSgqLx/9oADAMBAAIRAxEAPwDGSIiIiIiIiIiIiIu5Z7XcLxXNobbSvqahwJ3W9gHMkngB4ngvjnBou42C9Na55DWi5K6aKSXTROobfanXV1NDU0TDiSalqGTNjPbvbpOMd/JRteI5o5Rdjge5e5YJITaRpB7UREWRYkRERERERERERERERERERERERERERERERERERERERERSvZ5YbZc3XK632WVlptUAlqBEcPkc44YwHsyQf+HKsC7bNrXc9COu9tsr7NchCaiKnFU+bfYBkNfvcnFvYORwo6oxSCnkEb77gX6AT438hopWlweoqojJHbYm2tyBp1W32uRexsqUREUiopERERERERERERERERERERERERERERERTXZzpe3XSgud/vrp/mu2tGYoDh88h5MB8h4lw4rDUTsgYXv2+qz01M+pkEbN/YDUkqFIrk1hsyof3EG+263yWm4QQGeeiNQ6Zu4OJG8eO8G8eHDOR4qm1ho66KsaXR9BsVnrsPmoXhsvSLj+Gx8wiIi3FooiIiIiIiIiIiIiIiIiIiIikGitPw3uoq57hVmitdvh6+sna3Lg3OA1o9Ynl/wKeUWzCkv+mZbna6O4WqYjeom1lQ2Q1LeYL2ho3M9nE888sLRqMRgp3cMh6vC/86NhqVI0uF1FU3ijF97DpNv5bW1zoFUaL9Pa5j3Me0tc04IIwQe5flbyjkVnbLtP1N10vJDT78Ud0ujKSsmZwc2mjjMjmg9m8SB5KsVpTYPB1Ozeikxjr5ZZD+eW/sqFx6pdT0vE3ckfXkp/LlI2qrOF2wBPsPW9lL6G2UFFa2WulpIoqJsfViEN+junmD357e9ZIvdIKC9V1CM4pqiSHjz+i4j7lsNZW2pwCm2h3uMDGaoyfnAO+9QuV5SZpGk7i/r+6n84QtEETgNjbzH7KMoiK6KgoiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiKzNl9mnveg7/AENOzedNXUYe0drBJl3kCT7loIAAYA4KpujU3Fhuz++qaPJn+6tpc5x2Vzqt7OgG/mB9F1PLsDW0TJBuRbyLjzWP9R0wotQ3Kja0NEFXLEAOzdeR9y6Ck+1an+S7RL3HjG9UmT88B37SjC6BTP8AiQsf1gH0XM6qP4c72dRI9UREWZYEREREREREREREREREREREXLS089VUxU1NE+WaVwZGxgyXOPAABcSkuzG50Vn13a7hcCG00cjmveeTN5jmhx8ASD7line6ONzmi5AO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EREREREREUu0Rru4aao5ra+kprlbJzvPpKgZaD2kHszwyCCFEUWKaCOdnBILhZqeolp3/EiNipfrDXlffbZHZ6WiprTaYzkUlMMBxzkZPcDxwAAogiJDBHA3gjFglRUS1D+OU3KIiLKsKIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiKX7Jr/Q2HU73XTIoK2nfSVDsZ3GuIO9w44yMewlRBFinhbPG6N2xWamndTytlZuForQlZdbGI7K11JfbGw/+UuFNWxb8UZPBsjXOGQPDl2Z5KX1updPUWfld9tsJ7n1TAfLOVkZFXpstsmk43P77Dft3t5AKzQZqkgj+GyO9trm9uwaA27ye9all2h6Kj9LUNIfyQ532BI9omipCA3UNKM+sHN+0LLSJ/tam/8AN3p9F9/3hV3/ALG+v1Wt6PVGm6wgUt/tkrjya2qZveWcr1mPa9ocxwc08iDkFYyXYo62so3b9HV1FO7vikLD8FryZVb+iTzH7rZizk7/ALkXkf2WmNa3XUMjnWTTNqqTVTDdfcJm9XBTtPNwcfScPD48lTm0+622C12vR1mqRV01r3n1NSOImndneIPgS7zx2KLVmotQVtOaesvlzqISMGOWqe5p9xK8tSWHYOKUguI0106Ttc93QOhRWKY6awODARfTXoG9gB1kC51JsiIinFXkRERERERF7Vp1dqu00opLVqe9UFOOUVNXyxMHua4BdG63W6XaZs11uVZXytGA+pndK4D2uJXTRERERERSrRevdQaVYYKCaOakJyaaoaXMB7SMEFvuOFFUWKaCOdnBILjtWaColp38cTiD2Kcat2n6m1DQvoHup6GlkGJGUzSDIO4uJJx4DCg6IvkFNFTt4YmgBeqmqmqX8czi49qIiLMtdERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERf/Z" alt="HappiLoot" style="height:32px;width:auto;opacity:0.85"/>
     </div>
-  </div>
+
+  </div><!-- END SPLASH -->
 
   <!-- ════════════════ HOME ════════════════ -->
   <div id="screen-home" class="screen active">
     <div class="hero">
       <div class="hero-greeting" id="home-greeting">Good morning ☀️</div>
-      <div class="hero-title" id="home-banner">Your hair's comeback<br>story starts today.</div>
+      <div class="hero-title" id="home-banner">Your hair's comeback story starts today.</div>
       <div class="hero-date" id="home-date"></div>
       <div class="streak-badge" id="streak-badge">🔥 <span id="streak-count">0</span> day streak</div>
     </div>
@@ -1058,7 +1038,7 @@ IMPORTANT RULES:
       <h1>Ask HappiHeal 💚</h1>
       <p>Your alopecia recovery companion</p>
       <div class="ai-status"><div class="ai-dot"></div> AI is ready to help you</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:8px;line-height:1.4">Personal experience only — not medical advice. Consult a doctor for medical decisions.</div>
+
     </div>
     <div class="chat-suggestions" id="chat-suggestions">
       <div class="suggestion-chip" onclick="sendSuggestion(this)">What causes alopecia?</div>
@@ -1510,7 +1490,7 @@ function renderHome() {
   document.getElementById('daily-tip').textContent = getDailyTip();
 
   const streak = calcStreak();
-  document.getElementById('streak-count').textContent = streak;
+  const sc = document.getElementById('streak-count'); if (sc) sc.textContent = streak;
 
   const dayNum = new Date().getDate();
   const isGinger = dayNum % 2 !== 0;
@@ -1519,6 +1499,7 @@ function renderHome() {
   // Trial banner
   const { daysLeft, isPaid, isExpired } = getTrialInfo();
   const banner = document.getElementById('trial-banner');
+  if (!banner) { renderAffirmation(); return; }
   if (!isPaid) {
     banner.style.display = 'flex';
     if (isExpired) {
@@ -1638,27 +1619,39 @@ function renderTracker() {
   const today = new Date();
   const streak = calcStreak();
 
-  // Update stat boxes
-  document.getElementById('stat-streak').textContent = streak;
-  document.getElementById('stat-streak-hint').textContent = streak > 0 ? `${streak} day${streak>1?'s':''} strong! 🔥` : 'Log today to start!';
-  document.getElementById('profile-streak') && (document.getElementById('profile-streak').textContent = streak);
-  document.getElementById('streak-badge').querySelector('span').textContent = streak;
+  // Update stat boxes (with null checks — elements only exist when tracker is visible)
+  const el_streak = document.getElementById('stat-streak');
+  const el_hint   = document.getElementById('stat-streak-hint');
+  const el_badge  = document.getElementById('streak-badge');
+  const el_pstrk  = document.getElementById('profile-streak');
+  if (el_streak) el_streak.textContent = streak;
+  if (el_hint)   el_hint.textContent   = streak > 0 ? `${streak} day${streak>1?'s':''} strong! 🔥` : 'Log today to start!';
+  if (el_pstrk)  el_pstrk.textContent  = streak;
+  if (el_badge)  { const sp = el_badge.querySelector('span'); if (sp) sp.textContent = streak; }
 
   // Total baby hairs logged
-  const totalHairs = Object.values(logs).reduce((sum, l) => sum + (l.babyhairs || 0), 0);
-  document.getElementById('stat-hairs').textContent = totalHairs || 0;
+  const totalHairs = Object.values(logs).reduce((sum, l) => sum + (Number(l.babyhairs) || 0), 0);
+  const el_hairs = document.getElementById('stat-hairs');
+  if (el_hairs) el_hairs.textContent = totalHairs || 0;
 
   // Today's sleep & water from today's log
   const todayLog = logs[dateKey(today)] || {};
-  document.getElementById('stat-sleep').textContent = todayLog.sleep || '—';
-  document.getElementById('stat-water').textContent = todayLog.water || '—';
+  const el_sleep = document.getElementById('stat-sleep');
+  const el_water = document.getElementById('stat-water');
+  if (el_sleep) el_sleep.textContent = todayLog.sleep || '—';
+  if (el_water) el_water.textContent = todayLog.water || '—';
 
   // Restore today's inputs if already logged
-  if (todayLog.sleep)     document.getElementById('input-sleep').value    = todayLog.sleep;
-  if (todayLog.water)     document.getElementById('input-water').value    = todayLog.water;
-  if (todayLog.babyhairs) document.getElementById('input-babyhairs').value = todayLog.babyhairs;
-  if (todayLog.shed)      document.getElementById('input-shed').value     = todayLog.shed;
-  if (todayLog.notes)     document.getElementById('log-notes').value      = todayLog.notes;
+  const inp_sleep = document.getElementById('input-sleep');
+  const inp_water = document.getElementById('input-water');
+  const inp_hairs = document.getElementById('input-babyhairs');
+  const inp_shed  = document.getElementById('input-shed');
+  const inp_notes = document.getElementById('log-notes');
+  if (inp_sleep && todayLog.sleep)     inp_sleep.value = todayLog.sleep;
+  if (inp_water && todayLog.water)     inp_water.value = todayLog.water;
+  if (inp_hairs && todayLog.babyhairs) inp_hairs.value = todayLog.babyhairs;
+  if (inp_shed  && todayLog.shed)      inp_shed.value  = todayLog.shed;
+  if (inp_notes && todayLog.notes)     inp_notes.value = todayLog.notes;
 
   // Restore symptom chips
   if (todayLog.symptoms) {
@@ -1669,6 +1662,7 @@ function renderTracker() {
 
   // Week strip — show 7 days starting from Mon of this week
   const strip = document.getElementById('week-strip');
+  if (!strip) { renderHistory(); return; }
   const dayNames = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   strip.innerHTML = '';
   for (let i = 0; i < 7; i++) {
@@ -1691,10 +1685,12 @@ function renderTracker() {
 }
 
 function updateStatPreview() {
-  const sleep = document.getElementById('input-sleep').value;
-  const water = document.getElementById('input-water').value;
-  if (sleep) document.getElementById('stat-sleep').textContent = sleep;
-  if (water) document.getElementById('stat-water').textContent = water;
+  const si = document.getElementById('input-sleep');
+  const wi = document.getElementById('input-water');
+  const ss = document.getElementById('stat-sleep');
+  const sw = document.getElementById('stat-water');
+  if (si && ss && si.value) ss.textContent = si.value;
+  if (wi && sw && wi.value) sw.textContent = wi.value;
 }
 
 function toggleSymptom(el) {
@@ -1709,11 +1705,11 @@ function toggleOpt(el, groupId) {
 }
 
 function saveLog() {
-  const sleep     = document.getElementById('input-sleep').value;
-  const water     = document.getElementById('input-water').value;
-  const babyhairs = document.getElementById('input-babyhairs').value;
-  const shed      = document.getElementById('input-shed').value;
-  const notes     = document.getElementById('log-notes').value.trim();
+  const sleep     = document.getElementById('input-sleep')?.value || '';
+  const water     = document.getElementById('input-water')?.value || '';
+  const babyhairs = document.getElementById('input-babyhairs')?.value || '';
+  const shed      = document.getElementById('input-shed')?.value || '';
+  const notes     = (document.getElementById('log-notes')?.value || '').trim();
   const symptoms  = [...document.querySelectorAll('.symptom-chip.selected')].map(e => e.textContent.trim());
 
   if (!sleep && !water && !babyhairs && !shed && !symptoms.length && !notes) {
@@ -2148,17 +2144,17 @@ function renderMonthlyRoutine() {
 
     <!-- OPTIONAL BLOOD TESTS -->
     <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-soft);text-transform:uppercase;margin-bottom:10px">Optional — Blood Test Results</div>
-    <div class="card" style="margin-bottom:16px;background:var(--warm-amber-lt);border:1.5px dashed var(--warm-amber)">
+    <div style="margin-bottom:16px;background:var(--warm-amber-lt);border:1.5px dashed var(--warm-amber);border-radius:var(--radius-md);padding:16px;box-sizing:border-box;overflow:hidden">
       <div style="font-size:12px;color:#8a5a00;margin-bottom:12px;line-height:1.5">Ask your doctor to test these quarterly. Low levels in any of these directly affect hair regrowth.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${[['test_ferritin','Ferritin (iron stores)','ng/mL'],['test_vitd','Vitamin D','ng/mL'],['test_b12','Vitamin B12','pg/mL'],['test_zinc','Zinc','μg/dL'],['test_tsh','Thyroid (TSH)','mIU/L'],['test_hba1c','Blood sugar (HbA1c)','%']]
-          .map(([id,label,unit]) => `<div style="background:rgba(255,255,255,0.6);border-radius:var(--radius-sm);padding:10px">
-            <div style="font-size:11px;font-weight:700;color:#8a5a00;margin-bottom:4px">${label}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;box-sizing:border-box">
+        ${[['test_ferritin','Ferritin','ng/mL'],['test_vitd','Vitamin D','ng/mL'],['test_b12','Vitamin B12','pg/mL'],['test_zinc','Zinc','μg/dL'],['test_tsh','Thyroid (TSH)','mIU/L'],['test_hba1c','Blood sugar','%']]
+          .map(([id,label,unit]) => `<div style="background:rgba(255,255,255,0.6);border-radius:8px;padding:8px;box-sizing:border-box;width:100%;overflow:hidden">
+            <div style="font-size:11px;font-weight:700;color:#8a5a00;margin-bottom:5px">${label}</div>
             <div style="display:flex;align-items:center;gap:4px">
               <input type="text" value="${m[id]||''}" placeholder="Result"
-                style="flex:1;background:white;border-radius:6px;padding:5px 8px;font-size:12px;font-weight:700;color:var(--text-dark);font-family:var(--font-body);border:none;outline:none"
+                style="flex:1;min-width:0;width:0;background:white;border-radius:6px;padding:5px 7px;font-size:12px;font-weight:700;color:var(--text-dark);font-family:var(--font-body);border:none;outline:none;box-sizing:border-box"
                 oninput="saveMonthlyVal('${id}',this.value)"/>
-              <span style="font-size:10px;color:#a06010">${unit}</span>
+              <span style="font-size:10px;color:#a06010;white-space:nowrap;flex-shrink:0">${unit}</span>
             </div>
           </div>`).join('')}
       </div>
@@ -2547,13 +2543,13 @@ function showEbookOffer(title, inrPrice, usdPrice, link, note) {
 function renderProfile() {
   document.getElementById('founder-story').textContent = CONTENT.founderStory;
   document.getElementById('founder-sig').textContent   = CONTENT.founderSignature;
-  document.getElementById('profile-streak').textContent = calcStreak();
+  const ps = document.getElementById('profile-streak'); if (ps) ps.textContent = calcStreak();
 
   const { daysLeft, isPaid, isExpired, plan, daysPassed } = getTrialInfo();
 
   // Plan badge
   const planNames = { trial: 'Free Trial', basic: 'Basic Plan', premium: 'Premium Plan' };
-  document.getElementById('profile-plan-badge').textContent = planNames[plan] || 'Free Trial';
+  const ppb = document.getElementById('profile-plan-badge'); if (ppb) ppb.textContent = planNames[plan] || 'Free Trial';
 
   // Ebook price label in menu
   const ebookPrice = document.getElementById('ebook-menu-price');
