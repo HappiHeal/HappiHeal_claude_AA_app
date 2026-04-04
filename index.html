@@ -61,8 +61,10 @@ const SUBSCRIPTION_PLANS = {
   premium_monthly_usd: 'plan_SYxACXMzTGHkKv',
 };
 
-// Google Drive ebook link (for Premium users — free access)
-const EBOOK_DRIVE_LINK = 'https://drive.google.com/file/d/1lDlryQ6vrxQyCITjYuTat3a3M7T91pX6/view?usp=drivesdk';
+// Google Drive ebook links
+const EBOOK_VIEW_LINK     = 'https://drive.google.com/file/d/1lDlryQ6vrxQyCITjYuTat3a3M7T91pX6/preview';  // view-only (no download)
+const EBOOK_DOWNLOAD_LINK = 'https://drive.google.com/file/d/1lDlryQ6vrxQyCITjYuTat3a3M7T91pX6/view?usp=drivesdk'; // download allowed (annual only)
+const EBOOK_DRIVE_LINK    = EBOOK_VIEW_LINK; // default fallback = view-only
 
 // ── AUTH FUNCTIONS ───────────────────────────────────────────
 async function signUp(email, password, name) {
@@ -257,7 +259,7 @@ function payWithRazorpay(planKey, planName, onSuccess) {
         renderProfile();
       } else {
         showToast('Ebook purchased! Opening your guide now 📖');
-        setTimeout(() => window.open(EBOOK_DRIVE_LINK, '_blank'), 1000);
+        setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 1000);
       }
       if (onSuccess) onSuccess();
     }
@@ -3173,22 +3175,39 @@ function _renderPricingUI() {
 }
 
 /* ── EBOOK DOWNLOAD ───────────────────────────────────────── */
+// Returns true if user is on premium annual (gets download privilege)
+function isPremiumAnnual() {
+  if (currentPlan !== 'premium') return false;
+  const expiry = load('plan_expiry', null);
+  if (!expiry) return false;
+  // Annual plan expiry is ~365 days, monthly is ~30 days
+  const daysLeft = Math.floor((new Date(expiry) - new Date()) / 86400000);
+  return daysLeft > 60; // more than 60 days = annual plan
+}
+
+// Open ebook — view-only for all except premium annual
+function openEbook() {
+  const link = isPremiumAnnual() ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
+  window.open(link, '_blank');
+}
+
 function handleEbookDownload() {
   const plan = getUserPlan();
 
   if (plan === 'premium') {
-    // Free for Premium — open Google Drive
-    window.open(EBOOK_DRIVE_LINK, '_blank');
+    openEbook(); // annual = download, monthly = view-only
     return;
   }
 
   if (plan === 'basic') {
-    showEbookOffer('Recovery Ebook', '₹2,499', '$29', 'razorpay:ebook_basic', 'Upgrade to Premium to get it FREE 🌿');
+    showEbookOffer('Recovery Ebook', '₹2,499', '$29', 'razorpay:ebook_basic',
+      '📖 View-only access • Upgrade to Premium Annual to download forever');
     return;
   }
 
   // Free user — full price
-  showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free', 'Upgrade to Basic for 53% off, or Premium to get it FREE 🌿');
+  showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free',
+    '📖 View-only access • Upgrade to Premium Annual to download forever');
 }
 
 function showEbookOffer(title, inrPrice, usdPrice, link, note) {
@@ -3713,10 +3732,10 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
 
       if (ebookOnly) {
         showToast('Ebook purchased! Opening now 📖');
-        setTimeout(() => window.open(EBOOK_DRIVE_LINK, '_blank'), 800);
+        setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 800);
       } else if (includesEbook) {
         showToast('Payment successful! Plan + Ebook unlocked 🎉📖');
-        setTimeout(() => window.open(EBOOK_DRIVE_LINK, '_blank'), 1500);
+        setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 1500);
         goTo('home');
         renderHome();
         renderProfile();
@@ -3738,7 +3757,7 @@ function handleEbookBuy(link) {
     const planKey = link.replace('razorpay:', '');
     payWithRazorpay(planKey, 'ebook');
   } else if (link.startsWith('drive:')) {
-    window.open(EBOOK_DRIVE_LINK, '_blank');
+    openEbook();
   } else {
     window.open(link, '_blank');
   }
