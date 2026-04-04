@@ -18,7 +18,7 @@
 <script>
 // ── SUPABASE CONFIG ──────────────────────────────────────────
 const SUPABASE_URL = 'https://crvimiehvetdfqdhrnwd.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Ns3INY97RT8U3q32Nazv9A_EcXLmNEY';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNydmltaWVodmV0ZGZxZGhybndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjQ4ODUsImV4cCI6MjA5MDY0MDg4NX0.50tIoUIc8KyRO8bF5M6QjnAmLLSd84D0DsFt_jj-nPA';
 let _supabaseClient = null;
 function getSupabase() {
   if (!_supabaseClient) {
@@ -168,15 +168,18 @@ function subscribeWithRazorpay(planKey, planName, intl) {
     // For subscriptions, we use plan_id directly
     // Razorpay handles recurring billing automatically
     handler: async function(response) {
-      // Update user plan in Supabase
       const expiry = new Date();
       expiry.setMonth(expiry.getMonth() + 1);
-      await getSupabase().from('profiles').update({
-        plan: planName,
-        plan_expiry: expiry.toISOString(),
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_subscription_id: response.razorpay_subscription_id || null
-      }).eq('id', currentUser.id);
+      try {
+        await getSupabase().from('profiles').update({
+          plan: planName,
+          plan_expiry: expiry.toISOString(),
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_subscription_id: response.razorpay_subscription_id || null
+        }).eq('id', currentUser.id);
+      } catch(e) {
+        showPaymentSafetyMsg(response.razorpay_payment_id);
+      }
       currentPlan = planName;
       localStorage.setItem('hh_user_plan', planName);
       showToast('Subscription activated! Welcome to ' + planName + ' plan 🎉');
@@ -236,13 +239,16 @@ function payWithRazorpay(planKey, planName, onSuccess) {
       const newPlan = planName;
       const expiry = new Date();
       expiry.setMonth(expiry.getMonth() + (planKey.includes('annual') ? 12 : 1));
-      // Only update plan if it's an actual plan (not ebook)
       if (planName !== 'ebook') {
-        await getSupabase().from('profiles').update({
-          plan: newPlan,
-          plan_expiry: expiry.toISOString(),
-          razorpay_payment_id: response.razorpay_payment_id
-        }).eq('id', currentUser.id);
+        try {
+          await getSupabase().from('profiles').update({
+            plan: newPlan,
+            plan_expiry: expiry.toISOString(),
+            razorpay_payment_id: response.razorpay_payment_id
+          }).eq('id', currentUser.id);
+        } catch(e) {
+          showPaymentSafetyMsg(response.razorpay_payment_id);
+        }
         currentPlan = newPlan;
         localStorage.setItem('hh_user_plan', newPlan);
         showToast('Payment successful! Welcome to ' + newPlan + ' plan 🎉');
@@ -250,8 +256,7 @@ function payWithRazorpay(planKey, planName, onSuccess) {
         renderHome();
         renderProfile();
       } else {
-        showToast('Ebook purchased! Check your email for download link 📖');
-        // Open ebook drive link for immediate access
+        showToast('Ebook purchased! Opening your guide now 📖');
         setTimeout(() => window.open(EBOOK_DRIVE_LINK, '_blank'), 1000);
       }
       if (onSuccess) onSuccess();
@@ -1449,6 +1454,85 @@ IMPORTANT RULES:
           </div>
         </div>
       </div>
+
+      <!-- ── BOX BREATHING WIDGET ─────────────────────────── -->
+      <div style="padding:0 16px 24px">
+        <div id="box-breath-card" style="background:linear-gradient(135deg,#1a2e22 0%,#2d5a3d 60%,#3d6b4f 100%);border-radius:20px;padding:22px 20px 20px;position:relative;overflow:hidden">
+
+          <!-- Background circle glow -->
+          <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
+          <div style="position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:rgba(255,255,255,0.03);border-radius:50%"></div>
+
+          <!-- Header -->
+          <div style="margin-bottom:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.5);margin-bottom:4px">STRESS RELIEF</div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:white;line-height:1.3">Stressed? Try 5 min of<br>Box Breathing 🫁</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:5px">Lowers cortisol — directly linked to alopecia recovery</div>
+          </div>
+
+          <!-- Breathing box animation -->
+          <div style="display:flex;flex-direction:column;align-items:center;margin:8px 0 16px">
+
+            <!-- Phase label -->
+            <div id="breath-phase" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:1px;margin-bottom:12px;min-height:20px">TAP START</div>
+
+            <!-- Animated box -->
+            <div style="position:relative;width:120px;height:120px">
+              <!-- Static border box -->
+              <div style="position:absolute;inset:0;border:2px solid rgba(255,255,255,0.15);border-radius:16px"></div>
+              <!-- Animated fill -->
+              <div id="breath-fill" style="position:absolute;inset:0;border-radius:14px;background:rgba(255,255,255,0.08);transform:scale(0.3);transition:transform 0.3s ease,background 0.5s ease"></div>
+              <!-- Corner dots -->
+              <div style="position:absolute;top:-5px;left:-5px;width:10px;height:10px;background:#7dbb95;border-radius:50%"></div>
+              <div style="position:absolute;top:-5px;right:-5px;width:10px;height:10px;background:#7dbb95;border-radius:50%"></div>
+              <div style="position:absolute;bottom:-5px;left:-5px;width:10px;height:10px;background:#7dbb95;border-radius:50%"></div>
+              <div style="position:absolute;bottom:-5px;right:-5px;width:10px;height:10px;background:#7dbb95;border-radius:50%"></div>
+              <!-- Moving dot on border -->
+              <div id="breath-dot" style="position:absolute;top:-6px;left:-6px;width:12px;height:12px;background:white;border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,0.6)"></div>
+              <!-- Count inside box -->
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                <div id="breath-count" style="font-size:32px;font-weight:700;color:white;font-family:'Playfair Display',serif">4</div>
+              </div>
+            </div>
+
+            <!-- Progress dots -->
+            <div style="display:flex;gap:6px;margin-top:14px" id="breath-cycles">
+              <div class="bcycle" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+              <div class="bcycle" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+              <div class="bcycle" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+              <div class="bcycle" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+              <div class="bcycle" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2)"></div>
+            </div>
+          </div>
+
+          <!-- 4 phase labels row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:16px">
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px">INHALE</div>
+              <div style="font-size:13px;font-weight:700;color:white">4s</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px">HOLD</div>
+              <div style="font-size:13px;font-weight:700;color:white">4s</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px">EXHALE</div>
+              <div style="font-size:13px;font-weight:700;color:white">4s</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.5px">HOLD</div>
+              <div style="font-size:13px;font-weight:700;color:white">4s</div>
+            </div>
+          </div>
+
+          <!-- Start/Stop button -->
+          <button id="breath-btn" onclick="toggleBreathing()"
+            style="width:100%;padding:13px;background:rgba(255,255,255,0.12);color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,0.2);backdrop-filter:blur(4px);transition:all 0.2s">
+            🫁 Start 5-Minute Session
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -3224,6 +3308,34 @@ function clearAllData() {
 }
 
 /* ── TOAST ────────────────────────────────────────────────── */
+function showPaymentSafetyMsg(paymentId) {
+  const existing = document.getElementById('payment-safety-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'payment-safety-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:28px 22px;width:100%;max-width:380px">
+      <div style="font-size:36px;text-align:center;margin-bottom:12px">✅</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:#1a2e22;text-align:center;margin-bottom:8px">Payment Received!</div>
+      <div style="font-size:13px;color:#6b8577;text-align:center;line-height:1.6;margin-bottom:16px">
+        Your payment was successful. There was a small delay activating your plan — please email us and we'll activate it within a few hours.
+      </div>
+      <div style="background:#edf7f0;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;color:#6b8577;margin-bottom:4px">Your Payment ID:</div>
+        <div style="font-size:13px;font-weight:700;color:#2d5a3d;word-break:break-all">${paymentId || 'See Razorpay email'}</div>
+      </div>
+      <a href="mailto:contact.happiloot@gmail.com?subject=Plan Activation — Payment ID: ${paymentId || ''}&body=Hi, I just paid for HappiHeal but my plan did not activate. My payment ID is: ${paymentId || 'see attached'}. Please help activate my account. Thank you!"
+        style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:14px;font-weight:700;text-align:center;cursor:pointer;margin-bottom:10px">
+        📧 Email Us Now
+      </a>
+      <button onclick="document.getElementById('payment-safety-modal').remove()"
+        style="width:100%;padding:12px;background:none;color:#9db5a6;font-size:13px;cursor:pointer">
+        Close
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+}
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -3584,14 +3696,17 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
     theme: { color: '#3d6b4f' },
     handler: async function(response) {
       if (!ebookOnly) {
-        // Update plan in Supabase
         const expiry = new Date();
         expiry.setMonth(expiry.getMonth() + (label.includes('year') ? 12 : 1));
-        await getSupabase().from('profiles').update({
-          plan: planName,
-          plan_expiry: expiry.toISOString(),
-          razorpay_payment_id: response.razorpay_payment_id
-        }).eq('id', currentUser.id);
+        try {
+          await getSupabase().from('profiles').update({
+            plan: planName,
+            plan_expiry: expiry.toISOString(),
+            razorpay_payment_id: response.razorpay_payment_id
+          }).eq('id', currentUser.id);
+        } catch(e) {
+          showPaymentSafetyMsg(response.razorpay_payment_id);
+        }
         currentPlan = planName;
         localStorage.setItem('hh_user_plan', planName);
       }
@@ -3627,6 +3742,120 @@ function handleEbookBuy(link) {
   } else {
     window.open(link, '_blank');
   }
+}
+
+/* ── BOX BREATHING ────────────────────────────────────────── */
+const BREATH_PHASE_MS = 4000; // 4 seconds per side
+const BREATH_BOX = 120;       // box px size
+const BREATH_DOT_O = -6;      // dot overhang offset
+
+const breathPhaseInfo = [
+  { label: 'INHALE ↑',  scale: '1',   bg: 'rgba(125,187,149,0.25)' }, // top side L→R
+  { label: 'HOLD →',    scale: '1',   bg: 'rgba(255,255,255,0.12)' }, // right side T→B
+  { label: 'EXHALE ↓',  scale: '0.3', bg: 'rgba(255,255,255,0.05)' }, // bottom side R→L
+  { label: 'HOLD ←',    scale: '0.3', bg: 'rgba(255,255,255,0.08)' }, // left side B→T
+];
+
+let bs = {
+  running: false, phase: 0, cycle: 0, totalCycles: 5,
+  phaseStart: 0, animFrame: null, countInterval: null
+};
+
+// Returns {left, top} pixel values for the dot given phase (0-3) and progress (0-1)
+function breathDotPos(phase, progress) {
+  const s = BREATH_BOX, o = BREATH_DOT_O, p = progress;
+  switch (phase) {
+    case 0: return { left: o + p * s,       top: o             }; // top: L→R
+    case 1: return { left: s + o,           top: o + p * s     }; // right: T→B
+    case 2: return { left: s + o - p * s,   top: s + o         }; // bottom: R→L
+    case 3: return { left: o,               top: s + o - p * s }; // left: B→T
+  }
+}
+
+function breathAnimate(timestamp) {
+  if (!bs.running) return;
+  const elapsed  = timestamp - bs.phaseStart;
+  const progress = Math.min(elapsed / BREATH_PHASE_MS, 1);
+
+  // Move dot
+  const dot = document.getElementById('breath-dot');
+  if (dot) {
+    const pos = breathDotPos(bs.phase, progress);
+    dot.style.left = pos.left + 'px';
+    dot.style.top  = pos.top  + 'px';
+  }
+
+  // Update countdown number (1-4 visible)
+  const secRemaining = Math.ceil((BREATH_PHASE_MS - elapsed) / 1000);
+  const countEl = document.getElementById('breath-count');
+  if (countEl) countEl.textContent = Math.max(1, secRemaining);
+
+  if (progress < 1) {
+    bs.animFrame = requestAnimationFrame(breathAnimate);
+  } else {
+    // Advance phase
+    bs.phase = (bs.phase + 1) % 4;
+    if (bs.phase === 0) {
+      // Completed one full cycle
+      bs.cycle++;
+      const dots = document.querySelectorAll('.bcycle');
+      if (bs.cycle <= dots.length) dots[bs.cycle - 1].style.background = '#7dbb95';
+      if (bs.cycle >= bs.totalCycles) {
+        stopBreathing();
+        const pl = document.getElementById('breath-phase');
+        const cl = document.getElementById('breath-count');
+        if (pl) pl.textContent = 'Well done! 🌿';
+        if (cl) cl.textContent = '✓';
+        showToast('5-min breathing done! Cortisol down, you got this 🌿');
+        return;
+      }
+    }
+    // Apply new phase visuals
+    applyBreathPhase(bs.phase);
+    bs.phaseStart = performance.now();
+    bs.animFrame = requestAnimationFrame(breathAnimate);
+  }
+}
+
+function applyBreathPhase(phase) {
+  const info = breathPhaseInfo[phase];
+  const phaseEl = document.getElementById('breath-phase');
+  const fill    = document.getElementById('breath-fill');
+  if (phaseEl) phaseEl.textContent = info.label;
+  if (fill) {
+    fill.style.transition = 'transform ' + (BREATH_PHASE_MS/1000) + 's ease, background 0.5s ease';
+    fill.style.transform  = 'scale(' + info.scale + ')';
+    fill.style.background = info.bg;
+  }
+}
+
+function toggleBreathing() {
+  if (bs.running) { stopBreathing(); } else { startBreathing(); }
+}
+
+function startBreathing() {
+  bs.running = true; bs.phase = 0; bs.cycle = 0;
+  document.getElementById('breath-btn').textContent = '⏹ Stop Session';
+  document.getElementById('breath-btn').style.background = 'rgba(255,100,100,0.2)';
+  document.querySelectorAll('.bcycle').forEach(d => d.style.background = 'rgba(255,255,255,0.2)');
+  applyBreathPhase(0);
+  bs.phaseStart = performance.now();
+  bs.animFrame = requestAnimationFrame(breathAnimate);
+}
+
+function stopBreathing() {
+  bs.running = false;
+  cancelAnimationFrame(bs.animFrame);
+  const dot   = document.getElementById('breath-dot');
+  const fill  = document.getElementById('breath-fill');
+  const phase = document.getElementById('breath-phase');
+  const count = document.getElementById('breath-count');
+  const btn   = document.getElementById('breath-btn');
+  if (dot)   { dot.style.left = '-6px'; dot.style.top = '-6px'; }
+  if (fill)  { fill.style.transform = 'scale(0.3)'; fill.style.background = 'rgba(255,255,255,0.08)'; }
+  if (phase) phase.textContent = 'TAP START';
+  if (count) count.textContent = '4';
+  if (btn)   { btn.textContent = '🫁 Start 5-Minute Session'; btn.style.background = 'rgba(255,255,255,0.12)'; }
 }
 
 /* ── INIT ─────────────────────────────────────────────────── */
