@@ -167,6 +167,12 @@ function subscribeWithRazorpay(planKey, planName, intl) {
       name: currentUser.user_metadata?.full_name || ''
     },
     theme: { color: '#3d6b4f' },
+    modal: {
+      ondismiss: function() {
+        showToast('Payment cancelled — come back anytime 🌿');
+        goTo('pricing');
+      }
+    },
     // For subscriptions, we use plan_id directly
     // Razorpay handles recurring billing automatically
     handler: async function(response) {
@@ -237,10 +243,18 @@ function payWithRazorpay(planKey, planName, onSuccess) {
       name: currentUser.user_metadata?.full_name || ''
     },
     theme: { color: '#3d6b4f' },
+    modal: {
+      ondismiss: function() {
+        showToast('Payment cancelled — come back anytime 🌿');
+        if (planName === 'ebook') {
+          document.getElementById('ebook-overlay')?.remove();
+          goTo('profile');
+        } else {
+          goTo('pricing');
+        }
+      }
+    },
     handler: async function(response) {
-      const newPlan = planName;
-      const expiry = new Date();
-      expiry.setMonth(expiry.getMonth() + (planKey.includes('annual') ? 12 : 1));
       if (planName !== 'ebook') {
         try {
           await getSupabase().from('profiles').update({
@@ -277,7 +291,10 @@ function showAuthModal(mode) {
   modal.id = 'auth-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.innerHTML = `
-    <div style="background:white;border-radius:24px;padding:32px 24px;width:100%;max-width:380px;animation:fadeUp 0.3s ease">
+    <div style="background:white;border-radius:24px;padding:32px 24px 24px;width:100%;max-width:380px;animation:fadeUp 0.3s ease;position:relative">
+      <!-- Close button -->
+      <button onclick="hideAuthModal()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;background:#edf7f0;border-radius:50%;font-size:15px;color:#6b8577;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">✕</button>
+
       <div style="text-align:center;margin-bottom:24px">
         <div style="font-size:40px;margin-bottom:8px">🌿</div>
         <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#1a2e22">HappiHeal</div>
@@ -326,6 +343,7 @@ function showAuthModal(mode) {
       </div>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) hideAuthModal(); });
   if (mode === 'signup') switchAuthTab('signup');
 }
 
@@ -1839,10 +1857,9 @@ IMPORTANT RULES:
         <div class="menu-item" onclick="handleEbookDownload()" id="ebook-menu-item">
           <span class="menu-icon">📖</span>
           <div style="flex:1">
-            <div class="menu-label">Download Full Ebook</div>
+            <div class="menu-label">Recovery Ebook</div>
             <div style="font-size:11px;color:var(--text-muted)" id="ebook-menu-sub">260 pages — complete recovery guide</div>
           </div>
-          <span id="ebook-menu-price" style="font-size:12px;font-weight:700;color:var(--green-mid)"></span>
           <span class="menu-arrow">›</span>
         </div>
         <div class="menu-item" onclick="showToast('Sharing feature coming soon!')">
@@ -1855,12 +1872,24 @@ IMPORTANT RULES:
           <span class="menu-label">Reset My Data</span>
           <span class="menu-arrow">›</span>
         </div>
+        <div class="menu-item" onclick="showPrivacyPolicy()">
+          <span class="menu-icon">🔒</span>
+          <span class="menu-label">Privacy Policy</span>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showTerms()">
+          <span class="menu-icon">📋</span>
+          <span class="menu-label">Terms & Conditions</span>
+          <span class="menu-arrow">›</span>
+        </div>
       </div>
 
-      <!-- Disclaimer note -->
-      <div style="background:var(--green-mist);border-radius:var(--radius-md);padding:16px 18px;margin-top:4px">
-        <div style="font-size:11px;font-weight:700;color:var(--green-soft);letter-spacing:0.5px;margin-bottom:5px">📋 DISCLAIMER</div>
-        <div style="font-size:12px;color:var(--text-soft);line-height:1.65">HappiHeal is based on one person's lived experience with alopecia areata over 20+ years. All content is personal experience, not medical advice. We are not doctors or healthcare professionals. Always consult a qualified medical professional for diagnosis or treatment.</div>
+      <!-- Legal footer -->
+      <div style="text-align:center;padding:16px 0 8px">
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.6">
+          HappiHeal by HappiLoot · contact.happiloot@gmail.com<br>
+          Personal experience only — not medical advice
+        </div>
       </div>
     </div>
   </div>
@@ -3252,22 +3281,15 @@ function renderProfile() {
   const planNames = { trial: 'Free Trial', basic: 'Basic Plan', premium: 'Premium Plan' };
   const ppb = document.getElementById('profile-plan-badge'); if (ppb) ppb.textContent = planNames[plan] || 'Free Trial';
 
-  // Ebook price label in menu
-  const ebookPrice = document.getElementById('ebook-menu-price');
-  const ebookSub   = document.getElementById('ebook-menu-sub');
-  if (ebookPrice) {
+  // Ebook subtitle hint in menu (no price shown — appears after click)
+  const ebookSub = document.getElementById('ebook-menu-sub');
+  if (ebookSub) {
     if (plan === 'premium') {
-      ebookPrice.textContent = 'FREE ✅';
-      ebookPrice.style.color = 'var(--green-mid)';
-      if (ebookSub) ebookSub.textContent = 'Included in your Premium plan';
+      ebookSub.textContent = 'Included in your Premium plan ✅';
     } else if (plan === 'basic') {
-      ebookPrice.textContent = '₹2,499';
-      ebookPrice.style.color = 'var(--green-mid)';
-      if (ebookSub) ebookSub.textContent = 'Upgrade to Premium to get it FREE';
+      ebookSub.textContent = 'Upgrade to Premium to get it FREE';
     } else {
-      ebookPrice.textContent = '₹2,499';
-      ebookPrice.style.color = 'var(--text-muted)';
-      if (ebookSub) ebookSub.textContent = '260 pages — complete recovery guide';
+      ebookSub.textContent = '260 pages — complete recovery guide';
     }
   }
 
@@ -3326,6 +3348,132 @@ function clearAllData() {
   }
 }
 
+/* ── LEGAL MODALS ─────────────────────────────────────────── */
+function showLegalModal(title, icon, content) {
+  const existing = document.getElementById('legal-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'legal-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:flex-end';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px 24px 0 0;width:100%;max-width:430px;max-height:88vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px;border-bottom:1px solid #edf7f0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">${icon}</span>
+          <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:#1a2e22">${title}</span>
+        </div>
+        <button onclick="document.getElementById('legal-modal').remove()"
+          style="width:32px;height:32px;background:#edf7f0;border-radius:50%;font-size:16px;cursor:pointer;color:#2d5a3d;font-weight:700">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:20px;font-size:13px;color:#4a6557;line-height:1.75">
+        ${content}
+      </div>
+      <div style="padding:16px 20px 32px">
+        <button onclick="document.getElementById('legal-modal').remove()"
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">
+          I Understand 🌿
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function showPrivacyPolicy() {
+  showLegalModal('Privacy Policy', '🔒', `
+    <p style="font-size:11px;color:#9db5a6;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin-bottom:6px">1. Who We Are</div>
+    <p>HappiHeal is a digital wellness app created by Harshitha MV, operating under HappiLoot. We help people with alopecia areata through natural remedies, routines, and holistic guidance based on 20+ years of personal experience.</p>
+    <p>Contact: <a href="mailto:contact.happiloot@gmail.com" style="color:#3d6b4f">contact.happiloot@gmail.com</a></p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">2. What Data We Collect</div>
+    <p><b>Account data:</b> Your name and email address when you sign up. This is stored securely through our third-party authentication provider.</p>
+    <p><b>Payment data:</b> We collect only the payment ID needed to confirm your purchase and activate your plan. We do not store your card number, UPI ID, or banking details — these are handled entirely by our payment processor under PCI-DSS compliant systems.</p>
+    <p><b>App usage data:</b> Your daily logs, streaks, and checklist data are stored locally on your device only (localStorage). We cannot access this data; it never leaves your phone.</p>
+    <p><b>Photos:</b> HappiHeal does not ask you to upload or store photos. Any progress photos you take are saved to your device's gallery — we have no access to them.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">3. What We Do NOT Collect</div>
+    <p>No cookies or tracking pixels<br>
+    No health records or medical data<br>
+    No location data<br>
+    No device identifiers<br>
+    No data sold to third parties — ever</p>
+    <p>We do not process sensitive personal data under India's DPDP framework.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">4. How We Use Your Data</div>
+    <p>Your email is used to: create and manage your account, send plan confirmation, and respond to support requests. We do not send marketing emails without your explicit consent.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">5. Third-Party Services</div>
+    <p>We use the following third-party services, each with their own privacy policies:<br>
+    Authentication provider (handles sign-up and profile storage)<br>
+    Payment processor (PCI-DSS compliant, regulated by RBI-recognized bodies)<br>
+    AI service that powers the AI Ask feature. Your questions are sent to the AI API and are not stored by us.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">6. Your Rights (DPDP Act 2023)</div>
+    <p>Under India's Digital Personal Data Protection Act 2023, you have the right to:<br>
+    Access the personal data we hold about you<br>
+    Correct inaccurate data<br>
+    Request deletion of your account and associated data<br>
+    Withdraw consent at any time</p>
+    <p>Email <a href="mailto:contact.happiloot@gmail.com" style="color:#3d6b4f">contact.happiloot@gmail.com</a> and we will respond within 7 business days.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">7. Data Security & Retention</div>
+    <p>Your account data is protected using industry-standard security and HTTPS encryption in transit. We follow data minimization principles and retain your data only while your account is active or as required by law. You may request deletion at any time.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">8. Children</div>
+    <p>HappiHeal is intended for users aged 18 and above. We do not knowingly collect data from minors.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">9. Changes to This Policy</div>
+    <p>We may update this Privacy Policy occasionally. Significant changes will be communicated via the app or email. Continued use means you accept the updated policy.</p>
+  `);
+}
+
+function showTerms() {
+  showLegalModal('Terms & Conditions', '📋', `
+    <p style="font-size:11px;color:#9db5a6;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
+    <p>Please read these terms carefully before using HappiHeal. By accessing or using the app, you agree to be bound by these terms.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin-bottom:6px">1. Medical Disclaimer</div>
+    <div style="background:#fff8e6;border-left:3px solid #e8a048;border-radius:8px;padding:12px 14px;margin-bottom:10px">
+      <b>Important:</b> HappiHeal is based entirely on Harshitha MV's personal 20+ year experience with alopecia areata. All content including remedies, nutrition advice, routines, and AI responses is shared as personal experience only.<br><br>
+      This is <b>not medical advice</b>. We are not doctors, dermatologists, or licensed healthcare professionals. Nothing in this app should replace consultation with a qualified medical professional. Always seek professional medical advice for diagnosis and treatment of any health condition.
+    </div>
+    <p>Results vary from person to person. Natural remedies that worked for Harshitha may not work for everyone. HappiHeal makes no guarantees of hair regrowth or recovery.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">2. Digital Products — No Refund Policy</div>
+    <p>All purchases on HappiHeal are for digital products and services, including subscription plans, ebooks, and modules. By completing a purchase you acknowledge:</p>
+    <p>Digital products are delivered instantly upon payment.<br>
+    Once accessed, digital content cannot be returned.<br>
+    All sales are final — no refunds are offered, except in cases of non-delivery due to technical errors on our end, at our sole discretion.<br>
+    Subscriptions can be cancelled at any time; cancellation stops future billing but does not refund the current period.</p>
+    <p>If your plan did not activate after payment, please email <a href="mailto:contact.happiloot@gmail.com" style="color:#3d6b4f">contact.happiloot@gmail.com</a> with your payment ID and we will resolve it within 24 hours.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">3. Intellectual Property</div>
+    <p>All content in HappiHeal including the ebook, modules, AI knowledge base, app design, affirmations, routines, and written content is the intellectual property of HappiLoot. You may not copy, distribute, resell, or reproduce any content without written permission.</p>
+    <p>The ebook and module PDFs are for your personal use only. Sharing or distributing them is a violation of these terms.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">4. AI Coach Usage</div>
+    <p>The AI Ask feature uses a third-party AI service. Responses are generated based on Harshitha's personal experience and the app's knowledge base. These responses are for informational purposes only and do not constitute medical advice. Do not rely on AI responses for medical decisions. You use this feature at your own risk.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">5. Acceptable Use</div>
+    <p>You agree not to: misuse the platform, attempt to bypass plan restrictions, share account access with others, or use the app for any unlawful purpose. HappiHeal reserves the right to terminate or suspend accounts that violate these terms.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">6. Limitation of Liability</div>
+    <p>HappiHeal and HappiLoot shall not be liable for any direct, indirect, or consequential damages arising from your use of the app, including reliance on any content or AI responses. Your use of the app is entirely at your own risk.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">7. Changes to These Terms</div>
+    <p>We may update these terms from time to time. Significant changes will be communicated via the app or email. Continued use of HappiHeal after such changes means you accept the updated terms.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">8. Governing Law</div>
+    <p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Bengaluru, Karnataka.</p>
+
+    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">9. Contact</div>
+    <p>For any questions about these terms:<br>
+    <a href="mailto:contact.happiloot@gmail.com" style="color:#3d6b4f">contact.happiloot@gmail.com</a><br>
+    HappiHeal by HappiLoot, Bengaluru, India</p>
+  `);
+}
 /* ── TOAST ────────────────────────────────────────────────── */
 function showPaymentSafetyMsg(paymentId) {
   const existing = document.getElementById('payment-safety-modal');
@@ -3513,6 +3661,7 @@ function showPremiumRecurringConfirm(planKey, planName, intl) {
       </button>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function showFreeEbookOffer(intl) {
@@ -3551,6 +3700,7 @@ function showFreeEbookOffer(intl) {
       </div>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function buyEbookFree(isIntl) {
@@ -3643,6 +3793,7 @@ function showOrderBump(planKey, planName, isAnnual, intl) {
       </button>
     </div>`;
   document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 let _ebookSelected = false;
