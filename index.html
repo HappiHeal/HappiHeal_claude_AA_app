@@ -146,98 +146,29 @@ async function initAuth() {
 
 // ── RAZORPAY SUBSCRIPTION ────────────────────────────────────
 function subscribeWithRazorpay(planKey, planName, intl) {
-  if (!currentUser) { showAuthModal('signin'); return; }
-
-  // Pick correct plan ID based on plan and currency
-  const currency = intl ? 'usd' : 'inr';
-  const planId = SUBSCRIPTION_PLANS[planName + '_monthly_' + currency];
-
-  if (!planId) {
-    showToast('Plan not found. Please try again.');
-    return;
-  }
-
-  const options = {
-    key: RAZORPAY_KEY,
-    subscription_id: null, // will be set after creating subscription
-    name: 'HappiHeal',
-    description: planName.charAt(0).toUpperCase() + planName.slice(1) + ' Monthly Plan — Auto-renews every month. Cancel anytime.',
-    prefill: {
-      email: currentUser.email,
-      name: currentUser.user_metadata?.full_name || ''
-    },
-    theme: { color: '#3d6b4f' },
-    modal: {
-      ondismiss: function() {
-        showToast('Payment cancelled — come back anytime 🌿');
-        goTo('pricing');
-      }
-    },
-    // For subscriptions, we use plan_id directly
-    // Razorpay handles recurring billing automatically
-    handler: async function(response) {
-      const expiry = new Date();
-      expiry.setMonth(expiry.getMonth() + 1);
-      try {
-        await getSupabase().from('profiles').update({
-          plan: planName,
-          plan_expiry: expiry.toISOString(),
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_subscription_id: response.razorpay_subscription_id || null
-        }).eq('id', currentUser.id);
-      } catch(e) {
-        showPaymentSafetyMsg(response.razorpay_payment_id);
-      }
-      currentPlan = planName;
-      localStorage.setItem('hh_user_plan', planName);
-      showToast('Subscription activated! Welcome to ' + planName + ' plan 🎉');
-      goTo('home');
-      renderHome();
-      renderProfile();
-    }
-  };
-
-  // Use Razorpay subscription checkout
-  fetch('https://api.razorpay.com/v1/subscriptions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic ' + btoa(RAZORPAY_KEY + ':')
-    },
-    body: JSON.stringify({
-      plan_id: planId,
-      quantity: 1,
-      total_count: 12, // max 12 months, user can cancel anytime
-      customer_notify: 1
-    })
-  })
-  .then(r => r.json())
-  .then(sub => {
-    if (sub.id) {
-      options.subscription_id = sub.id;
-      const rzp = new Razorpay(options);
-      rzp.open();
-    } else {
-      // Fallback to one-time payment if subscription creation fails
-      showToast('Opening payment...');
-      payWithRazorpay(planKey, planName);
-    }
-  })
-  .catch(() => {
-    // Fallback to one-time payment
-    payWithRazorpay(planKey, planName);
-  });
+  // Razorpay subscription creation requires server-side secret key.
+  // As a browser-only PWA we use one-time monthly payments instead.
+  // Users renew by paying again each month — clean and simple.
+  payWithRazorpay(planKey, planName, intl);
 }
-function payWithRazorpay(planKey, planName, onSuccess) {
+function payWithRazorpay(planKey, planName, intl, onSuccess) {
   if (!currentUser) { showAuthModal('signin'); return; }
+
+  // Pick price based on currency
+  const useIntl = intl === true || intl === 'true' || state.intlCurrency;
   const price = PLAN_PRICES[planKey];
   if (!price) { showToast('Invalid plan selected'); return; }
+
+  const amount   = useIntl ? price.usd    : price.amount;
+  const label    = useIntl ? price.usdLabel : price.label;
+  const currency = useIntl ? 'USD'        : 'INR';
+
   const options = {
     key: RAZORPAY_KEY,
-    amount: price.amount,
-    currency: 'INR',
+    amount: amount,
+    currency: currency,
     name: 'HappiHeal',
-    description: price.label,
+    description: label,
     prefill: {
       email: currentUser.email,
       name: currentUser.user_metadata?.full_name || ''
@@ -256,24 +187,32 @@ function payWithRazorpay(planKey, planName, onSuccess) {
     },
     handler: async function(response) {
       if (planName !== 'ebook') {
+        // Determine plan name from planKey (e.g. 'basic_monthly' → 'basic')
+        const resolvedPlan = planKey.startsWith('basic') ? 'basic'
+                           : planKey.startsWith('premium') ? 'premium'
+                           : planName;
+        const isAnnual = planKey.includes('annual');
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + (isAnnual ? 12 : 1));
         try {
           await getSupabase().from('profiles').update({
-            plan: newPlan,
+            plan: resolvedPlan,
             plan_expiry: expiry.toISOString(),
             razorpay_payment_id: response.razorpay_payment_id
           }).eq('id', currentUser.id);
         } catch(e) {
           showPaymentSafetyMsg(response.razorpay_payment_id);
         }
-        currentPlan = newPlan;
-        localStorage.setItem('hh_user_plan', newPlan);
-        showToast('Payment successful! Welcome to ' + newPlan + ' plan 🎉');
+        currentPlan = resolvedPlan;
+        localStorage.setItem('hh_user_plan', resolvedPlan);
+        showToast('Payment successful! Welcome to ' + resolvedPlan + ' plan 🎉');
         goTo('home');
         renderHome();
         renderProfile();
       } else {
         showToast('Ebook purchased! Opening your guide now 📖');
-        setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 1000);
+        save('ebook_purchased', true); // free user owns ebook permanently — grant download access
+        setTimeout(() => window.open(EBOOK_DOWNLOAD_LINK, '_blank'), 1000);
       }
       if (onSuccess) onSuccess();
     }
@@ -1486,7 +1425,7 @@ IMPORTANT RULES:
           <!-- Header -->
           <div style="margin-bottom:16px">
             <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.5);margin-bottom:4px">STRESS RELIEF</div>
-            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:white;line-height:1.3">Stressed? Try 5 min of<br>Box Breathing 🫁</div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:white;line-height:1.3">Stressed? Try Box Breathing 🫁</div>
             <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:5px">Lowers cortisol — directly linked to alopecia recovery</div>
           </div>
 
@@ -1548,7 +1487,7 @@ IMPORTANT RULES:
           <!-- Start/Stop button -->
           <button id="breath-btn" onclick="toggleBreathing()"
             style="width:100%;padding:13px;background:rgba(255,255,255,0.12);color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,0.2);backdrop-filter:blur(4px);transition:all 0.2s">
-            🫁 Start 5-Minute Session
+            🫁 Start Breathing Session
           </button>
         </div>
       </div>
@@ -1627,6 +1566,20 @@ IMPORTANT RULES:
           <div class="stat-label">glasses</div>
           <div class="stat-sub">Water today</div>
           <div class="stat-hint">Log today's intake</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">📆</div>
+          <div class="stat-num" id="stat-weeks-earned">0</div>
+          <div class="stat-label">weeks</div>
+          <div class="stat-sub">Weeks earned</div>
+          <div class="stat-hint" id="stat-weeks-hint">Log 7 days to earn first</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-num" id="stat-months-earned">0</div>
+          <div class="stat-label">months</div>
+          <div class="stat-sub">Months earned</div>
+          <div class="stat-hint" id="stat-months-hint">Earn 4 weeks to unlock</div>
         </div>
       </div>
 
@@ -1707,6 +1660,18 @@ IMPORTANT RULES:
       <div class="card">
         <div class="section-title">Recent Log History</div>
         <div id="log-history"></div>
+      </div>
+
+      <!-- Weekly Progress History -->
+      <div class="card" id="weekly-history-card" style="display:none">
+        <div class="section-title">Weekly Progress History</div>
+        <div id="weekly-history"></div>
+      </div>
+
+      <!-- Monthly Progress History -->
+      <div class="card" id="monthly-history-card" style="display:none">
+        <div class="section-title">Monthly Progress History</div>
+        <div id="monthly-history"></div>
       </div>
 
     </div>
@@ -1887,7 +1852,7 @@ IMPORTANT RULES:
       <!-- Legal footer -->
       <div style="text-align:center;padding:16px 0 8px">
         <div style="font-size:11px;color:var(--text-muted);line-height:1.6">
-          HappiHeal by HappiLoot · contact.happiloot@gmail.com<br>
+          HappiHeal by HappiLoot · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="82e1edecf6e3e1f6aceae3f2f2ebeeededf6c2e5efe3ebeeace1edef">[email&#160;protected]</a><br>
           Personal experience only — not medical advice
         </div>
       </div>
@@ -1916,7 +1881,7 @@ IMPORTANT RULES:
   <div id="toast"></div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ── STATE ───────────────────────────────────────────────── */
 let state = {
   currentScreen: 'home',
@@ -2155,7 +2120,7 @@ async function sendChat() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -2245,6 +2210,20 @@ function renderTracker() {
   if (el_sleep) el_sleep.textContent = todayLog.sleep || '—';
   if (el_water) el_water.textContent = todayLog.water || '—';
 
+  // Weeks & months earned
+  const completedWeeks  = getCompletedWeeks();
+  const completedMonths = getCompletedMonths();
+  const weeksEarned  = completedWeeks.length;
+  const monthsEarned = completedMonths.length;
+  const el_we = document.getElementById('stat-weeks-earned');
+  const el_me = document.getElementById('stat-months-earned');
+  const el_wh = document.getElementById('stat-weeks-hint');
+  const el_mh = document.getElementById('stat-months-hint');
+  if (el_we) el_we.textContent = weeksEarned;
+  if (el_me) el_me.textContent = monthsEarned;
+  if (el_wh) el_wh.textContent = weeksEarned > 0 ? `${weeksEarned} week${weeksEarned>1?'s':''} completed! 🌿` : 'Log 7 days in a week to earn';
+  if (el_mh) el_mh.textContent = monthsEarned > 0 ? `${monthsEarned} month${monthsEarned>1?'s':''} completed! 🎉` : 'Earn 4 weeks to unlock';
+
   // Restore today's inputs if already logged
   const inp_sleep = document.getElementById('input-sleep');
   const inp_water = document.getElementById('input-water');
@@ -2327,6 +2306,11 @@ function saveLog() {
 
   showToast('Today\'s log saved! 🌿');
   renderTracker();
+  // Refresh weekly/monthly banners if user is on routine screen
+  if (state.currentScreen === 'routine') {
+    if (state.routineViewTab === 'weekly')  renderRoutineUnlockBanner('weekly');
+    if (state.routineViewTab === 'monthly') renderRoutineUnlockBanner('monthly');
+  }
 }
 
 function renderHistory() {
@@ -2335,25 +2319,74 @@ function renderHistory() {
   const entries = Object.entries(logs).sort((a,b) => b[0].localeCompare(a[0])).slice(0,5);
   if (!entries.length) {
     el.innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0">No logs yet — save today\'s log to start your history 🌱</p>';
-    return;
+  } else {
+    el.innerHTML = entries.map(([date, log]) => {
+      const parts = [];
+      if (log.sleep)     parts.push(`😴 ${log.sleep}h sleep`);
+      if (log.water)     parts.push(`💧 ${log.water} glasses`);
+      if (log.babyhairs) parts.push(`🌱 ${log.babyhairs} baby hairs`);
+      if (log.shed)      parts.push(`🍂 ${log.shed} shed`);
+      if (log.symptoms?.length) parts.push(log.symptoms.slice(0,2).join(', '));
+      return `
+      <div class="history-item">
+        <div class="history-dot">📝</div>
+        <div class="history-text">
+          <div class="ht-date">${new Date(date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>
+          <div class="ht-title">${parts.join(' · ') || 'Log saved'}</div>
+          ${log.notes ? `<div class="ht-note">${log.notes}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
   }
-  el.innerHTML = entries.map(([date, log]) => {
-    const parts = [];
-    if (log.sleep)     parts.push(`😴 ${log.sleep}h sleep`);
-    if (log.water)     parts.push(`💧 ${log.water} glasses`);
-    if (log.babyhairs) parts.push(`🌱 ${log.babyhairs} baby hairs`);
-    if (log.shed)      parts.push(`🍂 ${log.shed} shed`);
-    if (log.symptoms?.length) parts.push(log.symptoms.slice(0,2).join(', '));
-    return `
-    <div class="history-item">
-      <div class="history-dot">📝</div>
-      <div class="history-text">
-        <div class="ht-date">${new Date(date+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>
-        <div class="ht-title">${parts.join(' · ') || 'Log saved'}</div>
-        ${log.notes ? `<div class="ht-note">${log.notes}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+
+  // ── Weekly progress history ────────────────────────────────
+  const completedWeeks  = getCompletedWeeks();
+  const weeklyCard = document.getElementById('weekly-history-card');
+  const weeklyEl   = document.getElementById('weekly-history');
+  if (weeklyCard && weeklyEl) {
+    if (completedWeeks.length) {
+      weeklyCard.style.display = 'block';
+      const weekStats = getWeeklyLogStats();
+      weeklyEl.innerHTML = completedWeeks.slice().reverse().map(([wk]) => {
+        const daysLogged = weekStats[wk]?.count || 7;
+        const weekData   = load('weekly_' + wk, {});
+        const avgPct     = weekData._dailyAvg ? Math.round(weekData._dailyAvg) : null;
+        const avgStr     = avgPct !== null ? ` · ${avgPct}% avg daily completion` : '';
+        return `<div class="history-item">
+          <div class="history-dot">📆</div>
+          <div class="history-text">
+            <div class="ht-date" style="color:var(--green-deep);font-weight:700">Week starting ${weekStartLabel(wk)}</div>
+            <div class="ht-title">${daysLogged}/7 days logged${avgStr} ✅</div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      weeklyCard.style.display = 'none';
+    }
+  }
+
+  // ── Monthly progress history ───────────────────────────────
+  const completedMonths = getCompletedMonths();
+  const monthlyCard = document.getElementById('monthly-history-card');
+  const monthlyEl   = document.getElementById('monthly-history');
+  if (monthlyCard && monthlyEl) {
+    if (completedMonths.length) {
+      monthlyCard.style.display = 'block';
+      const allCompletedWeeks = getCompletedWeeks();
+      monthlyEl.innerHTML = completedMonths.slice().reverse().map(([mk, weeksCount]) => {
+        const weeksInMonth = allCompletedWeeks.filter(([wk]) => wk.slice(0, 7) === mk).length;
+        return `<div class="history-item">
+          <div class="history-dot">🗓️</div>
+          <div class="history-text">
+            <div class="ht-date" style="color:var(--green-deep);font-weight:700">${monthLabelStr(mk)}</div>
+            <div class="ht-title">${weeksInMonth}/4 weeks earned ✅</div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      monthlyCard.style.display = 'none';
+    }
+  }
 }
 
 /* ── ROUTINE ──────────────────────────────────────────────── */
@@ -2423,9 +2456,86 @@ function renderDailyRoutine() {
   updateProgress();
 }
 
+// ── ROUTINE UNLOCK BANNER ─────────────────────────────────────
+function routineUnlockBannerHTML(tab) {
+  const isPaid = getTrialInfo().isPaid;
+
+  if (tab === 'weekly') {
+    const totalLogged  = getTotalDaysLogged();
+    const thisWeek     = daysLoggedInCurrentWeek();
+    const weeksEarned  = getCompletedWeeks().length;
+    const unlocked     = totalLogged >= 7;
+    const bgColor      = unlocked ? 'var(--green-mist)' : 'var(--warm-amber-lt)';
+    const borderColor  = unlocked ? 'var(--green-mid)' : 'var(--warm-amber)';
+    const icon         = unlocked ? '✅' : '🔓';
+    const statusText   = unlocked
+      ? `Weekly routines unlocked! (${weeksEarned} week${weeksEarned!==1?'s':''} earned)`
+      : `Unlock after 7 days logged (${totalLogged}/7 days logged)`;
+    const subText = unlocked
+      ? (isPaid ? 'You can mark and save your weekly progress below.' : 'Upgrade to Basic or Premium to mark and save.')
+      : 'Keep logging daily — this tab unlocks automatically.';
+    const progressBar = !unlocked
+      ? `<div style="background:rgba(0,0,0,0.08);border-radius:99px;height:6px;overflow:hidden;margin-top:10px">
+           <div style="width:${Math.min(100, Math.round(totalLogged/7*100))}%;height:100%;background:var(--warm-amber);border-radius:99px;transition:width 0.4s ease"></div>
+         </div>`
+      : `<div style="margin-top:8px;font-size:12px;color:var(--green-soft)">This week: ${thisWeek}/7 days logged</div>`;
+    return `<div style="background:${bgColor};border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;border-left:4px solid ${borderColor}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:16px">${icon}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green-deep)">${statusText}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-soft)">${subText}</div>
+      ${progressBar}
+    </div>`;
+  }
+
+  if (tab === 'monthly') {
+    const completedWks  = getCompletedWeeks().length;
+    const thisMonthWks  = completedWeeksThisMonth();
+    const monthsEarned  = getCompletedMonths().length;
+    const unlocked      = completedWks >= 4;
+    const bgColor       = unlocked ? 'var(--green-mist)' : 'var(--warm-amber-lt)';
+    const borderColor   = unlocked ? 'var(--green-mid)' : 'var(--warm-amber)';
+    const icon          = unlocked ? '✅' : '🔓';
+    const statusText    = unlocked
+      ? `Monthly routines unlocked! (${monthsEarned} month${monthsEarned!==1?'s':''} earned)`
+      : `Unlock after 4 weeks earned (${completedWks}/4 weeks earned)`;
+    const subText = unlocked
+      ? (isPaid ? 'You can mark and save your monthly progress below.' : 'Upgrade to Basic or Premium to mark and save.')
+      : 'Complete 4 full weekly routines — this tab unlocks automatically.';
+    const progressBar = !unlocked
+      ? `<div style="background:rgba(0,0,0,0.08);border-radius:99px;height:6px;overflow:hidden;margin-top:10px">
+           <div style="width:${Math.min(100, Math.round(completedWks/4*100))}%;height:100%;background:var(--warm-amber);border-radius:99px;transition:width 0.4s ease"></div>
+         </div>`
+      : `<div style="margin-top:8px;font-size:12px;color:var(--green-soft)">This month: ${thisMonthWks}/4 weeks completed</div>`;
+    return `<div style="background:${bgColor};border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;border-left:4px solid ${borderColor}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:16px">${icon}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green-deep)">${statusText}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-soft)">${subText}</div>
+      ${progressBar}
+    </div>`;
+  }
+  return '';
+}
+
+function renderRoutineUnlockBanner(tab) {
+  const bannerId = 'routine-unlock-banner-' + tab;
+  const el = document.getElementById(bannerId);
+  if (el) el.outerHTML = routineUnlockBannerHTML(tab).replace('>', ` id="${bannerId}">`);
+}
+
 function renderWeeklyRoutine() {
-  if (!isPremium() && getTrialInfo().isExpired) {
-    document.getElementById('routine-weekly').innerHTML = premiumBlock('Weekly Progress Tracker', 'Track your weekly hair health summary, treatment consistency, photos, improvements and nutrition.');
+  const { isExpired, isPaid } = getTrialInfo();
+  // All users see the content; only paid users can save (lock handled per-item)
+  // If trial expired AND not paid, show lock screen
+  if (isExpired && !isPaid) {
+    const totalLogged = getTotalDaysLogged();
+    const weeksEarned = getCompletedWeeks().length;
+    document.getElementById('routine-weekly').innerHTML =
+      `<div id="routine-unlock-banner-weekly">${routineUnlockBannerHTML('weekly')}</div>` +
+      premiumBlock('Weekly Progress Tracker', 'Track your weekly hair health summary, treatment consistency, photos, improvements and nutrition. Upgrade to unlock saving your progress.');
     return;
   }
   const wk = weekKey();
@@ -2470,6 +2580,7 @@ function renderWeeklyRoutine() {
   }
 
   document.getElementById('routine-weekly').innerHTML = `
+    <div id="routine-unlock-banner-weekly">${routineUnlockBannerHTML('weekly')}</div>
 
     <!-- Header -->
     <div style="background:var(--green-mist);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
@@ -2606,8 +2717,11 @@ function renderWeeklyRoutine() {
 }
 
 function renderMonthlyRoutine() {
-  if (!isPremium() && getTrialInfo().isExpired) {
-    document.getElementById('routine-monthly').innerHTML = premiumBlock('Monthly Comprehensive Assessment', 'Track physical changes, treatment effectiveness, emotional wellbeing, lifestyle and set monthly goals.');
+  const { isExpired, isPaid } = getTrialInfo();
+  if (isExpired && !isPaid) {
+    document.getElementById('routine-monthly').innerHTML =
+      `<div id="routine-unlock-banner-monthly">${routineUnlockBannerHTML('monthly')}</div>` +
+      premiumBlock('Monthly Comprehensive Assessment', 'Track physical changes, treatment effectiveness, emotional wellbeing, lifestyle and set monthly goals. Upgrade to unlock saving your progress.');
     return;
   }
   const mk = monthKey();
@@ -2635,6 +2749,7 @@ function renderMonthlyRoutine() {
   const monthName = new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'});
 
   document.getElementById('routine-monthly').innerHTML = `
+    <div id="routine-unlock-banner-monthly">${routineUnlockBannerHTML('monthly')}</div>
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:16px;margin-bottom:16px;color:white">
@@ -2796,6 +2911,80 @@ function weekLabel() {
 function monthKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// ── ROUTINE–TRACKER HELPERS ──────────────────────────────────
+
+// Total unique days logged
+function getTotalDaysLogged() {
+  return Object.keys(load('logs', {})).length;
+}
+
+// Per-week log counts across all history
+function getWeeklyLogStats() {
+  const logs = load('logs', {});
+  const weekStats = {};
+  Object.keys(logs).forEach(dateStr => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const start = new Date(d);
+    start.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Mon
+    const wk = dateKey(start);
+    if (!weekStats[wk]) weekStats[wk] = { count: 0 };
+    weekStats[wk].count++;
+  });
+  return weekStats;
+}
+
+// Weeks where user logged all 7 days
+function getCompletedWeeks() {
+  const stats = getWeeklyLogStats();
+  return Object.entries(stats)
+    .filter(([, s]) => s.count >= 7)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+// Months where 4+ calendar weeks were fully completed
+function getCompletedMonths() {
+  const completed = getCompletedWeeks();
+  const counts = {};
+  completed.forEach(([wk]) => {
+    const mk = wk.slice(0, 7);
+    counts[mk] = (counts[mk] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .filter(([, c]) => c >= 4)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+// Human-friendly labels
+function weekStartLabel(wkKey) {
+  const d = new Date(wkKey + 'T12:00:00');
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+function monthLabelStr(mk) {
+  const [y, m] = mk.split('-');
+  return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+}
+
+// Days logged inside a specific calendar week (for weekly banner)
+function daysLoggedInCurrentWeek() {
+  const logs = load('logs', {});
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  let count = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    if (logs[dateKey(d)]) count++;
+  }
+  return count;
+}
+
+// Completed weeks inside the current calendar month
+function completedWeeksThisMonth() {
+  const mk = monthKey();
+  return getCompletedWeeks().filter(([wk]) => wk.slice(0, 7) === mk).length;
 }
 
 function saveWeekly(group, value, el, isRadio) {
@@ -3204,39 +3393,54 @@ function _renderPricingUI() {
 }
 
 /* ── EBOOK DOWNLOAD ───────────────────────────────────────── */
-// Returns true if user is on premium annual (gets download privilege)
+
+// Free users who bought the ebook get download access (they own it outright).
+// Basic plan users get view-only (they can cancel the plan, so no permanent download).
+// Premium annual users get download. Premium monthly users get view-only.
+
+function hasEbookPurchased() {
+  return load('ebook_purchased', false) === true;
+}
+
 function isPremiumAnnual() {
   if (currentPlan !== 'premium') return false;
   const expiry = load('plan_expiry', null);
   if (!expiry) return false;
-  // Annual plan expiry is ~365 days, monthly is ~30 days
   const daysLeft = Math.floor((new Date(expiry) - new Date()) / 86400000);
   return daysLeft > 60; // more than 60 days = annual plan
 }
 
-// Open ebook — view-only for all except premium annual
+// Open ebook with appropriate link
 function openEbook() {
-  const link = isPremiumAnnual() ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
-  window.open(link, '_blank');
+  const canDownload = isPremiumAnnual() || hasEbookPurchased();
+  window.open(canDownload ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK, '_blank');
 }
 
 function handleEbookDownload() {
   const plan = getUserPlan();
 
+  // Premium — annual gets download, monthly gets view-only
   if (plan === 'premium') {
-    openEbook(); // annual = download, monthly = view-only
+    openEbook();
     return;
   }
 
+  // Free user who already bought the ebook → download directly, no paywall
+  if (plan !== 'basic' && hasEbookPurchased()) {
+    window.open(EBOOK_DOWNLOAD_LINK, '_blank');
+    return;
+  }
+
+  // Basic plan user — view-only access (plan can be cancelled, so no permanent download)
   if (plan === 'basic') {
     showEbookOffer('Recovery Ebook', '₹2,499', '$29', 'razorpay:ebook_basic',
-      '📖 View-only access • Upgrade to Premium Annual to download forever');
+      '📖 View-only access while on Basic plan • Upgrade to Premium Annual for permanent download');
     return;
   }
 
-  // Free user — full price
+  // Free user who hasn't bought yet — show offer (they get download on purchase)
   showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free',
-    '📖 View-only access • Upgrade to Premium Annual to download forever');
+    '📥 One-time purchase — download & keep forever, no subscription needed');
 }
 
 function showEbookOffer(title, inrPrice, usdPrice, link, note) {
@@ -3288,6 +3492,8 @@ function renderProfile() {
       ebookSub.textContent = 'Included in your Premium plan ✅';
     } else if (plan === 'basic') {
       ebookSub.textContent = 'Upgrade to Premium to get it FREE';
+    } else if (hasEbookPurchased()) {
+      ebookSub.textContent = 'Purchased ✅ — tap to download';
     } else {
       ebookSub.textContent = '260 pages — complete recovery guide';
     }
@@ -3580,9 +3786,7 @@ function showWelcomeModal() {
         style="width:100%;padding:12px;background:none;color:#9db5a6;border-radius:14px;font-size:14px;cursor:pointer">
         Skip for now — explore as guest
       </button>
-      <div style="text-align:center;margin-top:12px;font-size:11px;color:#c8d8d0">
-        Free forever • No credit card needed
-      </div>
+
     </div>`;
   document.body.appendChild(modal);
 }
@@ -3611,11 +3815,11 @@ function handlePlanClick(link, planName, isIntl) {
     return;
   }
 
-  // Premium — monthly uses subscription, annual uses one-time
+  // Premium — monthly or annual, both use one-time payment
   if (!annual) {
     showPremiumRecurringConfirm(planKey, planName, intl);
   } else {
-    payWithRazorpay(planKey, planName);
+    payWithRazorpay(planKey, planName, intl);
   }
 }
 
@@ -3632,7 +3836,7 @@ function showPremiumRecurringConfirm(planKey, planName, intl) {
         <div style="font-size:13px;color:var(--text-soft);margin-bottom:4px">You're signing up for</div>
         <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--green-deep)">Premium Plan ⭐</div>
         <div style="font-size:14px;color:var(--text-mid);margin-top:4px">${price}</div>
-        <div style="display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;border-radius:99px;padding:4px 12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--green-deep)">🔄 Auto-renews every month • Cancel anytime</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;border-radius:99px;padding:4px 12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--green-deep)">✅ One-time monthly payment • No auto-debit</div>
       </div>
 
       <div style="background:var(--green-mist);border-radius:12px;padding:14px 16px;margin-bottom:16px">
@@ -3647,8 +3851,8 @@ function showPremiumRecurringConfirm(planKey, planName, intl) {
       </div>
 
       <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:16px;line-height:1.6">
-        ⚠️ By continuing, you agree to a <b>monthly recurring charge</b> of ${price}.<br>
-        Your card will be auto-debited every month. Cancel anytime from your profile.
+        One-time payment of ${price} for 1 month of Premium access.<br>
+        Renew anytime. No surprise charges.
       </div>
 
       <button onclick="document.getElementById('order-bump-modal').remove(); subscribeWithRazorpay('${planKey}','${planName}',${intl})"
@@ -3841,11 +4045,11 @@ function processOrderBump(planKey, isAnnual, isIntl) {
   } else {
     // Plan only
     if (!annual) {
-      // Monthly = subscription (recurring)
+      // Monthly = one-time payment (subscriptions require server-side secret key)
       subscribeWithRazorpay(planKey, 'basic', intl);
     } else {
       // Annual = one-time payment
-      payWithRazorpay(planKey, 'basic');
+      payWithRazorpay(planKey, 'basic', intl);
     }
   }
   _ebookSelected = false;
@@ -3976,7 +4180,7 @@ function breathAnimate(timestamp) {
         const cl = document.getElementById('breath-count');
         if (pl) pl.textContent = 'Well done! 🌿';
         if (cl) cl.textContent = '✓';
-        showToast('5-min breathing done! Cortisol down, you got this 🌿');
+        showToast('Box breathing complete! Cortisol down, you got this 🌿');
         return;
       }
     }
@@ -4025,21 +4229,24 @@ function stopBreathing() {
   if (fill)  { fill.style.transform = 'scale(0.3)'; fill.style.background = 'rgba(255,255,255,0.08)'; }
   if (phase) phase.textContent = 'TAP START';
   if (count) count.textContent = '4';
-  if (btn)   { btn.textContent = '🫁 Start 5-Minute Session'; btn.style.background = 'rgba(255,255,255,0.12)'; }
+  if (btn)   { btn.textContent = '🫁 Start Breathing Session'; btn.style.background = 'rgba(255,255,255,0.12)'; }
 }
 
 /* ── INIT ─────────────────────────────────────────────────── */
 initTrial();
 
 // Always show splash screen on every open
-// It stays until user clicks "Begin Your Journey"
-// (splash is visible by default in HTML)
-renderHome();
 
-// Silently restore session in background — no popup
-window.addEventListener('load', function() {
-  initAuth();
+
+// Always show splash screen on every open.
+// It stays until the user taps "Begin Journey".
+// initAuth restores Supabase session in background (if user was logged in before).
+document.addEventListener('DOMContentLoaded', function() {
+  initAuth().then(() => {
+    renderHome();
+  });
 });
+
 </script>
 </body>
 </html>
