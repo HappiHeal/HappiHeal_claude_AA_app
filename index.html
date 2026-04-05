@@ -36,7 +36,7 @@ let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -236,6 +236,7 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
         currentPlan = resolvedPlan;
         localStorage.setItem('hh_user_plan', resolvedPlan);
         localStorage.setItem('hh_plan_expiry', expiry.toISOString());
+        localStorage.setItem('hh_plan_type', isAnnual ? 'annual' : 'monthly');
         showToast('Payment successful! Welcome to ' + resolvedPlan + ' plan 🎉');
         goTo('home');
         renderHome();
@@ -1399,7 +1400,7 @@ IMPORTANT RULES:
     <!-- Trial countdown banner -->
     <div id="trial-banner" style="display:none;background:linear-gradient(135deg,#fff8e6,#fdf3e3);border-bottom:1px solid var(--warm-amber);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px">
       <div>
-        <div style="font-size:12px;font-weight:700;color:#a06010">⏳ FREE TRIAL</div>
+        <div style="font-size:12px;font-weight:700;color:#a06010" id="trial-label">⏳ FREE TRIAL</div>
         <div style="font-size:13px;color:var(--text-mid)" id="trial-text">3 days remaining</div>
       </div>
       <button onclick="goTo('pricing')" style="background:var(--warm-amber);color:white;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;white-space:nowrap">Upgrade →</button>
@@ -2042,11 +2043,13 @@ function renderHome() {
     // Premium users — no banner at all
     banner.style.display = 'none';
   } else if (plan === 'basic') {
-    // Basic users — gentle upgrade nudge
+    // Basic users — gentle green upgrade nudge, no "FREE TRIAL" text
     banner.style.display = 'flex';
     banner.style.background = 'linear-gradient(135deg,#edf7f0,#d4f0df)';
     banner.style.borderBottomColor = 'var(--green-pale)';
-    document.getElementById('trial-text').textContent = 'Unlock all 7 modules with Premium 🌿';
+    const lbl = document.getElementById('trial-label');
+    if (lbl) { lbl.textContent = '🌿 BASIC PLAN'; lbl.style.color = 'var(--green-deep)'; }
+    document.getElementById('trial-text').textContent = 'Unlock all 7 modules with Premium';
     const btn = banner.querySelector('button');
     if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = 'var(--green-mid)'; }
   } else if (!isPaid) {
@@ -2054,12 +2057,14 @@ function renderHome() {
     banner.style.display = 'flex';
     banner.style.background = 'linear-gradient(135deg,#fff8e6,#fdf3e3)';
     banner.style.borderBottomColor = 'var(--warm-amber)';
+    const lbl = document.getElementById('trial-label');
+    if (lbl) { lbl.textContent = '⏳ FREE TRIAL'; lbl.style.color = '#a06010'; }
     if (isExpired) {
       document.getElementById('trial-text').textContent = 'Your free trial has ended';
       banner.style.background = 'linear-gradient(135deg,#fde8e8,#fdf0f0)';
       banner.style.borderBottomColor = '#d85a5a';
       const btn = banner.querySelector('button');
-      if (btn) btn.style.background = '#d85a5a';
+      if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = '#d85a5a'; }
     } else {
       document.getElementById('trial-text').textContent =
         daysLeft === 1 ? 'Last day of free trial!' : `${daysLeft} days of free trial remaining`;
@@ -3678,8 +3683,14 @@ function renderProfile() {
     const expiryStr = expiryDate
       ? expiryDate.toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})
       : 'Active';
-    const isAnnualPlan = daysRemaining && daysRemaining > 60;
-    const renewalNote = isAnnualPlan ? '365-day annual plan' : '30-day monthly plan';
+    // Use stored plan type — basic is always monthly, premium can be monthly or annual
+    const storedType = localStorage.getItem('hh_plan_type');
+    const isAnnualPlan = plan === 'basic' ? false
+                       : storedType === 'annual' ? true
+                       : daysRemaining && daysRemaining > 60;
+    const renewalNote = plan === 'basic' ? '30-day monthly plan · renew each month'
+                      : isAnnualPlan ? '365-day annual plan'
+                      : '30-day monthly plan';
     const urgencyColor = daysRemaining <= 5 ? '#d85a5a' : daysRemaining <= 10 ? '#c07010' : 'var(--green-mid)';
     const features = planFeatures[plan] || [];
 
@@ -3710,7 +3721,10 @@ function renderProfile() {
       <div style="padding:14px;background:#fde8e8;border-radius:var(--radius-md);border-left:4px solid #d85a5a">
         <div style="font-size:14px;font-weight:700;color:#a33">⏰ Free Trial Expired</div>
         <div style="font-size:12px;color:#c55;margin-top:4px">Your 3-day trial ended. Upgrade to continue your healing journey.</div>
-      </div>`;
+      </div>
+      <button onclick="goTo('pricing')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
+        🌿 View Plans & Upgrade
+      </button>`;
   } else {
     const installDate = new Date(load('install_date', new Date().toISOString()));
     const expiryDate = new Date(installDate);
@@ -3721,7 +3735,10 @@ function renderProfile() {
         <div style="font-size:14px;font-weight:700;color:#a06010">⏳ Free Trial — ${daysLeft} day${daysLeft!==1?'s':''} left</div>
         <div style="font-size:12px;color:#c07010;margin-top:4px">Trial expires: ${expiryStr}</div>
         <div style="font-size:12px;color:var(--text-soft);margin-top:6px">Enjoying the app? Upgrade before your trial ends to keep your streak going! 🌿</div>
-      </div>`;
+      </div>
+      <button onclick="goTo('pricing')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
+        🌿 View Plans & Upgrade
+      </button>`;
   }
 
   // Show sign in / sign out button in profile
@@ -4028,7 +4045,7 @@ function showPremiumRecurringConfirm(planKey, planName, intl) {
         <div style="font-size:13px;color:var(--text-soft);margin-bottom:4px">You're signing up for</div>
         <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--green-deep)">Premium Plan ⭐</div>
         <div style="font-size:14px;color:var(--text-mid);margin-top:4px">${price}</div>
-        <div style="display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;border-radius:99px;padding:4px 12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--green-deep)">✅ One-time monthly payment • No auto-debit</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;border-radius:99px;padding:4px 12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--green-deep)">🔄 Monthly plan — renews every 30 days</div>
       </div>
 
       <div style="background:var(--green-mist);border-radius:12px;padding:14px 16px;margin-bottom:16px">
@@ -4043,8 +4060,8 @@ function showPremiumRecurringConfirm(planKey, planName, intl) {
       </div>
 
       <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:16px;line-height:1.6">
-        One-time payment of ${price} for 1 month of Premium access.<br>
-        Renew anytime. No surprise charges.
+        Pay ${price} for 30 days of Premium access.<br>
+        To keep access, pay again each month. No automatic charges.
       </div>
 
       <button onclick="document.getElementById('order-bump-modal').remove(); subscribeWithRazorpay('${planKey}','${planName}',${intl})"
