@@ -36,7 +36,7 @@ let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -126,12 +126,30 @@ async function loadUserPlan(user) {
   // First try localStorage (instant, no network)
   const savedPlan = localStorage.getItem('hh_user_plan');
   if (savedPlan) currentPlan = savedPlan;
-  // Then update from Supabase in background
+  // Then update from Supabase — fetch plan AND expiry together
   try {
-    const { data } = await getSupabase().from('profiles').select('plan').eq('id', user.id).single();
-    if (data && data.plan) {
-      currentPlan = data.plan;
-      localStorage.setItem('hh_user_plan', data.plan);
+    const { data } = await getSupabase()
+      .from('profiles')
+      .select('plan, plan_expiry')
+      .eq('id', user.id)
+      .single();
+    if (data) {
+      let activePlan = data.plan || 'free';
+      // If plan has an expiry, check it hasn't passed
+      if (data.plan_expiry && (activePlan === 'basic' || activePlan === 'premium')) {
+        const expired = new Date(data.plan_expiry) < new Date();
+        if (expired) {
+          activePlan = 'free';
+          // Update Supabase so it stays in sync
+          try {
+            await getSupabase().from('profiles')
+              .update({ plan: 'free', plan_expiry: null })
+              .eq('id', user.id);
+          } catch(e) {}
+        }
+      }
+      currentPlan = activePlan;
+      localStorage.setItem('hh_user_plan', activePlan);
     }
   } catch(e) {}
 }
@@ -196,8 +214,10 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
                            : planKey.startsWith('premium') ? 'premium'
                            : planName;
         const isAnnual = planKey.includes('annual');
+        // Exact days from payment date — never rounded to month end
+        // Monthly = 30 days from today, Annual = 365 days from today
         const expiry = new Date();
-        expiry.setMonth(expiry.getMonth() + (isAnnual ? 12 : 1));
+        expiry.setDate(expiry.getDate() + (isAnnual ? 365 : 30));
         try {
           await getSupabase().from('profiles').update({
             plan: resolvedPlan,
@@ -209,6 +229,7 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
         }
         currentPlan = resolvedPlan;
         localStorage.setItem('hh_user_plan', resolvedPlan);
+        localStorage.setItem('hh_plan_expiry', expiry.toISOString());
         showToast('Payment successful! Welcome to ' + resolvedPlan + ' plan 🎉');
         goTo('home');
         renderHome();
@@ -1796,6 +1817,7 @@ IMPORTANT RULES:
       <div class="profile-avatar">🌿</div>
       <div class="profile-name" id="profile-name">Welcome!</div>
       <div class="profile-plan"><span id="profile-plan-badge">Free Trial</span> • <span id="profile-streak">0</span> day streak 🔥</div>
+      <div id="profile-expiry-hero" style="margin-top:8px;font-size:12px;opacity:0.75;display:none"></div>
     </div>
     <div class="profile-content">
 
@@ -1804,9 +1826,6 @@ IMPORTANT RULES:
         <div class="section-title">⭐ My Plan</div>
         <div id="plan-status-card"></div>
         <div id="profile-auth-btn" style="margin-top:12px"></div>
-        <div style="margin-top:16px;display:flex;gap:10px">
-          <button class="btn btn-primary" onclick="goTo('pricing')" style="font-size:13px;padding:11px">View All Plans</button>
-        </div>
       </div>
 
       <div class="founder-card">
@@ -3582,11 +3601,31 @@ function renderProfile() {
 
   const { daysLeft, isPaid, isExpired, plan, daysPassed } = getTrialInfo();
 
-  // Plan badge
-  const planNames = { trial: 'Free Trial', basic: 'Basic Plan', premium: 'Premium Plan' };
-  const ppb = document.getElementById('profile-plan-badge'); if (ppb) ppb.textContent = planNames[plan] || 'Free Trial';
+  // Plan badge in hero
+  const planNames = { trial: 'Free Trial', free: 'Free Plan', basic: 'Basic Plan', premium: 'Premium Plan' };
+  const ppb = document.getElementById('profile-plan-badge');
+  if (ppb) ppb.textContent = planNames[plan] || 'Free Trial';
 
-  // Ebook subtitle hint in menu (no price shown — appears after click)
+  // Expiry line in hero
+  const heroExpiry = document.getElementById('profile-expiry-hero');
+  if (heroExpiry) {
+    if (isPaid) {
+      const expiryRaw = load('plan_expiry', null) || localStorage.getItem('hh_plan_expiry');
+      if (expiryRaw) {
+        const expiryDate = new Date(expiryRaw);
+        const daysRemaining = Math.max(0, Math.ceil((expiryDate - new Date()) / 86400000));
+        const expiryStr = expiryDate.toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+        heroExpiry.style.display = 'block';
+        heroExpiry.textContent = `Active until ${expiryStr} · ${daysRemaining} day${daysRemaining!==1?'s':''} remaining`;
+      } else {
+        heroExpiry.style.display = 'none';
+      }
+    } else {
+      heroExpiry.style.display = 'none';
+    }
+  }
+
+  // Ebook subtitle hint in menu
   const ebookSub = document.getElementById('ebook-menu-sub');
   if (ebookSub) {
     if (plan === 'premium') {
@@ -3600,20 +3639,48 @@ function renderProfile() {
     }
   }
 
+  // Plan features per plan
+  const planFeatures = {
+    basic: ['Unlimited AI coach questions','Full daily checklist & routines','Weekly & monthly routine planner','Progress tracker','Email support'],
+    premium: ['Everything in Basic','All 7 modules fully unlocked','Full Recovery Ebook FREE','Personalized recovery plan','Priority email support'],
+  };
+
   // Plan status card
   const planCard = document.getElementById('plan-status-card');
   if (isPaid) {
-    const expiry = load('plan_expiry', null);
-    const expiryStr = expiry ? new Date(expiry).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : 'Active';
+    const expiryRaw = load('plan_expiry', null) || localStorage.getItem('hh_plan_expiry');
+    const expiryDate = expiryRaw ? new Date(expiryRaw) : null;
+    const daysRemaining = expiryDate ? Math.max(0, Math.ceil((expiryDate - new Date()) / 86400000)) : null;
+    const expiryStr = expiryDate
+      ? expiryDate.toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})
+      : 'Active';
+    const isAnnualPlan = daysRemaining && daysRemaining > 60;
+    const renewalNote = isAnnualPlan ? '365-day annual plan' : '30-day monthly plan';
+    const urgencyColor = daysRemaining <= 5 ? '#d85a5a' : daysRemaining <= 10 ? '#c07010' : 'var(--green-mid)';
+    const features = planFeatures[plan] || [];
+
     planCard.innerHTML = `
-      <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--green-mist);border-radius:var(--radius-md)">
-        <div style="font-size:32px">⭐</div>
-        <div>
-          <div style="font-size:16px;font-weight:700;color:var(--green-deep)">${planNames[plan]}</div>
-          <div style="font-size:12px;color:var(--text-soft);margin-top:2px">Active until: ${expiryStr}</div>
-          <div style="font-size:12px;color:var(--green-soft);margin-top:2px">✅ Full access unlocked</div>
+      <div style="background:var(--green-mist);border-radius:var(--radius-md);padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--green-deep)">${planNames[plan]} ⭐</div>
+            <div style="font-size:11px;color:var(--text-soft);margin-top:2px">${renewalNote}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:20px;font-weight:700;color:${urgencyColor}">${daysRemaining ?? '—'}</div>
+            <div style="font-size:10px;color:var(--text-muted)">days left</div>
+          </div>
         </div>
-      </div>`;
+        <div style="background:white;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:4px">EXPIRES ON</div>
+          <div style="font-size:14px;font-weight:700;color:var(--green-deep)">${expiryStr}</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);margin-bottom:6px">WHAT'S INCLUDED</div>
+        ${features.map(f => `<div style="font-size:12px;color:var(--text-mid);padding:3px 0;display:flex;align-items:center;gap:6px"><span style="color:var(--green-mid)">✓</span>${f}</div>`).join('')}
+      </div>
+      <button onclick="goTo('pricing')" style="width:100%;padding:10px;background:transparent;border:1.5px solid var(--green-pale);border-radius:var(--radius-md);font-size:13px;font-weight:600;color:var(--green-mid);cursor:pointer">
+        🔄 Renew / Change Plan
+      </button>`;
   } else if (isExpired) {
     planCard.innerHTML = `
       <div style="padding:14px;background:#fde8e8;border-radius:var(--radius-md);border-left:4px solid #d85a5a">
@@ -4171,8 +4238,9 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
     theme: { color: '#3d6b4f' },
     handler: async function(response) {
       if (!ebookOnly) {
+        // Exact days from payment date — monthly = 30 days, annual = 365 days
         const expiry = new Date();
-        expiry.setMonth(expiry.getMonth() + (label.includes('year') ? 12 : 1));
+        expiry.setDate(expiry.getDate() + (label.includes('year') ? 365 : 30));
         try {
           await getSupabase().from('profiles').update({
             plan: planName,
