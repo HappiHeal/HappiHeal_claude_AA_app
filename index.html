@@ -31,8 +31,12 @@ function getSupabase() {
 let currentUser = null;
 let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 
+// ── ANTHROPIC API KEY ─────────────────────────────────────────
+// Get yours free at: console.anthropic.com → API Keys → Create Key
+const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
+
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -1716,6 +1720,10 @@ IMPORTANT RULES:
             <div id="checklist-bar" style="height:100%;background:linear-gradient(90deg,var(--green-soft),var(--green-mid));border-radius:99px;width:0%;transition:width 0.4s ease"></div>
           </div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:8px;text-align:center" id="checklist-msg">Start checking off your routine 🌱</div>
+          <button onclick="saveDailyRoutine()" id="save-daily-btn" style="width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
+            ✅ Save Today's Routine
+          </button>
+          <div id="save-daily-msg" style="font-size:12px;color:var(--green-soft);text-align:center;margin-top:8px;display:none">Routine saved! Keep going 🌿</div>
         </div>
       </div>
 
@@ -2120,7 +2128,11 @@ async function sendChat() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'Authorization': 'Bearer ' + ANTHROPIC_API_KEY,
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -2540,6 +2552,12 @@ function renderWeeklyRoutine() {
   }
   const wk = weekKey();
   const w = load('weekly_'+wk, {});
+  const weeklyUnlocked = getTotalDaysLogged() >= 7;
+  const wLockedOverlay = !weeklyUnlocked
+    ? `<div style="position:absolute;inset:0;z-index:5;cursor:not-allowed;border-radius:12px"
+         onclick="showToast('Log 7 daily routines first to unlock weekly tracking 🌿')"></div>
+       <div style="position:absolute;inset:0;background:rgba(255,255,255,0.55);z-index:4;border-radius:12px;pointer-events:none"></div>`
+    : '';
 
   function wRadio(group, options, saved) {
     return options.map(o => {
@@ -2580,6 +2598,8 @@ function renderWeeklyRoutine() {
   }
 
   document.getElementById('routine-weekly').innerHTML = `
+  <div style="position:relative">
+    ${wLockedOverlay}
     <div id="routine-unlock-banner-weekly">${routineUnlockBannerHTML('weekly')}</div>
 
     <!-- Header -->
@@ -2713,6 +2733,12 @@ function renderWeeklyRoutine() {
         placeholder="Anything else to note this week?"
         oninput="saveWeeklyVal('notes',this.value)">${w.notes||''}</textarea>
     </div>
+
+    <!-- Save button -->
+    <button onclick="saveWeeklyRoutine()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:24px">
+      ✅ Save This Week's Progress
+    </button>
+  </div>
   `;
 }
 
@@ -2726,6 +2752,12 @@ function renderMonthlyRoutine() {
   }
   const mk = monthKey();
   const m = load('monthly_'+mk, {});
+  const monthlyUnlocked = getCompletedWeeks().length >= 4;
+  const mLockedOverlay = !monthlyUnlocked
+    ? `<div style="position:absolute;inset:0;z-index:5;cursor:not-allowed;border-radius:12px"
+         onclick="showToast('Earn 4 completed weeks first to unlock monthly tracking 🌿')"></div>
+       <div style="position:absolute;inset:0;background:rgba(255,255,255,0.55);z-index:4;border-radius:12px;pointer-events:none"></div>`
+    : '';
 
   function mRadio(group, options, saved, cols) {
     return `<div style="display:flex;flex-direction:column;gap:0">` +
@@ -2749,6 +2781,8 @@ function renderMonthlyRoutine() {
   const monthName = new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'});
 
   document.getElementById('routine-monthly').innerHTML = `
+  <div style="position:relative">
+    ${mLockedOverlay}
     <div id="routine-unlock-banner-monthly">${routineUnlockBannerHTML('monthly')}</div>
 
     <!-- Header -->
@@ -2893,6 +2927,12 @@ function renderMonthlyRoutine() {
           oninput="saveMonthlyVal('goal_${n}',this.value)"/>
       </div>`).join('')}
     </div>
+
+    <!-- Save button -->
+    <button onclick="saveMonthlyRoutine()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:24px">
+      ✅ Save This Month's Progress
+    </button>
+  </div>
   `;
 }
 
@@ -3131,8 +3171,69 @@ function updateProgress() {
   }
 }
 
-function toggleStep(el) {
-  el.classList.toggle('done');
+function saveDailyRoutine() {
+  const today = dateKey(new Date());
+  const saved = load('checklist_'+today, {});
+  // Count completion %
+  let total = 0, done = 0;
+  CONTENT.checklistSections.forEach(s => {
+    if (s.isGlasses) { total += s.target; done += Math.min(saved['glasses']||0, s.target); }
+    else s.items.forEach(item => { total++; if (saved[item.id]) done++; });
+  });
+  total += CONTENT.gingerSteps.length;
+  document.querySelectorAll('#ginger-step-list .step-item.done').forEach(() => done++);
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+
+  // Save into today's log entry (so tracker picks it up)
+  const logs = load('logs', {});
+  if (!logs[today]) logs[today] = { ts: Date.now() };
+  logs[today].routinePct = pct;
+  logs[today].routineSaved = true;
+  save('logs', logs);
+
+  // Visual feedback
+  const btn = document.getElementById('save-daily-btn');
+  const msg = document.getElementById('save-daily-msg');
+  if (btn) { btn.textContent = '✅ Saved!'; btn.style.background = 'var(--green-soft)'; setTimeout(() => { btn.textContent = '✅ Save Today\'s Routine'; btn.style.background = 'linear-gradient(135deg,var(--green-mid),var(--green-deep))'; }, 2000); }
+  if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+  showToast('Daily routine saved! 🌿');
+  renderTracker(); // update streak and tracker stats
+}
+
+function saveWeeklyRoutine() {
+  if (getTotalDaysLogged() < 7) {
+    showToast('Log 7 daily routines first to save weekly progress 🌿');
+    return;
+  }
+  const wk = weekKey();
+  const w = load('weekly_'+wk, {});
+  w._saved = true;
+  w._savedAt = new Date().toISOString();
+  save('weekly_'+wk, w);
+
+  // Mark this week's daily-avg completion for the tracker history
+  const weekStats = getWeeklyLogStats();
+  const daysLogged = weekStats[wk]?.count || 0;
+  w._dailyAvg = daysLogged >= 7 ? 100 : Math.round((daysLogged/7)*100);
+  save('weekly_'+wk, w);
+
+  showToast('Week saved! Your progress is recorded 📆');
+  renderTracker(); // refresh weeks-earned stat
+}
+
+function saveMonthlyRoutine() {
+  if (getCompletedWeeks().length < 4) {
+    showToast('Earn 4 completed weeks first to save monthly progress 🌿');
+    return;
+  }
+  const mk = monthKey();
+  const m = load('monthly_'+mk, {});
+  m._saved = true;
+  m._savedAt = new Date().toISOString();
+  save('monthly_'+mk, m);
+
+  showToast('Month saved! Incredible consistency 🗓️🎉');
+  renderTracker(); // refresh months-earned stat
 }
 
 let timerMax = 15*60;
