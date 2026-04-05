@@ -36,7 +36,7 @@ let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -125,7 +125,7 @@ async function loadUserPlan(user) {
   currentUser = user;
   // First try localStorage (instant, no network)
   const savedPlan = localStorage.getItem('hh_user_plan');
-  if (savedPlan) currentPlan = savedPlan;
+  if (savedPlan && savedPlan !== 'free') currentPlan = savedPlan;
   // Then update from Supabase — fetch plan AND expiry together
   try {
     const { data } = await getSupabase()
@@ -140,16 +140,22 @@ async function loadUserPlan(user) {
         const expired = new Date(data.plan_expiry) < new Date();
         if (expired) {
           activePlan = 'free';
-          // Update Supabase so it stays in sync
           try {
             await getSupabase().from('profiles')
               .update({ plan: 'free', plan_expiry: null })
               .eq('id', user.id);
           } catch(e) {}
+        } else {
+          // Save expiry for profile display
+          localStorage.setItem('hh_plan_expiry', data.plan_expiry);
         }
       }
       currentPlan = activePlan;
       localStorage.setItem('hh_user_plan', activePlan);
+      // Re-render any visible screens so paid plan shows immediately
+      if (state.currentScreen === 'home')    renderHome();
+      if (state.currentScreen === 'profile') renderProfile();
+      if (state.currentScreen === 'learn')   renderLearn();
     }
   } catch(e) {}
 }
@@ -1935,17 +1941,20 @@ function initTrial() {
 }
 
 function getTrialInfo() {
+  // Always use currentPlan global — it's the most up-to-date value
+  // (set from Supabase in loadUserPlan, falls back to localStorage)
+  const plan = currentPlan || localStorage.getItem('hh_user_plan') || 'free';
+  const isPaid = plan === 'basic' || plan === 'premium';
+
   const installStr = load('install_date', null);
   if (!installStr) {
-    // Hasn't accepted disclaimer yet — treat as fresh trial
+    if (isPaid) return { daysLeft: 0, daysPassed: 0, isPaid: true, isExpired: false, plan };
     return { daysLeft: TRIAL_DAYS, daysPassed: 0, isPaid: false, isExpired: false, plan: 'trial' };
   }
   const installed = new Date(installStr);
   const now = new Date();
   const daysPassed = Math.floor((now - installed) / (1000 * 60 * 60 * 24));
   const daysLeft = Math.max(0, TRIAL_DAYS - daysPassed);
-  const plan = load('user_plan', 'trial');
-  const isPaid = plan === 'basic' || plan === 'premium';
   const isExpired = !isPaid && daysLeft === 0;
   return { daysLeft, daysPassed, isPaid, isExpired, plan };
 }
@@ -2024,21 +2033,38 @@ function renderHome() {
   const isGinger = dayNum % 2 !== 0;
   document.getElementById('routine-type-home').textContent = isGinger ? 'Ginger juice day 🫚' : 'Oil massage day 🌿';
 
-  // Trial banner
-  const { daysLeft, isPaid, isExpired } = getTrialInfo();
+  // Trial banner logic
+  const { daysLeft, isPaid, isExpired, plan } = getTrialInfo();
   const banner = document.getElementById('trial-banner');
   if (!banner) { renderAffirmation(); return; }
-  if (!isPaid) {
+
+  if (plan === 'premium') {
+    // Premium users — no banner at all
+    banner.style.display = 'none';
+  } else if (plan === 'basic') {
+    // Basic users — gentle upgrade nudge
     banner.style.display = 'flex';
+    banner.style.background = 'linear-gradient(135deg,#edf7f0,#d4f0df)';
+    banner.style.borderBottomColor = 'var(--green-pale)';
+    document.getElementById('trial-text').textContent = 'Unlock all 7 modules with Premium 🌿';
+    const btn = banner.querySelector('button');
+    if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = 'var(--green-mid)'; }
+  } else if (!isPaid) {
+    // Free trial users
+    banner.style.display = 'flex';
+    banner.style.background = 'linear-gradient(135deg,#fff8e6,#fdf3e3)';
+    banner.style.borderBottomColor = 'var(--warm-amber)';
     if (isExpired) {
       document.getElementById('trial-text').textContent = 'Your free trial has ended';
       banner.style.background = 'linear-gradient(135deg,#fde8e8,#fdf0f0)';
       banner.style.borderBottomColor = '#d85a5a';
-      banner.querySelector('button').style.background = '#d85a5a';
+      const btn = banner.querySelector('button');
+      if (btn) btn.style.background = '#d85a5a';
     } else {
       document.getElementById('trial-text').textContent =
-        daysLeft === 1 ? 'Last day of free trial!' :
-        `${daysLeft} days of free trial remaining`;
+        daysLeft === 1 ? 'Last day of free trial!' : `${daysLeft} days of free trial remaining`;
+      const btn = banner.querySelector('button');
+      if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = 'var(--warm-amber)'; }
     }
   } else {
     banner.style.display = 'none';
@@ -3305,33 +3331,33 @@ async function getSignedUrl(bucket, filename) {
 }
 
 async function openModule(m) {
-  const plan = getUserPlan();
+  const plan = currentPlan; // always use live global, not stale getter
   showToast('Loading... please wait 🌿');
 
   // Freebie — anyone can open
   if (m.isFreebie || m.bucket === 'Freebies') {
     const url = await getSignedUrl(m.bucket, m.file);
-    if (url) openPdfViewer(m.title, url, false); // false = allow download
-    else showToast('Loading failed. Please try again 🌿');
+    if (url) openPdfViewer(m.title, url, false);
+    else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Premium modules — only premium users
-  if (!m.free) {
-    if (plan !== 'premium') {
-      showPaywall('All 7 modules are');
-      return;
-    }
+  // Free module M1 — everyone
+  if (m.free) {
     const url = await getSignedUrl(m.bucket, m.file);
-    if (url) openPdfViewer(m.title, url, true); // true = NO download
-    else showToast('Loading failed. Please try again 🌿');
+    if (url) openPdfViewer(m.title, url, false);
+    else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Free module M1
+  // Paid modules M2-M7 — premium only
+  if (plan !== 'premium') {
+    showPaywall('All 7 modules are');
+    return;
+  }
   const url = await getSignedUrl(m.bucket, m.file);
-  if (url) openPdfViewer(m.title, url, false);
-  else showToast('Loading failed. Please try again 🌿');
+  if (url) openPdfViewer(m.title, url, true); // view only for premium
+  else showToast('Unable to load. Please check your connection 🌿');
 }
 
 function openPdfViewer(title, url, noDownload) {
@@ -3345,15 +3371,13 @@ function openPdfViewer(title, url, noDownload) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#1a2e22;color:white">
       <div style="font-size:14px;font-weight:600;flex:1;margin-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${!noDownload ? `<a href="${url}" download style="background:rgba(255,255,255,0.15);color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600">⬇️ Save</a>` : '<span style="font-size:11px;color:rgba(255,255,255,0.5)">🔒 View only</span>'}
-        <button onclick="document.getElementById('pdf-viewer-overlay').remove()" 
-          style="background:rgba(255,255,255,0.15);color:white;padding:6px 12px;border-radius:8px;font-size:14px;font-weight:700">✕</button>
+        ${!noDownload ? `<a href="${url}" target="_blank" style="background:rgba(255,255,255,0.15);color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">⬇️ Save</a>` : '<span style="font-size:11px;color:rgba(255,255,255,0.5)">🔒 View only</span>'}
+        <button onclick="document.getElementById('pdf-viewer-overlay').remove()"
+          style="background:rgba(255,255,255,0.15);color:white;padding:6px 12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✕</button>
       </div>
     </div>
-    <iframe src="${url}${noDownload ? '#toolbar=0&navpanes=0' : ''}" 
-      style="flex:1;width:100%;border:none;background:white"
-      ${noDownload ? 'sandbox="allow-scripts allow-same-origin"' : ''}></iframe>
-    ${noDownload ? '<div style="text-align:center;padding:8px;background:#1a2e22;color:rgba(255,255,255,0.4);font-size:11px">🔒 This content is protected. Downloading is disabled for Premium modules.</div>' : ''}
+    <iframe src="${url}" style="flex:1;width:100%;border:none;background:white" allowfullscreen></iframe>
+    ${noDownload ? '<div style="text-align:center;padding:8px;background:#1a2e22;color:rgba(255,255,255,0.4);font-size:11px">🔒 View only — downloading is disabled for Premium modules</div>' : ''}
   `;
   document.body.appendChild(overlay);
 }
