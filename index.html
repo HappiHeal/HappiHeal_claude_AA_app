@@ -36,7 +36,7 @@ let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
+const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -3753,7 +3753,7 @@ function renderProfile() {
     } else if (ebookAccess === 'view') {
       ebookSub.textContent = 'Purchased ✅ — tap to view (Basic plan)';
     } else if (plan === 'basic') {
-      ebookSub.textContent = 'Add-on: ₹2,499 • view-only while on Basic';
+      ebookSub.textContent = 'Add-on;
     } else {
       ebookSub.textContent = '260 pages — purchase to access';
     }
