@@ -242,9 +242,13 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
         renderHome();
         renderProfile();
       } else {
+        // Ebook standalone purchase
+        const ebookType = currentPlan === 'basic' ? 'basic_addon' : 'free_owned';
+        save('ebook_access', { type: ebookType, purchasedAt: new Date().toISOString() });
         showToast('Ebook purchased! Opening your guide now 📖');
-        save('ebook_purchased', true); // free user owns ebook permanently — grant download access
-        setTimeout(() => window.open(EBOOK_DOWNLOAD_LINK, '_blank'), 1000);
+        const openLink = ebookType === 'free_owned' ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
+        setTimeout(() => window.open(openLink, '_blank'), 1000);
+        renderProfile(); // refresh menu subtitle
       }
       if (onSuccess) onSuccess();
     }
@@ -3602,8 +3606,39 @@ function _renderPricingUI() {
 // Basic plan users get view-only (they can cancel the plan, so no permanent download).
 // Premium annual users get download. Premium monthly users get view-only.
 
+// ── EBOOK ACCESS RULES ───────────────────────────────────────
+// ebook_access stored as: { type: 'free_owned' | 'basic_addon', purchasedAt: ISO }
+// free_owned  = free user paid for ebook → permanent download, plan-independent
+// basic_addon = basic user paid for ebook add-on → view-only while basic plan active
+// Premium plan = download always included, no separate purchase needed
+
+function getEbookAccess() {
+  const plan = currentPlan;
+  const isPaid = getTrialInfo().isPaid;
+
+  // Premium always includes ebook with download
+  if (plan === 'premium') return 'download';
+
+  // Check stored ebook purchase
+  const stored = load('ebook_access', null);
+  if (!stored) return null;
+
+  if (stored.type === 'free_owned') {
+    // Permanent — always download regardless of current plan
+    return 'download';
+  }
+
+  if (stored.type === 'basic_addon') {
+    // Only valid while basic plan is active
+    if (plan === 'basic' && isPaid) return 'view';
+    return null; // basic plan expired = no ebook access
+  }
+
+  return null;
+}
+
 function hasEbookPurchased() {
-  return load('ebook_purchased', false) === true;
+  return getEbookAccess() !== null;
 }
 
 function isPremiumAnnual() {
@@ -3614,40 +3649,33 @@ function isPremiumAnnual() {
   return daysLeft > 60; // more than 60 days = annual plan
 }
 
-// Open ebook with appropriate link
+// Open ebook with correct link based on access level
 function openEbook() {
-  const canDownload = isPremiumAnnual() || hasEbookPurchased();
-  window.open(canDownload ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK, '_blank');
+  const access = getEbookAccess();
+  if (access === 'download') window.open(EBOOK_DOWNLOAD_LINK, '_blank');
+  else if (access === 'view') window.open(EBOOK_VIEW_LINK, '_blank');
+  else showToast('Please purchase the ebook to access it 📖');
 }
 
 function handleEbookDownload() {
   const plan = getUserPlan();
+  const access = getEbookAccess();
 
-  // Premium — annual gets download, monthly gets view-only
-  if (plan === 'premium') {
-    openEbook();
-    return;
-  }
+  // Has access already → open directly
+  if (access === 'download') { window.open(EBOOK_DOWNLOAD_LINK, '_blank'); return; }
+  if (access === 'view')     { window.open(EBOOK_VIEW_LINK, '_blank');     return; }
 
-  // Any paid user who bought the ebook separately → open it
-  if (hasEbookPurchased()) {
-    // Basic plan buyers get view-only (plan can lapse); free buyers get download (they own it)
-    if (plan === 'basic') {
-      window.open(EBOOK_VIEW_LINK, '_blank');
-    } else {
-      window.open(EBOOK_DOWNLOAD_LINK, '_blank');
-    }
-    return;
-  }
+  // Premium — always included
+  if (plan === 'premium') { window.open(EBOOK_DOWNLOAD_LINK, '_blank'); return; }
 
-  // Basic plan — ebook not yet purchased, show offer
+  // Basic plan — not yet purchased as add-on
   if (plan === 'basic') {
     showEbookOffer('Recovery Ebook', '₹2,499', '$29', 'razorpay:ebook_basic',
-      '📖 View-only access while on Basic plan • Upgrade to Premium for free access');
+      '📖 View-only access while on Basic plan • Ebook access ends if plan expires');
     return;
   }
 
-  // Free user — must purchase before accessing anything
+  // Free trial / free plan — not purchased
   showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free',
     '📥 One-time purchase — download & keep forever, no subscription needed');
 }
@@ -3717,14 +3745,17 @@ function renderProfile() {
   // Ebook subtitle hint in menu
   const ebookSub = document.getElementById('ebook-menu-sub');
   if (ebookSub) {
+    const ebookAccess = getEbookAccess();
     if (plan === 'premium') {
       ebookSub.textContent = 'Included in your Premium plan ✅';
-    } else if (plan === 'basic') {
-      ebookSub.textContent = 'Upgrade to Premium to get it FREE';
-    } else if (hasEbookPurchased()) {
+    } else if (ebookAccess === 'download') {
       ebookSub.textContent = 'Purchased ✅ — tap to download';
+    } else if (ebookAccess === 'view') {
+      ebookSub.textContent = 'Purchased ✅ — tap to view (Basic plan)';
+    } else if (plan === 'basic') {
+      ebookSub.textContent = 'Add-on: ₹2,499 • view-only while on Basic';
     } else {
-      ebookSub.textContent = '260 pages — complete recovery guide';
+      ebookSub.textContent = '260 pages — purchase to access';
     }
   }
 
@@ -4356,9 +4387,15 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
       }
 
       if (ebookOnly) {
+        const ebookType = currentPlan === 'basic' ? 'basic_addon' : 'free_owned';
+        save('ebook_access', { type: ebookType, purchasedAt: new Date().toISOString() });
         showToast('Ebook purchased! Opening now 📖');
-        setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 800);
+        const openLink = ebookType === 'free_owned' ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
+        setTimeout(() => window.open(openLink, '_blank'), 800);
+        renderProfile();
       } else if (includesEbook) {
+        // Basic plan + ebook bundle — ebook is basic_addon
+        save('ebook_access', { type: 'basic_addon', purchasedAt: new Date().toISOString() });
         showToast('Payment successful! Plan + Ebook unlocked 🎉📖');
         setTimeout(() => window.open(EBOOK_VIEW_LINK, '_blank'), 1500);
         goTo('home');
@@ -4504,6 +4541,23 @@ function stopBreathing() {
 
 /* ── INIT ─────────────────────────────────────────────────── */
 initTrial();
+
+// Migrate old ebook_purchased flag → new ebook_access structure
+// Also clears any accidentally-set test flags
+(function migrateEbookFlag() {
+  const old = localStorage.getItem('hh_ebook_purchased');
+  if (old === 'true') {
+    // Old flag set — only keep if there's a record of actual purchase plan
+    // Since we can't verify, clear it and let users re-purchase cleanly
+    localStorage.removeItem('hh_ebook_purchased');
+  }
+  // Remove any incorrectly set ebook_access from testing
+  const access = load('ebook_access', null);
+  if (access && !access.purchasedAt) {
+    // Corrupted entry — remove
+    localStorage.removeItem('hh_ebook_access');
+  }
+})();
 
 // Always show splash screen on every open
 
