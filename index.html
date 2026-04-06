@@ -36,7 +36,7 @@ let currentPlan = 'free'; // 'free' | 'basic' | 'premium'
 const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
-const RAZORPAY_KEY = 'rzp_test_2CHiFvEFvOsyNQ';
+const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
@@ -2167,6 +2167,72 @@ PLAN RULES FOR YOU:
 - Always warm, empathetic, and encouraging`;
 }
 
+// ── LOCAL KNOWLEDGE BASE AI ──────────────────────────────────
+// Uses the embedded knowledge base — no API key needed, works for everyone
+function searchKnowledgeBase(question) {
+  const kb = CONTENT.knowledgeBase;
+  const q = question.toLowerCase();
+
+  // Topic detection
+  const topics = {
+    ginger:     ['ginger','juice','patch','fresh','apply','scalp application'],
+    rosemary:   ['rosemary','essential oil','carrier','jojoba','coconut'],
+    aloe:       ['aloe','vera','anti-inflam','gel'],
+    nutrition:  ['food','eat','diet','protein','vitamin','iron','zinc','biotin','omega','supplement','deficiency','ferritin','b12'],
+    sleep:      ['sleep','rest','pillow','satin','silk','bonnet'],
+    stress:     ['stress','cortisol','anxiety','mental','emotion','confidence','mood','meditation','breathe','yoga'],
+    growth:     ['growth','regrow','new hair','baby hair','result','timeline','how long','progress'],
+    causes:     ['cause','why','reason','trigger','autoimmune','genetics','hormones'],
+    haircare:   ['shampoo','wash','style','heat','detangle','comb','routine','morning','evening'],
+    massage:    ['massage','scalp massage','blood flow','circulation','fingertip'],
+    water:      ['water','hydrat','drink','glass'],
+    onion:      ['onion','onion juice'],
+    general:    ['alopecia','areata','hair loss','bald','patch','thinning'],
+  };
+
+  // Find matching topic sections
+  const kbLines = kb.split('\n');
+  let matched = [];
+  let currentSection = '';
+  let collecting = false;
+
+  for (const line of kbLines) {
+    if (line.startsWith('MODULE') || line.startsWith('ABOUT') || line.startsWith('IMPORTANT')) {
+      currentSection = line;
+      collecting = false;
+    }
+
+    // Check if this line matches the question
+    const lineLower = line.toLowerCase();
+    let relevant = false;
+    for (const [topic, keywords] of Object.entries(topics)) {
+      if (keywords.some(kw => q.includes(kw))) {
+        if (keywords.some(kw => lineLower.includes(kw)) || lineLower.includes(topic)) {
+          relevant = true;
+          break;
+        }
+      }
+    }
+    // Also direct word match
+    const questionWords = q.split(/\s+/).filter(w => w.length > 3);
+    if (questionWords.some(w => lineLower.includes(w))) relevant = true;
+
+    if (relevant && line.trim().length > 10) {
+      matched.push(line.trim());
+    }
+  }
+
+  // Build a warm, personal response
+  if (matched.length === 0) {
+    return `That's a great question 💚 From what I've learned on my own 20+ year journey with alopecia:\n\nHealing is holistic — it's about consistent care across remedies, nutrition, sleep, and stress management together. No single cure, but many small things compound beautifully over time.\n\nIf you have a specific question about ginger juice, nutrition, haircare routines, or managing stress, I'd love to help with that! 🌿\n\n— This is personal experience, not medical advice. Please consult a dermatologist for your specific case.`;
+  }
+
+  // Take the most relevant lines (up to 6)
+  const snippets = matched.slice(0, 6).join('\n');
+
+  return `Here's what I've learned from my own journey 💚\n\n${snippets}\n\n🌿 Remember, healing is not linear — consistency matters more than perfection. Keep going!\n\n— This is Harshitha's personal experience, not medical advice.`;
+}
+
 async function sendChat() {
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
@@ -2175,30 +2241,14 @@ async function sendChat() {
   addMessage('user', msg);
   state.chatHistory.push({ role: 'user', content: msg });
   showTyping();
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'Authorization': 'Bearer ' + ANTHROPIC_API_KEY,
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: getSystemPromptForPlan(),
-        messages: state.chatHistory.slice(-8),
-      }),
-    });
-    const data = await res.json();
+
+  // Small delay to feel natural
+  setTimeout(() => {
     hideTyping();
-    const reply = data.content?.[0]?.text || "I'm here for you 💚 Could you rephrase that?";
+    const reply = searchKnowledgeBase(msg);
     addMessage('ai', reply);
     state.chatHistory.push({ role: 'assistant', content: reply });
-  } catch (e) {
-    hideTyping();
-    addMessage('ai', "I'm having a little trouble connecting right now 💚 Please try again in a moment.");
-  }
+  }, 800 + Math.random() * 600);
 }
 
 function sendSuggestion(el) {
@@ -2473,16 +2523,21 @@ function switchRoutineTab(tab) {
 
 function renderDailyRoutine() {
   const gingerList = document.getElementById('ginger-step-list');
-  if (gingerList && !gingerList.children.length) {
-    gingerList.innerHTML = CONTENT.gingerSteps.map((step, i) => `
-      <div class="step-item" onclick="toggleStep(this)" id="gstep-${i}">
-        <div class="step-num">${i+1}</div>
-        <div class="step-text">${step}</div>
-      </div>`).join('');
+  const today = dateKey(new Date());
+  // Always re-render ginger steps — check if they belong to today or are stale
+  if (gingerList) {
+    const renderedDate = gingerList.dataset.date;
+    if (renderedDate !== today || !gingerList.children.length) {
+      gingerList.dataset.date = today;
+      gingerList.innerHTML = CONTENT.gingerSteps.map((step, i) => `
+        <div class="step-item" onclick="toggleStep(this)" id="gstep-${i}">
+          <div class="step-num">${i+1}</div>
+          <div class="step-text">${step}</div>
+        </div>`).join('');
+    }
   }
   const container = document.getElementById('daily-checklist-container');
   if (!container) return;
-  const today = dateKey(new Date());
   const saved = load('checklist_'+today, {});
   const colorMap = {
     green:  'var(--green-mid)',
@@ -3574,20 +3629,25 @@ function handleEbookDownload() {
     return;
   }
 
-  // Free user who already bought the ebook → download directly, no paywall
-  if (plan !== 'basic' && hasEbookPurchased()) {
-    window.open(EBOOK_DOWNLOAD_LINK, '_blank');
+  // Any paid user who bought the ebook separately → open it
+  if (hasEbookPurchased()) {
+    // Basic plan buyers get view-only (plan can lapse); free buyers get download (they own it)
+    if (plan === 'basic') {
+      window.open(EBOOK_VIEW_LINK, '_blank');
+    } else {
+      window.open(EBOOK_DOWNLOAD_LINK, '_blank');
+    }
     return;
   }
 
-  // Basic plan user — view-only access (plan can be cancelled, so no permanent download)
+  // Basic plan — ebook not yet purchased, show offer
   if (plan === 'basic') {
     showEbookOffer('Recovery Ebook', '₹2,499', '$29', 'razorpay:ebook_basic',
-      '📖 View-only access while on Basic plan • Upgrade to Premium Annual for permanent download');
+      '📖 View-only access while on Basic plan • Upgrade to Premium for free access');
     return;
   }
 
-  // Free user who hasn't bought yet — show offer (they get download on purchase)
+  // Free user — must purchase before accessing anything
   showEbookOffer('Full Recovery Guide', '₹2,499', '$29', 'razorpay:ebook_free',
     '📥 One-time purchase — download & keep forever, no subscription needed');
 }
