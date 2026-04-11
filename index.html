@@ -38,6 +38,29 @@ const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 // ── RAZORPAY CONFIG ──────────────────────────────────────────
 const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 
+// ── COUPON CONFIG ─────────────────────────────────────────────
+const COUPON = {
+  code:         'HAPPIHEAL25',
+  discount:     0.25,
+  expiresAt:    new Date('2026-04-13T23:59:59'),
+  eligiblePlan: 'premium_annual',
+  label:        '25% Weekend Sale'
+};
+function isCouponValid() {
+  return new Date() < COUPON.expiresAt;
+}
+function validateCoupon(code) {
+  if (!isCouponValid()) return { valid: false, msg: 'This coupon has expired.' };
+  if (code.trim().toUpperCase() !== COUPON.code) return { valid: false, msg: 'Invalid coupon code.' };
+  return { valid: true, msg: 'Coupon applied! 25% off 🎉' };
+}
+function getDiscountedAmount(planKey, useIntl) {
+  const price = PLAN_PRICES[planKey];
+  if (!price) return null;
+  const base = useIntl ? price.usd : price.amount;
+  return Math.round(base * (1 - COUPON.discount));
+}
+
 // All prices in paise (INR × 100) and cents (USD × 100)
 const PLAN_PRICES = {
   // INR in paise (×100), USD in cents (×100)
@@ -187,9 +210,15 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
   const price = PLAN_PRICES[planKey];
   if (!price) { showToast('Invalid plan selected'); return; }
 
-  const amount   = useIntl ? price.usd    : price.amount;
-  const label    = useIntl ? price.usdLabel : price.label;
+  let amount   = useIntl ? price.usd    : price.amount;
+  let label    = useIntl ? price.usdLabel : price.label;
   const currency = useIntl ? 'USD'        : 'INR';
+
+  // Apply coupon if valid and eligible plan
+  if (planKey === COUPON.eligiblePlan && _couponApplied && isCouponValid()) {
+    amount = getDiscountedAmount(planKey, useIntl);
+    label  = label + ' (HAPPIHEAL25 — 25% off)';
+  }
 
   const options = {
     key: RAZORPAY_KEY,
@@ -3580,6 +3609,42 @@ function _renderPricingUI() {
     const newPrice = intl ? newObj.usd : newObj.inr;
     const showStrike = active && p.name !== 'Free';
 
+    // Coupon input block — Premium Annual only
+    const isPremiumAnnualCard = p.name === 'Premium' && annual;
+    const couponActive = isCouponValid();
+    let couponHTML = '';
+    if (isPremiumAnnualCard && couponActive) {
+      const baseInr = active ? 4999 : 6599;
+      const baseUsd = active ? 59   : 79;
+      const discInr = '₹' + Math.round(baseInr * (1 - COUPON.discount)).toLocaleString('en-IN');
+      const discUsd = '$' + Math.round(baseUsd * (1 - COUPON.discount));
+      const discPrice = intl ? discUsd : discInr;
+      couponHTML = `
+        <div style="background:rgba(255,248,230,0.15);border:1.5px dashed rgba(255,200,80,0.6);border-radius:12px;padding:12px 14px;margin:12px 0 4px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:${p.highlight?'rgba(255,255,200,0.9)':'#a06010'};margin-bottom:8px">🏷️ WEEKEND COUPON — APPLY BELOW</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="coupon-input-${p.name}" type="text" placeholder="Enter code: HAPPIHEAL25"
+              style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#c8e6d0'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#1a2e22'};font-family:var(--font-body)"
+              oninput="this.value=this.value.toUpperCase()"/>
+            <button onclick="applyCouponUI('${p.name}','${intl}','${active}')"
+              style="padding:8px 14px;background:${p.highlight?'rgba(255,255,255,0.2)':'var(--green-mid)'};color:white;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+              Apply
+            </button>
+          </div>
+          <div id="coupon-msg-${p.name}" style="font-size:11px;margin-top:6px;display:none"></div>
+          <div id="coupon-preview-${p.name}" style="display:none;margin-top:8px;padding:8px 10px;background:${p.highlight?'rgba(255,255,255,0.12)':'var(--green-mist)'};border-radius:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-size:13px;text-decoration:line-through;opacity:0.5;margin-right:6px">${price}</span>
+                <span style="font-size:18px;font-weight:700;color:${p.highlight?'#ffd700':'var(--green-deep)'}">${discPrice}</span>
+                <span style="font-size:11px;opacity:0.7"> / year</span>
+              </div>
+              <span style="font-size:11px;font-weight:700;background:${p.highlight?'rgba(255,215,0,0.2)':'#fdf3e3'};color:${p.highlight?'#ffd700':'#a06010'};padding:3px 8px;border-radius:99px">−25%</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
     return `
     <div class="plan-card ${p.highlight ? 'highlight' : ''}" style="margin-bottom:16px">
       ${p.tag ? `<div class="plan-tag">${p.tag}</div>` : ''}
@@ -3590,14 +3655,43 @@ function _renderPricingUI() {
         <span class="plan-period">${period}</span>
         ${showStrike ? `<span style="font-size:13px;text-decoration:line-through;opacity:0.5">${newPrice}</span>` : ''}
       </div>
+      ${couponHTML}
       <div class="plan-divider"></div>
       <div class="feature-list">
         ${p.features.map(f => `<div class="feature-item"><span class="fi-icon">✅</span>${f}</div>`).join('')}
         ${p.locked.map(f  => `<div class="feature-item locked-f"><span class="fi-icon">🔒</span>${f}</div>`).join('')}
       </div>
-      <a href="#" onclick="handlePlanClick('${intl && p.linkInt ? p.linkInt : p.link}','${p.name.toLowerCase()}','${intl}')" class="plan-btn ${p.highlight ? 'plan-btn-primary' : 'plan-btn-outline'}">${p.cta}</a>
+      <a href="#" id="plan-cta-${p.name}" onclick="handlePlanClick('${intl && p.linkInt ? p.linkInt : p.link}','${p.name.toLowerCase()}','${intl}')" class="plan-btn ${p.highlight ? 'plan-btn-primary' : 'plan-btn-outline'}">${p.cta}</a>
     </div>`;
   }).join('');
+}
+
+/* ── COUPON UI LOGIC ──────────────────────────────────────── */
+let _couponApplied = false;
+
+function applyCouponUI(planName, intl, active) {
+  const input    = document.getElementById('coupon-input-' + planName);
+  const msgEl    = document.getElementById('coupon-msg-' + planName);
+  const previewEl = document.getElementById('coupon-preview-' + planName);
+  const ctaEl    = document.getElementById('plan-cta-' + planName);
+  if (!input || !msgEl) return;
+
+  const result = validateCoupon(input.value);
+  msgEl.style.display = 'block';
+
+  if (!result.valid) {
+    msgEl.textContent = '❌ ' + result.msg;
+    msgEl.style.color = '#d85a5a';
+    if (previewEl) previewEl.style.display = 'none';
+    _couponApplied = false;
+    return;
+  }
+
+  msgEl.textContent = '✅ ' + result.msg;
+  msgEl.style.color = '#2d5a3d';
+  if (previewEl) previewEl.style.display = 'block';
+  _couponApplied = true;
+  if (ctaEl) ctaEl.textContent = 'Go Premium — 25% Off 🎉';
 }
 
 /* ── EBOOK DOWNLOAD ───────────────────────────────────────── */
@@ -4119,8 +4213,70 @@ function handlePlanClick(link, planName, isIntl) {
   if (!annual) {
     showPremiumRecurringConfirm(planKey, planName, intl);
   } else {
-    payWithRazorpay(planKey, planName, intl);
+    showPremiumAnnualConfirm(planKey, planName, intl);
   }
+}
+
+function showPremiumAnnualConfirm(planKey, planName, intl) {
+  const existing = document.getElementById('order-bump-modal');
+  if (existing) existing.remove();
+  const useIntl = intl === true || intl === 'true' || state.intlCurrency;
+  const couponApplied = planKey === COUPON.eligiblePlan && _couponApplied && isCouponValid();
+  const baseInr = '₹4,999', baseUsd = '$59';
+  const discInr = '₹' + Math.round(4999 * (1 - COUPON.discount)).toLocaleString('en-IN');
+  const discUsd = '$' + Math.round(59 * (1 - COUPON.discount));
+  const displayOriginal = useIntl ? baseUsd : baseInr;
+  const displayFinal    = couponApplied ? (useIntl ? discUsd : discInr) : displayOriginal;
+  const savings         = useIntl
+    ? '$' + Math.round(59 * COUPON.discount)
+    : '₹' + Math.round(4999 * COUPON.discount).toLocaleString('en-IN');
+
+  const modal = document.createElement('div');
+  modal.id = 'order-bump-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px 24px 0 0;padding:28px 24px 44px;width:100%;max-width:430px;animation:fadeUp 0.3s ease">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:13px;color:var(--text-soft);margin-bottom:4px">You're signing up for</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--green-deep)">Premium Annual ⭐</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;border-radius:99px;padding:4px 12px;margin-top:8px;font-size:11px;font-weight:600;color:var(--green-deep)">📅 365 days of full access</div>
+      </div>
+      ${couponApplied ? `
+      <div style="background:#fff8e6;border:1.5px solid var(--warm-amber);border-radius:12px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#a06010;margin-bottom:8px">🏷️ Coupon HAPPIHEAL25 Applied</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-mid);margin-bottom:4px">
+          <span>Original price</span><span style="text-decoration:line-through;opacity:0.6">${displayOriginal}/year</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#2d5a3d;margin-bottom:4px">
+          <span>Discount (25%)</span><span style="font-weight:700">− ${savings}</span>
+        </div>
+        <div style="border-top:1px solid var(--warm-amber);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:17px;font-weight:700;color:var(--green-deep)">
+          <span>Total today</span><span>${displayFinal}</span>
+        </div>
+      </div>` : `
+      <div style="background:var(--green-mist);border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--green-deep)">${displayFinal}<span style="font-size:13px;font-weight:500;color:var(--text-soft)"> / year</span></div>
+      </div>`}
+      <div style="background:var(--green-mist);border-radius:12px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--green-deep);margin-bottom:8px">Included in Premium Annual:</div>
+        <div style="font-size:12px;color:var(--text-mid);line-height:1.9">
+          ✅ All 7 modules fully unlocked<br>
+          ✅ Full Recovery Ebook FREE (₹2,499 value)<br>
+          ✅ Unlimited AI coach<br>
+          ✅ Personalized recovery plan<br>
+          ✅ Priority support<br>
+          ✅ All future features
+        </div>
+      </div>
+      <button onclick="document.getElementById('order-bump-modal').remove(); payWithRazorpay('${planKey}','${planName}',${useIntl})"
+        style="width:100%;padding:16px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        ${couponApplied ? `Pay ${displayFinal} — 25% Off 🎉` : `Continue to Payment →`}
+      </button>
+      <button onclick="document.getElementById('order-bump-modal').remove()"
+        style="width:100%;padding:12px;background:none;color:var(--text-muted);font-size:13px;cursor:pointer">Cancel</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function showPremiumRecurringConfirm(planKey, planName, intl) {
