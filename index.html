@@ -1438,6 +1438,14 @@ IMPORTANT RULES:
       </div>
       <button onclick="goTo('pricing')" style="background:var(--warm-amber);color:white;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;white-space:nowrap">Upgrade →</button>
     </div>
+     <!-- Weekend coupon banner — auto-hides when coupon expires -->
+    <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#1a2e22,#2d5a3d);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🏷️ OFFER — 48 HRS ONLY</div>
+        <div style="font-size:13px;font-weight:600;color:white">25% off Premium Annual · Use code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
+      </div>
+      <button onclick="goTo('pricing');setTimeout(()=>setBilling('annual'),300)" style="background:#ffd700;color:#1a2e22;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0">Grab It →</button>
+    </div>
     <div class="home-content">
       <div>
         <div class="section-title">Today's Affirmation</div>
@@ -3621,7 +3629,7 @@ function _renderPricingUI() {
       const discPrice = intl ? discUsd : discInr;
       couponHTML = `
         <div style="background:rgba(255,248,230,0.15);border:1.5px dashed rgba(255,200,80,0.6);border-radius:12px;padding:12px 14px;margin:12px 0 4px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:${p.highlight?'rgba(255,255,200,0.9)':'#a06010'};margin-bottom:8px">🏷️ WEEKEND COUPON — APPLY BELOW</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:${p.highlight?'rgba(255,255,200,0.9)':'#a06010'};margin-bottom:8px">🏷️ COUPON — APPLY BELOW</div>
           <div style="display:flex;gap:8px;align-items:center">
             <input id="coupon-input-${p.name}" type="text" placeholder="Enter code: HAPPIHEAL25"
               style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#c8e6d0'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#1a2e22'};font-family:var(--font-body)"
