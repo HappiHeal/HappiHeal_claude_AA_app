@@ -42,9 +42,9 @@ const RAZORPAY_KEY = 'rzp_live_syDaDTT7GRyiYL';
 const COUPON = {
   code:         'HAPPIHEAL25',
   discount:     0.25,
-  expiresAt:    new Date('2026-04-13T23:59:59'),
+  expiresAt:    new Date('2026-04-20T23:59:59'),
   eligiblePlan: 'premium_annual',
-  label:        '25% Weekend Sale'
+  label:        '25% Off'
 };
 function isCouponValid() {
   return new Date() < COUPON.expiresAt;
