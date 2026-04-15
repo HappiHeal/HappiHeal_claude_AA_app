@@ -181,6 +181,8 @@ async function loadUserPlan(user) {
       if (state.currentScreen === 'learn')   renderLearn();
     }
   } catch(e) {}
+  // Restore progress data from Supabase (fills gaps on new devices)
+  restoreProgressFromSupabase();
 }
 
 async function initAuth() {
@@ -416,9 +418,11 @@ async function handleSignUp() {
     return; 
   }
   hideAuthModal();
+  // Start 3-day trial from signup date
+  if (!load('install_date', null)) save('install_date', new Date().toISOString());
   renderHome();
   renderProfile();
-  showToast('Welcome to HappiHeal! 🌿');
+  showToast('Welcome to HappiHeal! Your 3-day trial has started 🌿');
   // If there was a pending payment, trigger it now
   if (window._pendingPayment) {
     const { planKey, planName, intl, annual } = window._pendingPayment;
@@ -1888,7 +1892,7 @@ IMPORTANT RULES:
           <span class="menu-label">Learning Modules</span>
           <span class="menu-arrow">›</span>
         </div>
-        <div class="menu-item" onclick="showToast('Consultation booking coming soon!')">
+        <div class="menu-item" onclick="showToast('Consultation booking coming soon! 🌿')">
           <span class="menu-icon">📞</span>
           <span class="menu-label">Book a Consultation</span>
           <span class="menu-arrow">›</span>
@@ -1902,7 +1906,7 @@ IMPORTANT RULES:
           </div>
           <span class="menu-arrow">›</span>
         </div>
-        <div class="menu-item" onclick="showToast('Sharing feature coming soon!')">
+        <div class="menu-item" onclick="shareHappiHeal()">
           <span class="menu-icon">💬</span>
           <span class="menu-label">Share HappiHeal</span>
           <span class="menu-arrow">›</span>
@@ -1974,6 +1978,35 @@ let state = {
 const save = (k,v) => { try { localStorage.setItem('hh_'+k, JSON.stringify(v)); } catch(e){} };
 const load = (k,d)  => { try { const v = localStorage.getItem('hh_'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } };
 
+async function syncProgressToSupabase(key, value) {
+  if (!currentUser) return;
+  try {
+    await getSupabase().from('user_progress').upsert({
+      user_id: currentUser.id,
+      data_key: key,
+      data_value: value,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,data_key' });
+  } catch(e) {}
+}
+
+async function restoreProgressFromSupabase() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await getSupabase()
+      .from('user_progress').select('data_key, data_value').eq('user_id', currentUser.id);
+    if (error || !data) return;
+    data.forEach(row => {
+      if (!localStorage.getItem('hh_' + row.data_key)) {
+        save(row.data_key, row.data_value);
+      }
+    });
+    if (state?.currentScreen === 'tracker') renderTracker();
+    if (state?.currentScreen === 'routine') renderRoutine();
+    if (state?.currentScreen === 'home') renderHome();
+  } catch(e) {}
+}
+
 /* ── TRIAL SYSTEM ────────────────────────────────────────── */
 const TRIAL_DAYS = 3;
 
@@ -1987,6 +2020,12 @@ function getTrialInfo() {
   // (set from Supabase in loadUserPlan, falls back to localStorage)
   const plan = currentPlan || localStorage.getItem('hh_user_plan') || 'free';
   const isPaid = plan === 'basic' || plan === 'premium';
+
+  // Creator account — permanent full access, never expires
+  const creatorEmail = 'happiloot.store@gmail.com';
+  if (currentUser?.email === creatorEmail) {
+    return { daysLeft: 999, daysPassed: 0, isPaid: true, isExpired: false, plan: 'premium' };
+  }
 
   const installStr = load('install_date', null);
   if (!installStr) {
@@ -2018,8 +2057,8 @@ function showPaywall(feature) {
     <div style="background:var(--white);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:430px;animation:fadeUp 0.3s ease">
       <div style="text-align:center;margin-bottom:20px">
         <div style="font-size:40px;margin-bottom:12px">🔒</div>
-        <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--text-dark);margin-bottom:8px">Premium Feature</div>
-        <div style="font-size:14px;color:var(--text-soft);line-height:1.6">${feature} is available on Basic & Premium plans. Upgrade to unlock your full healing journey.</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--text-dark);margin-bottom:8px">Upgrade Your Plan</div>
+        <div style="font-size:14px;color:var(--text-soft);line-height:1.6">Your free trial has ended. Upgrade to Basic or Premium to continue your healing journey.</div>
       </div>
       <button onclick="document.getElementById('paywall-overlay').remove();goTo('pricing')" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">View Plans 🌿</button>
       <button onclick="document.getElementById('paywall-overlay').remove()" style="display:block;width:100%;padding:12px;background:none;color:var(--text-muted);font-size:14px;cursor:pointer">Not now</button>
@@ -2030,7 +2069,14 @@ function showPaywall(feature) {
 
 /* ── NAVIGATION ──────────────────────────────────────────── */
 function goTo(screen) {
-  // Check trial expiry for gated screens
+  // Gate AI, Tracker, Routine behind signup
+  const signupGated = ['ai', 'tracker', 'routine'];
+  if (signupGated.includes(screen) && !currentUser) {
+    showToast('Sign up free to unlock your 3-day trial 🌱');
+    showAuthModal('signup');
+    return;
+  }
+  // Check trial expiry for gated screens (signed-in users only)
   const { isExpired } = getTrialInfo();
   const gatedScreens = ['ai', 'tracker', 'routine', 'learn'];
   if (isExpired && gatedScreens.includes(screen)) {
@@ -3336,6 +3382,9 @@ function saveDailyRoutine() {
   logs[today].routinePct = pct;
   logs[today].routineSaved = true;
   save('logs', logs);
+  // Sync to Supabase so progress is available across devices
+  syncProgressToSupabase('logs', logs);
+  syncProgressToSupabase('checklist_'+today, load('checklist_'+today, {}));
 
   // Visual feedback
   const btn = document.getElementById('save-daily-btn');
@@ -3362,6 +3411,7 @@ function saveWeeklyRoutine() {
   const daysLogged = weekStats[wk]?.count || 0;
   w._dailyAvg = daysLogged >= 7 ? 100 : Math.round((daysLogged/7)*100);
   save('weekly_'+wk, w);
+  syncProgressToSupabase('weekly_'+wk, w);
 
   showToast('Week saved! Your progress is recorded 📆');
   renderTracker(); // refresh weeks-earned stat
@@ -3377,6 +3427,7 @@ function saveMonthlyRoutine() {
   m._saved = true;
   m._savedAt = new Date().toISOString();
   save('monthly_'+mk, m);
+  syncProgressToSupabase('monthly_'+mk, m);
 
   showToast('Month saved! Incredible consistency 🗓️🎉');
   renderTracker(); // refresh months-earned stat
@@ -3435,23 +3486,29 @@ async function openModule(m) {
   const plan = currentPlan; // always use live global, not stale getter
   showToast('Loading... please wait 🌿');
 
-  // Freebie — anyone can open
+  // Freebie — signed-in users only, trial must be active
   if (m.isFreebie || m.bucket === 'Freebies') {
+    if (!currentUser) { showToast('Sign up free to unlock your healing guides 🌱'); showAuthModal('signup'); return; }
+    const { isExpired, isPaid } = getTrialInfo();
+    if (isExpired && !isPaid) { showPaywall('This feature'); return; }
     const url = await getSignedUrl(m.bucket, m.file);
     if (url) openPdfViewer(m.title, url, false);
     else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Free module M1 — everyone
+  // Free module M1 — signed-in users only, trial must be active
   if (m.free) {
+    if (!currentUser) { showToast('Sign up free to unlock your healing guides 🌱'); showAuthModal('signup'); return; }
+    const { isExpired, isPaid } = getTrialInfo();
+    if (isExpired && !isPaid) { showPaywall('This feature'); return; }
     const url = await getSignedUrl(m.bucket, m.file);
     if (url) openPdfViewer(m.title, url, false);
     else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Paid modules M2-M7 — premium only
+  // Paid modules M2-M7 — premium only (always, regardless of trial)
   if (plan !== 'premium') {
     showPaywall('All 7 modules are');
     return;
@@ -4136,9 +4193,6 @@ function showDisclaimer() {
 }
 
 function acceptDisclaimer() {
-  if (!load('install_date', null)) {
-    save('install_date', new Date().toISOString());
-  }
   startApp();
 }
 
@@ -4184,7 +4238,7 @@ function showWelcomeModal() {
         style="width:100%;padding:14px;background:#edf7f0;color:#2d5a3d;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">
         Sign In
       </button>
-      <button onclick="document.getElementById('welcome-modal').remove()"
+      <button onclick="document.getElementById('welcome-modal').remove();showToast('Sign up to save your progress, streaks &amp; access your free guides 🌱', 4000)"
         style="width:100%;padding:12px;background:none;color:#9db5a6;border-radius:14px;font-size:14px;cursor:pointer">
         Skip for now — explore as guest
       </button>
@@ -4587,6 +4641,44 @@ function handleEbookBuy(link) {
   } else {
     window.open(link, '_blank');
   }
+}
+
+function shareHappiHeal() {
+  const url = 'https://happiheal.happiloot.com';
+  const text = 'I\'ve been using HappiHeal for natural alopecia areata recovery — it\'s really helped me build a daily routine. Check it out!';
+  if (navigator.share) {
+    navigator.share({ title: 'HappiHeal — Natural Alopecia Recovery', text, url }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(url).then(() => {
+      showToast('Link copied! Share it with someone who needs it 💚');
+    }).catch(() => showToast('happiheal.happiloot.com — copy and share! 💚'));
+  }
+}
+
+function showConsultationModal() {
+  const existing = document.getElementById('consult-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'consult-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px 24px 0 0;padding:32px 24px 44px;width:100%;max-width:430px;animation:fadeUp 0.3s ease">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:36px;margin-bottom:8px">🌿</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:#1a2e22;margin-bottom:6px">Book a Session with Harshitha</div>
+        <div style="font-size:13px;color:#6b8577;line-height:1.6">A personal 1:1 session to talk through your alopecia journey, your current routine, and what's working (or not).</div>
+      </div>
+      <a href="mailto:contact.happiloot@gmail.com?subject=Consultation%20Request%20-%20HappiHeal&body=Hi%20Harshitha%2C%0A%0AI%20would%20like%20to%20book%20a%20consultation%20session.%0A%0AMy%20name%3A%0AMy%20alopecia%20journey%3A%0APreferred%20time%3A%0A%0AThank%20you!"
+        style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+        ✉️ Email to Book
+      </a>
+      <button onclick="document.getElementById('consult-modal').remove()"
+        style="width:100%;padding:13px;background:#edf7f0;color:#2d5a3d;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
+        Maybe later
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 /* ── BOX BREATHING ────────────────────────────────────────── */
