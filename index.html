@@ -276,6 +276,7 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
         // Ebook standalone purchase
         const ebookType = currentPlan === 'basic' ? 'basic_addon' : 'free_owned';
         save('ebook_access', { type: ebookType, purchasedAt: new Date().toISOString() });
+        console.log('✅ Ebook purchased — type:', ebookType, '| plan at purchase:', currentPlan, '| access:', ebookType === 'free_owned' ? 'DOWNLOAD' : 'VIEW ONLY');
         showToast('Ebook purchased! Opening your guide now 📖');
         const openLink = ebookType === 'free_owned' ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
         setTimeout(() => window.open(openLink, '_blank'), 1000);
@@ -701,7 +702,7 @@ const CONTENT = {
     { id: 0, title: "Free Healing Starter Guide", emoji: "🎁", free: true,  desc: "9 proven tips across remedies, nutrition, haircare routines & mental health. Harshitha's personal journey.", lessons: 9, isFreebie: true,
       file: "AA_9Tips_RecoveryGuide.pdf", bucket: "Freebies" },
     { id: 1, title: "My Story + The Holistic Approach", emoji: "🧬", free: true,  desc: "The 5 factors that influence alopecia & why early awareness is your advantage.", lessons: 4,
-      file: "M1 - Foundation of Alopecia.pdf", bucket: "Freebies" },
+      file: "M1 - Foundation of Alopecia.pdf", bucket: "M1 basic" },
     { id: 2, title: "Natural Home Remedies", emoji: "🫚", free: false, desc: "Rosemary oil, aloe vera, ginger juice, onion — exact recipes and timing.", lessons: 8,
       file: "M2 - Natural Home Remedies for Hair fall.pdf", bucket: "Modules" },
     { id: 3, title: "Nutrition: The 95% Protein Fact", emoji: "🥗", free: false, desc: "Power foods, 7-day meal plans, supplements guide and what to avoid.", lessons: 6,
@@ -2021,10 +2022,10 @@ function getTrialInfo() {
   const plan = currentPlan || localStorage.getItem('hh_user_plan') || 'free';
   const isPaid = plan === 'basic' || plan === 'premium';
 
-  // Creator account — permanent full access, never expires
+  // Creator account — permanent free trial, never expires
   const creatorEmail = 'happiloot.store@gmail.com';
   if (currentUser?.email === creatorEmail) {
-    return { daysLeft: 999, daysPassed: 0, isPaid: true, isExpired: false, plan: 'premium' };
+    return { daysLeft: 999, daysPassed: 0, isPaid: false, isExpired: false, plan: 'trial' };
   }
 
   const installStr = load('install_date', null);
@@ -3486,29 +3487,29 @@ async function openModule(m) {
   const plan = currentPlan; // always use live global, not stale getter
   showToast('Loading... please wait 🌿');
 
-  // Freebie — signed-in users only, trial must be active
+  // Freebie — trial users and above (not expired guests)
   if (m.isFreebie || m.bucket === 'Freebies') {
     if (!currentUser) { showToast('Sign up free to unlock your healing guides 🌱'); showAuthModal('signup'); return; }
     const { isExpired, isPaid } = getTrialInfo();
     if (isExpired && !isPaid) { showPaywall('This feature'); return; }
     const url = await getSignedUrl(m.bucket, m.file);
-    if (url) openPdfViewer(m.title, url, false);
+    if (url) openPdfViewer(m.title, url, true); // view only
     else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Free module M1 — signed-in users only, trial must be active
+  // Free module M1 — Basic and Premium only
   if (m.free) {
     if (!currentUser) { showToast('Sign up free to unlock your healing guides 🌱'); showAuthModal('signup'); return; }
-    const { isExpired, isPaid } = getTrialInfo();
-    if (isExpired && !isPaid) { showPaywall('This feature'); return; }
+    const { isPaid } = getTrialInfo();
+    if (!isPaid) { showPaywall('Module 1'); return; }
     const url = await getSignedUrl(m.bucket, m.file);
-    if (url) openPdfViewer(m.title, url, false);
+    if (url) openPdfViewer(m.title, url, true); // view only
     else showToast('Unable to load. Please check your connection 🌿');
     return;
   }
 
-  // Paid modules M2-M7 — premium only (always, regardless of trial)
+  // Paid modules M2-M7 — premium only
   if (plan !== 'premium') {
     showPaywall('All 7 modules are');
     return;
@@ -3545,7 +3546,7 @@ function renderLearn() {
   const plan = getUserPlan();
 
   list.innerHTML = CONTENT.modules.map(m => {
-    // Freebie download card
+    // Freebie — free trial and above
     if (m.isFreebie) {
       return `
         <div class="module-card" style="background:linear-gradient(135deg,var(--warm-sand),var(--warm-amber-lt));border:1.5px solid var(--warm-amber)" onclick="openModule(${JSON.stringify(m).replace(/"/g,'&quot;')})">
@@ -3554,28 +3555,29 @@ function renderLearn() {
             <div class="module-title" style="color:var(--text-dark)">${m.title}</div>
             <div class="module-desc">${m.desc}</div>
             <div class="module-meta">
-              <span class="pill pill-amber">Free Download</span>
+              <span class="pill pill-amber">Free Trial</span>
               <span class="module-lessons">${m.lessons} tips inside</span>
             </div>
           </div>
-          <div style="font-size:18px">⬇️</div>
+          <div style="font-size:18px">👁</div>
         </div>`;
     }
 
-    // Free module M1
+    // M1 — Basic and Premium only
     if (m.free) {
+      const m1Unlocked = plan === 'basic' || plan === 'premium';
       return `
-        <div class="module-card" onclick="openModule(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+        <div class="module-card ${m1Unlocked ? '' : 'locked'}" onclick="openModule(${JSON.stringify(m).replace(/"/g,'&quot;')})">
           <div class="module-emoji">${m.emoji}</div>
           <div class="module-info">
             <div class="module-title">${m.title}</div>
             <div class="module-desc">${m.desc}</div>
             <div class="module-meta">
-              <span class="pill pill-green">Free</span>
+              <span class="pill pill-green">Basic+</span>
               <span class="module-lessons">${m.lessons} lessons</span>
             </div>
           </div>
-          <div style="font-size:18px">▶</div>
+          <div class="lock-icon">${m1Unlocked ? '▶' : '🔒'}</div>
         </div>`;
     }
 
@@ -3775,8 +3777,8 @@ function getEbookAccess() {
   const plan = currentPlan;
   const isPaid = getTrialInfo().isPaid;
 
-  // Premium always includes ebook with download
-  if (plan === 'premium') return 'download';
+  // Premium — annual gets download, monthly gets view only
+  if (plan === 'premium') return isPremiumAnnual() ? 'download' : 'view';
 
   // Check stored ebook purchase
   const stored = load('ebook_access', null);
@@ -3789,7 +3791,7 @@ function getEbookAccess() {
 
   if (stored.type === 'basic_addon') {
     // Only valid while basic plan is active
-    if (plan === 'basic' && isPaid) return 'view';
+    if (plan === 'basic' && isPaid) return isBasicAnnual() ? 'download' : 'view';
     return null; // basic plan expired = no ebook access
   }
 
@@ -3802,6 +3804,14 @@ function hasEbookPurchased() {
 
 function isPremiumAnnual() {
   if (currentPlan !== 'premium') return false;
+  const expiry = load('plan_expiry', null);
+  if (!expiry) return false;
+  const daysLeft = Math.floor((new Date(expiry) - new Date()) / 86400000);
+  return daysLeft > 60; // more than 60 days = annual plan
+}
+
+function isBasicAnnual() {
+  if (currentPlan !== 'basic') return false;
   const expiry = load('plan_expiry', null);
   if (!expiry) return false;
   const daysLeft = Math.floor((new Date(expiry) - new Date()) / 86400000);
@@ -3824,8 +3834,12 @@ function handleEbookDownload() {
   if (access === 'download') { window.open(EBOOK_DOWNLOAD_LINK, '_blank'); return; }
   if (access === 'view')     { window.open(EBOOK_VIEW_LINK, '_blank');     return; }
 
-  // Premium — always included
-  if (plan === 'premium') { window.open(EBOOK_DOWNLOAD_LINK, '_blank'); return; }
+  // Premium — annual download, monthly view only
+  if (plan === 'premium') {
+    const link = isPremiumAnnual() ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
+    window.open(link, '_blank');
+    return;
+  }
 
   // Basic plan — not yet purchased as add-on
   if (plan === 'basic') {
@@ -4607,6 +4621,7 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
       if (ebookOnly) {
         const ebookType = currentPlan === 'basic' ? 'basic_addon' : 'free_owned';
         save('ebook_access', { type: ebookType, purchasedAt: new Date().toISOString() });
+        console.log('✅ Ebook purchased — type:', ebookType, '| plan at purchase:', currentPlan, '| access:', ebookType === 'free_owned' ? 'DOWNLOAD' : 'VIEW ONLY');
         showToast('Ebook purchased! Opening now 📖');
         const openLink = ebookType === 'free_owned' ? EBOOK_DOWNLOAD_LINK : EBOOK_VIEW_LINK;
         setTimeout(() => window.open(openLink, '_blank'), 800);
