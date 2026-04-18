@@ -4,8 +4,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="theme-color" content="#3d6b4f"/>
-<meta name="description" content="HappiHeal — Your alopecia recovery companion. Natural remedies, daily routines, and community support."/>
-<title>HappiHeal by HappiLoot</title>
+<meta name="description" content="HappiHeal — Natural alopecia recovery app by Harshitha, who healed naturally after 20 years. Natural remedies, nutrition tracker, AI coach & 260-page ebook. Start free 3-day trial."/>
+<meta name="keywords" content="alopecia recovery, natural hair recovery, alopecia app, hair loss tracker, natural remedies, holistic hair growth"/>
+<meta property="og:title" content="HappiHeal — Natural Alopecia Recovery Companion"/>
+<meta property="og:description" content="A 20-year natural recovery journey distilled into a daily companion. Natural remedies, nutrition tracking, AI coach & full recovery ebook. Start your free 3-day trial."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://happiheal.happiloot.com"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="HappiHeal — Natural Alopecia Recovery"/>
+<meta name="twitter:description" content="Harshitha healed alopecia naturally after 20 years. This app is everything she wished she had. Start your free 3-day trial."/>
+<title>HappiHeal — Natural Alopecia Recovery App</title>
 <link rel="manifest" href="#"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -22,7 +30,14 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let _supabaseClient = null;
 function getSupabase() {
   if (!_supabaseClient) {
-    _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    _supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,       // Save session to localStorage — survives app close
+        autoRefreshToken: true,     // Silently refresh JWT before expiry — no re-login needed
+        detectSessionInUrl: false,  // Not using magic links, so skip URL parsing
+        storageKey: 'hh_session'    // Explicit key so it's never accidentally cleared
+      }
+    });
   }
   return _supabaseClient;
 }
@@ -195,6 +210,18 @@ async function initAuth() {
   } catch(e) {
     console.log('Auth init:', e);
   }
+
+  // Keep currentUser in sync if Supabase silently refreshes the token
+  getSupabase().auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (session?.user && session.user.id !== currentUser?.id) {
+        loadUserPlan(session.user);
+      }
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      currentPlan = 'free';
+    }
+  });
 }
 
 // ── RAZORPAY SUBSCRIPTION ────────────────────────────────────
@@ -632,7 +659,6 @@ const CONTENT = {
       features: [
         "Free Healing Starter Guide (PDF download)",
         "9 tips: remedies, nutrition, haircare & mindset",
-        "Module 1: My Story + Holistic Approach (4 lessons)",
         "Daily affirmation cards",
         "3-day routine checklist",
         "Basic progress tracker",
@@ -657,6 +683,7 @@ const CONTENT = {
       tag: "🌿 Most Popular",
       features: [
         "Everything in Free",
+        "Module 1: My Story + Holistic Approach (4 lessons)",
         "Unlimited AI coach questions",
         "Full daily checklist & all routines",
         "Weekly & monthly routine planner",
@@ -1392,38 +1419,99 @@ IMPORTANT RULES:
 <div id="app">
 
   <!-- ════════════════ SPLASH SCREEN ════════════════ -->
-  <div id="screen-splash" style="position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1e3d28 0%,#2d5a3d 45%,#3d6b4f 100%);padding:40px 32px;text-align:center">
+  <div id="screen-splash" style="position:fixed;inset:0;z-index:500;overflow-y:auto;background:linear-gradient(160deg,#1e3d28 0%,#2d5a3d 45%,#3d6b4f 100%)">
 
     <!-- Animated background leaves -->
     <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
       <div style="position:absolute;top:-20px;right:-20px;font-size:180px;opacity:0.06;transform:rotate(20deg)">🌿</div>
-      <div style="position:absolute;bottom:-30px;left:-20px;font-size:160px;opacity:0.05;transform:rotate(-15deg)">🌱</div>
+      <div style="position:absolute;bottom:30%;left:-20px;font-size:160px;opacity:0.05;transform:rotate(-15deg)">🌱</div>
     </div>
 
-    <!-- No icon at top - clean look -->
-    <div style="height:20px"></div>
+    <div style="max-width:430px;margin:0 auto;padding:52px 28px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:100vh;position:relative">
 
-    <!-- Title -->
-    <div style="font-family:var(--font-display);font-size:48px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:6px;animation:splashTitle 0.7s ease 0.15s both">HappiHeal</div>
-    <div style="font-size:12px;letter-spacing:3px;color:rgba(255,255,255,0.55);text-transform:uppercase;margin-bottom:32px;animation:splashTitle 0.7s ease 0.2s both">by HappiLoot</div>
+      <!-- Title -->
+      <div style="font-family:var(--font-display);font-size:46px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:4px;animation:splashTitle 0.7s ease 0.15s both">HappiHeal</div>
+      <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:20px;animation:splashTitle 0.7s ease 0.2s both">by HappiLoot</div>
 
-    <!-- Tagline -->
-    <div style="font-family:var(--font-display);font-style:italic;font-size:18px;color:rgba(255,255,255,0.82);line-height:1.55;max-width:280px;margin-bottom:48px;animation:splashTitle 0.7s ease 0.3s both">"Your daily companion for natural hair recovery"</div>
+      <!-- ── FOUNDER CARD ── -->
+      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:20px 20px 18px;margin-bottom:24px;width:100%;animation:splashTitle 0.7s ease 0.28s both">
+        <!-- Avatar + name row -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);border:2px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🌿</div>
+          <div style="text-align:left">
+            <div style="font-size:15px;font-weight:700;color:#ffffff">Harshitha MV</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:1px">Founder · Healed naturally after 20 years</div>
+          </div>
+        </div>
+        <!-- Story quote -->
+        <div style="font-family:var(--font-display);font-style:italic;font-size:15px;color:rgba(255,255,255,0.88);line-height:1.6;text-align:left">"Alopecia appeared when I was 10. After 20 years of trial, tears and breakthroughs — I healed naturally. This app is everything I wish I'd had at the start."</div>
+      </div>
 
-    <!-- CTA Button -->
-    <button onclick="showDisclaimer()" style="background:rgba(255,255,255,0.18);color:#ffffff;border:1.5px solid rgba(255,255,255,0.35);border-radius:99px;padding:16px 40px;font-size:16px;font-weight:600;letter-spacing:0.3px;cursor:pointer;backdrop-filter:blur(8px);transition:all 0.2s;animation:splashTitle 0.7s ease 0.45s both;font-family:var(--font-body)" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'" ontouchstart="this.style.background='rgba(255,255,255,0.28)'" ontouchend="this.style.background='rgba(255,255,255,0.18)'">
-      Begin Your Journey →
-    </button>
+      <!-- ── 3-FEATURE STRIP ── -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;margin-bottom:24px;animation:splashTitle 0.7s ease 0.36s both">
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
+          <div style="font-size:22px;margin-bottom:5px">🫚</div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">Natural Remedies</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
+          <div style="font-size:22px;margin-bottom:5px">💬</div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">AI Recovery Coach</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
+          <div style="font-size:22px;margin-bottom:5px">📖</div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">260-Page Ebook</div>
+        </div>
+      </div>
 
-    <!-- Sub text -->
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:16px;animation:splashTitle 0.7s ease 0.55s both">A 20-year natural recovery journey — distilled into your daily companion</div>
+      <!-- ── SOCIAL PROOF ── -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;animation:splashTitle 0.7s ease 0.42s both">
+        <div style="display:flex;align-items:center">
+          <div style="width:26px;height:26px;border-radius:50%;background:#5a8a6a;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-2px">🌱</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#4a7a5a;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">💚</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#3d6b4f;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">🌿</div>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;text-align:left"><span style="color:#a8e6c0;font-weight:600">47+ members</span> already on their recovery journey</div>
+      </div>
 
-    <!-- HappiLoot brand - clean text -->
-    <div style="position:absolute;bottom:36px;left:0;right:0;display:flex;flex-direction:column;align-items:center;animation:splashTitle 0.7s ease 0.7s both">
-      <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:4px">Brought to you by</div>
-      <div style="font-size:14px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.6)">HappiLoot</div>
+      <!-- ── AA SPECIFICITY TAG ── -->
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:99px;padding:6px 14px;margin-bottom:28px;font-size:12px;color:rgba(255,255,255,0.8);font-weight:500;animation:splashTitle 0.7s ease 0.46s both">
+        <span style="font-size:14px">🎯</span> Built for all types of Alopecia
+      </div>
+
+      <!-- CTA Button -->
+      <!-- ── REVIEWS ── -->
+      <div style="width:100%;margin-bottom:22px;animation:splashTitle 0.7s ease 0.46s both">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
+            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"I've been consistent for 3 weeks straight for the first time in years. The daily routine makes it feel achievable."</div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Sarah M. · Toronto, Canada</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
+            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"Knowing Harshitha built this from her own experience makes me trust the content in a way no other app has."</div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Nimal P. · Colombo, Sri Lanka</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button id="splash-cta-btn" onclick="showDisclaimer()" style="width:100%;background:white;color:#1e3d28;border-radius:14px;padding:17px 40px;font-size:16px;font-weight:700;letter-spacing:0.2px;cursor:pointer;transition:all 0.2s;animation:splashTitle 0.7s ease 0.5s both;font-family:var(--font-body);box-shadow:0 4px 20px rgba(0,0,0,0.25)" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
+        Start Your Free 3-Day Trial →
+      </button>
+
+      <div id="splash-cta-sub" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:14px;animation:splashTitle 0.7s ease 0.58s both">Free to start · No credit card needed</div>
+
+      <!-- HappiLoot brand -->
+      <div style="margin-top:32px;display:flex;flex-direction:column;align-items:center;animation:splashTitle 0.7s ease 0.65s both">
+        <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:3px">Brought to you by</div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.55)">HappiLoot</div>
+      </div>
+
     </div>
-
   </div><!-- END SPLASH -->
 
   <!-- ════════════════ HOME ════════════════ -->
@@ -1452,6 +1540,26 @@ IMPORTANT RULES:
       <button onclick="goTo('pricing');setTimeout(()=>setBilling('annual'),300)" style="background:#ffd700;color:#1a2e22;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0">Grab It →</button>
     </div>
     <div class="home-content">
+      <!-- ── PRE-LOGIN VALUE STRIP (only for guests / logged-out) ── -->
+      <div id="guest-hero-strip" style="display:none;background:linear-gradient(135deg,#edf7f0,#d4f0df);border-radius:var(--radius-md);padding:18px 20px;border:1px solid var(--green-pale)">
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--green-deep)">Harshitha's 20-year journey</div>
+            <div style="font-size:12px;color:var(--text-soft);margin-top:2px;line-height:1.5;font-style:italic">"Alopecia appeared at 10. I healed it naturally. This app is everything I wish I'd had."</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span>🌿</span> Natural remedies</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span>💬</span> AI recovery coach</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span>📊</span> Progress tracker</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid)"><span>📖</span> 260-page ebook</div>
+        </div>
+        <button onclick="showAuthModal('signup')" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
+          Start Free — 3-Day Trial 🌱
+        </button>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted)">🎯 For all types of Alopecia · <span id="guest-member-count">47</span>+ members recovering</div>
+      </div>
       <div>
         <div class="section-title">Today's Affirmation</div>
         <div class="affirmation-card" onclick="nextAffirmation()" id="affirmation-card">
@@ -1861,6 +1969,34 @@ IMPORTANT RULES:
 
       <div id="plan-cards"></div>
 
+      <!-- ── TESTIMONIALS ── -->
+      <div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">What members say</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"I've been consistent for 3 weeks straight for the first time in years. The daily routine makes it feel achievable."</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mist);display:flex;align-items:center;justify-content:center;font-size:13px">🌱</div>
+              <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Sarah M. · Toronto, Canada</div>
+            </div>
+          </div>
+          <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"The natural remedy section finally explained the right way to use the ingredients. I noticed less itching in week 2."</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--warm-amber-lt);display:flex;align-items:center;justify-content:center;font-size:13px">💚</div>
+              <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Divya R. · Bangalore, India</div>
+            </div>
+          </div>
+          <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"Knowing Harshitha built this from her own experience makes me trust the content in a way no other app has."</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mist);display:flex;align-items:center;justify-content:center;font-size:13px">🌿</div>
+              <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Nimal P. · Colombo, Sri Lanka</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2164,6 +2300,14 @@ function renderHome() {
   }
 
   renderAffirmation();
+
+  // Show guest hero strip only for logged-out users
+  const guestStrip = document.getElementById('guest-hero-strip');
+  if (guestStrip) {
+    guestStrip.style.display = currentUser ? 'none' : 'block';
+    const mc = document.getElementById('guest-member-count');
+    if (mc) mc.textContent = CONTENT.foundingUsersCount || '47';
+  }
 }
 
 function renderAffirmation() {
@@ -4238,15 +4382,41 @@ function showWelcomeModal() {
   modal.id = 'welcome-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:998;display:flex;align-items:flex-end;justify-content:center';
   modal.innerHTML = `
-    <div style="background:white;border-radius:24px 24px 0 0;padding:32px 24px 44px;width:100%;max-width:430px;animation:fadeUp 0.3s ease">
-      <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:44px;margin-bottom:10px">🌿</div>
-        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#1a2e22;margin-bottom:6px">Welcome to HappiHeal</div>
-        <div style="font-size:14px;color:#6b8577;line-height:1.5">Create a free account to save your progress, streaks and healing journey across all your devices.</div>
+    <div style="background:white;border-radius:24px 24px 0 0;padding:28px 24px 44px;width:100%;max-width:430px;animation:fadeUp 0.3s ease;max-height:92vh;overflow-y:auto">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:38px;margin-bottom:8px">🌿</div>
+        <div style="font-family:'Playfair Display',serif;font-size:21px;font-weight:600;color:#1a2e22;margin-bottom:5px">Welcome to HappiHeal</div>
+        <div style="font-size:13px;color:#6b8577;line-height:1.5">Create a free account to save your progress, streaks and healing journey across all your devices.</div>
       </div>
+
+      <!-- Founder mini card -->
+      <div style="background:#edf7f0;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#2d5a3d;margin-bottom:3px">Harshitha MV · Founder</div>
+          <div style="font-size:12px;color:#4a7060;line-height:1.5;font-style:italic">"I healed naturally after 20 years. Every feature in this app comes from lived experience."</div>
+        </div>
+      </div>
+
+      <!-- What you get strip -->
+      <div style="background:#f9fdf9;border:1px solid #c8e6d0;border-radius:14px;padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:#2d5a3d;letter-spacing:0.5px;margin-bottom:10px">WHAT YOU GET — FREE</div>
+        <div style="display:grid;gap:7px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">🌿</span> Natural remedies, routines &amp; daily habits</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">💬</span> AI recovery coach</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">📊</span> Progress tracker: hairs, sleep, stress &amp; more</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">🎁</span> Free Guide: 9 proven tips — remedies, nutrition, haircare &amp; mental health</div>
+        </div>
+      </div>
+
+      <!-- Social proof -->
+      <div style="text-align:center;font-size:12px;color:#9db5a6;margin-bottom:18px">💚 <strong style="color:#6b8577">${CONTENT.foundingUsersCount || 47}+ members</strong> already on their recovery journey</div>
+
       <button onclick="document.getElementById('welcome-modal').remove();showAuthModal('signup')"
         style="width:100%;padding:16px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
-        Create Free Account 🌱
+        Start Free 3-Day Trial 🌱
       </button>
       <button onclick="document.getElementById('welcome-modal').remove();showAuthModal('signin')"
         style="width:100%;padding:14px;background:#edf7f0;color:#2d5a3d;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">
@@ -4839,6 +5009,22 @@ initTrial();
 document.addEventListener('DOMContentLoaded', function() {
   initAuth().then(() => {
     renderHome();
+    // Update splash CTA based on auth state
+    const btn = document.getElementById('splash-cta-btn');
+    const sub = document.getElementById('splash-cta-sub');
+    if (btn && sub) {
+      if (currentUser) {
+        const plan = currentPlan || 'free';
+        if (plan === 'basic' || plan === 'premium' || plan === 'annual') {
+          btn.textContent = 'Continue Your Journey →';
+          sub.textContent = '✨ Welcome back — your recovery streak awaits';
+        } else {
+          btn.textContent = 'Continue Your Journey →';
+          sub.textContent = 'Welcome back 🌿 Pick up where you left off';
+        }
+      }
+      // else: new/logged-out user keeps the default "Start Your Free 3-Day Trial →"
+    }
   });
 });
 
