@@ -2643,14 +2643,32 @@ function saveLog() {
     showToast('Fill in at least one field to save 📝'); return;
   }
 
+  // Also capture routine completion % from today's checkboxes
+  let done = 0, total = 0;
+  document.querySelectorAll('.routine-check').forEach(cb => { total++; if (cb.checked) done++; });
+  document.querySelectorAll('#ginger-step-list .step-item').forEach(el => { total++; if (el.classList.contains('done')) done++; });
+  const routinePct = total > 0 ? Math.round((done/total)*100) : null;
+
   const logs = load('logs', {});
   const today = dateKey(new Date());
-  logs[today] = { sleep: sleep||null, water: water||null, babyhairs: babyhairs||null, shed: shed||null, symptoms, notes, ts: Date.now() };
+  // Preserve existing routinePct if already saved via saveRoutine
+  const existing = logs[today] || {};
+  logs[today] = {
+    sleep: sleep||null,
+    water: water||null,
+    babyhairs: babyhairs||null,
+    shed: shed||null,
+    symptoms,
+    notes,
+    ts: Date.now(),
+    routinePct: existing.routinePct || routinePct,
+    routineSaved: existing.routineSaved || false
+  };
   save('logs', logs);
+  syncProgressToSupabase('logs', logs);
 
   showToast('Today\'s log saved! 🌿');
   renderTracker();
-  // Refresh weekly/monthly banners if user is on routine screen
   if (state.currentScreen === 'routine') {
     if (state.routineViewTab === 'weekly')  renderRoutineUnlockBanner('weekly');
     if (state.routineViewTab === 'monthly') renderRoutineUnlockBanner('monthly');
@@ -2695,12 +2713,18 @@ function renderHistory() {
         const daysLogged = weekStats[wk]?.count || 7;
         const weekData   = load('weekly_' + wk, {});
         const avgPct     = weekData._dailyAvg ? Math.round(weekData._dailyAvg) : null;
-        const avgStr     = avgPct !== null ? ` · ${avgPct}% avg daily completion` : '';
-        return `<div class="history-item">
-          <div class="history-dot">📆</div>
-          <div class="history-text">
-            <div class="ht-date" style="color:var(--green-deep);font-weight:700">Week starting ${weekStartLabel(wk)}</div>
-            <div class="ht-title">${daysLogged}/7 days logged${avgStr} ✅</div>
+        const analysis   = generateWeeklyAnalysis(wk, daysLogged, avgPct, weekData);
+        return `<div class="history-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="history-dot">📆</div>
+            <div class="history-text">
+              <div class="ht-date" style="color:var(--green-deep);font-weight:700">Week of ${weekStartLabel(wk)}</div>
+              <div class="ht-title">${daysLogged}/7 days logged${avgPct !== null ? ` · ${avgPct}% routine completion` : ''}</div>
+            </div>
+          </div>
+          <div style="background:${analysis.bg};border-left:3px solid ${analysis.color};border-radius:8px;padding:10px 12px;width:100%;box-sizing:border-box">
+            <div style="font-size:12px;font-weight:700;color:${analysis.color};margin-bottom:4px">${analysis.emoji} ${analysis.title}</div>
+            <div style="font-size:12px;color:var(--text-mid);line-height:1.5">${analysis.message}</div>
           </div>
         </div>`;
       }).join('');
@@ -2719,11 +2743,18 @@ function renderHistory() {
       const allCompletedWeeks = getCompletedWeeks();
       monthlyEl.innerHTML = completedMonths.slice().reverse().map(([mk, weeksCount]) => {
         const weeksInMonth = allCompletedWeeks.filter(([wk]) => wk.slice(0, 7) === mk).length;
-        return `<div class="history-item">
-          <div class="history-dot">🗓️</div>
-          <div class="history-text">
-            <div class="ht-date" style="color:var(--green-deep);font-weight:700">${monthLabelStr(mk)}</div>
-            <div class="ht-title">${weeksInMonth}/4 weeks earned ✅</div>
+        const monthAnalysis = generateMonthlyAnalysis(mk, weeksInMonth);
+        return `<div class="history-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="history-dot">🗓️</div>
+            <div class="history-text">
+              <div class="ht-date" style="color:var(--green-deep);font-weight:700">${monthLabelStr(mk)}</div>
+              <div class="ht-title">${weeksInMonth}/4 weeks earned</div>
+            </div>
+          </div>
+          <div style="background:${monthAnalysis.bg};border-left:3px solid ${monthAnalysis.color};border-radius:8px;padding:10px 12px;width:100%;box-sizing:border-box">
+            <div style="font-size:12px;font-weight:700;color:${monthAnalysis.color};margin-bottom:4px">${monthAnalysis.emoji} ${monthAnalysis.title}</div>
+            <div style="font-size:12px;color:var(--text-mid);line-height:1.5">${monthAnalysis.message}</div>
           </div>
         </div>`;
       }).join('');
@@ -2731,6 +2762,155 @@ function renderHistory() {
       monthlyCard.style.display = 'none';
     }
   }
+}
+
+/* ── WEEKLY ANALYSIS ENGINE ───────────────────────────────── */
+function generateWeeklyAnalysis(wk, daysLogged, avgPct, weekData) {
+  const logs = load('logs', {});
+
+  // Collect this week's data
+  const weekEntries = Object.entries(logs).filter(([d]) => {
+    const date = new Date(d + 'T12:00:00');
+    return dateKey(date).slice(0, 10) >= wk && dateKey(date).slice(0, 10) <= getWeekEnd(wk);
+  });
+
+  const sleepVals = weekEntries.map(([,l]) => Number(l.sleep)).filter(v => v > 0);
+  const waterVals = weekEntries.map(([,l]) => Number(l.water)).filter(v => v > 0);
+  const hairVals  = weekEntries.map(([,l]) => Number(l.babyhairs)).filter(v => v > 0);
+  const shedVals  = weekEntries.map(([,l]) => Number(l.shed)).filter(v => v > 0);
+  const routinePcts = weekEntries.map(([,l]) => Number(l.routinePct)).filter(v => v > 0);
+
+  const avgSleep   = sleepVals.length   ? (sleepVals.reduce((a,b)=>a+b,0)/sleepVals.length).toFixed(1) : null;
+  const avgWater   = waterVals.length   ? (waterVals.reduce((a,b)=>a+b,0)/waterVals.length).toFixed(1) : null;
+  const avgRoutine = routinePcts.length ? Math.round(routinePcts.reduce((a,b)=>a+b,0)/routinePcts.length) : avgPct;
+  const totalHairs = hairVals.reduce((a,b)=>a+b,0);
+  const avgShed    = shedVals.length    ? Math.round(shedVals.reduce((a,b)=>a+b,0)/shedVals.length) : null;
+
+  // Build insights
+  const insights = [];
+  if (avgSleep !== null) {
+    if (avgSleep >= 7)      insights.push(`Sleep: ${avgSleep}h avg ✅`);
+    else if (avgSleep >= 6) insights.push(`Sleep: ${avgSleep}h avg — try for 7-8h for better hair growth`);
+    else                    insights.push(`Sleep: Only ${avgSleep}h avg ⚠️ Low sleep raises cortisol — hurts hair recovery`);
+  }
+  if (avgWater !== null) {
+    if (avgWater >= 8)      insights.push(`Hydration: ${avgWater} glasses avg ✅`);
+    else if (avgWater >= 6) insights.push(`Hydration: ${avgWater} glasses avg — aim for 8+`);
+    else                    insights.push(`Hydration: Only ${avgWater} glasses avg ⚠️ Drink more water daily`);
+  }
+  if (totalHairs > 0)  insights.push(`Baby hairs: ${totalHairs} logged this week 🌱`);
+  if (avgShed !== null) {
+    if (avgShed <= 50)  insights.push(`Shedding: ~${avgShed}/day — within normal range ✅`);
+    else                insights.push(`Shedding: ~${avgShed}/day ⚠️ Higher than normal — check stress & diet`);
+  }
+
+  // Score and verdict
+  let score = 0;
+  if (daysLogged >= 7)                    score += 30;
+  else if (daysLogged >= 5)               score += 20;
+  else if (daysLogged >= 3)               score += 10;
+  if (avgRoutine >= 80)                   score += 30;
+  else if (avgRoutine >= 50)              score += 20;
+  else if (avgRoutine >= 30)              score += 10;
+  if (avgSleep >= 7)                      score += 20;
+  else if (avgSleep >= 6)                 score += 10;
+  if (avgWater >= 8)                      score += 20;
+  else if (avgWater >= 6)                 score += 10;
+
+  let title, message, emoji, color, bg;
+  if (score >= 80) {
+    emoji = '🌟'; title = 'Excellent Week!';
+    color = '#2d7a4f'; bg = '#e8f5ed';
+    message = `Outstanding consistency! ${insights.join(' · ')} Keep this up — hair recovery responds to sustained habits.`;
+  } else if (score >= 55) {
+    emoji = '💚'; title = 'Good Progress!';
+    color = '#3d6b4f'; bg = '#f0faf4';
+    message = `Solid effort this week. ${insights.join(' · ')} Small improvements in consistency will compound over time.`;
+  } else if (score >= 35) {
+    emoji = '🌱'; title = 'Can Be Better';
+    color = '#a06010'; bg = '#fdf6e3';
+    message = `You started — that matters! ${insights.join(' · ')} Focus on logging daily and completing at least 50% of your routine.`;
+  } else {
+    emoji = '💛'; title = 'Just Getting Started';
+    color = '#c07010'; bg = '#fef9e7';
+    message = `Every journey starts somewhere. ${insights.length ? insights.join(' · ') : ''} Try to log every day this week — even partial routines count!`;
+  }
+
+  return { title, message, emoji, color, bg };
+}
+
+function getWeekEnd(wkStart) {
+  const d = new Date(wkStart + 'T12:00:00');
+  d.setDate(d.getDate() + 6);
+  return dateKey(d);
+}
+
+/* ── MONTHLY ANALYSIS ENGINE ──────────────────────────────── */
+function generateMonthlyAnalysis(mk, weeksCompleted) {
+  const logs = load('logs', {});
+
+  // Get all logs for this month
+  const monthEntries = Object.entries(logs).filter(([d]) => d.slice(0,7) === mk);
+  const daysLogged = monthEntries.length;
+
+  const sleepVals = monthEntries.map(([,l]) => Number(l.sleep)).filter(v => v > 0);
+  const waterVals = monthEntries.map(([,l]) => Number(l.water)).filter(v => v > 0);
+  const hairVals  = monthEntries.map(([,l]) => Number(l.babyhairs)).filter(v => v > 0);
+  const shedVals  = monthEntries.map(([,l]) => Number(l.shed)).filter(v => v > 0);
+  const routinePcts = monthEntries.map(([,l]) => Number(l.routinePct)).filter(v => v > 0);
+
+  const avgSleep   = sleepVals.length   ? (sleepVals.reduce((a,b)=>a+b,0)/sleepVals.length).toFixed(1) : null;
+  const avgWater   = waterVals.length   ? (waterVals.reduce((a,b)=>a+b,0)/waterVals.length).toFixed(1) : null;
+  const avgRoutine = routinePcts.length ? Math.round(routinePcts.reduce((a,b)=>a+b,0)/routinePcts.length) : 0;
+  const totalHairs = hairVals.reduce((a,b)=>a+b,0);
+
+  // Month insights
+  const insights = [];
+  insights.push(`${daysLogged} days logged out of ~30`);
+  if (avgRoutine > 0) insights.push(`${avgRoutine}% avg routine completion`);
+  if (avgSleep !== null) insights.push(`${avgSleep}h avg sleep`);
+  if (avgWater !== null) insights.push(`${avgWater} glasses avg hydration`);
+  if (totalHairs > 0) insights.push(`${totalHairs} baby hairs logged total 🌱`);
+
+  // Trend analysis
+  let trendMsg = '';
+  if (hairVals.length >= 4) {
+    const firstHalf = hairVals.slice(0, Math.floor(hairVals.length/2));
+    const secondHalf = hairVals.slice(Math.floor(hairVals.length/2));
+    const avgFirst  = firstHalf.reduce((a,b)=>a+b,0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((a,b)=>a+b,0) / secondHalf.length;
+    if (avgSecond > avgFirst * 1.1)       trendMsg = 'Baby hair growth is trending UP this month! 📈';
+    else if (avgSecond < avgFirst * 0.9)  trendMsg = 'Baby hair count dipped — review your nutrition and stress levels.';
+    else                                   trendMsg = 'Baby hair count is stable — consistency is building the foundation.';
+  }
+
+  // Score
+  let score = 0;
+  score += Math.min(weeksCompleted * 20, 40);
+  score += Math.min(daysLogged * 1.5, 30);
+  if (avgRoutine >= 70) score += 30;
+  else if (avgRoutine >= 40) score += 15;
+
+  let title, message, emoji, color, bg;
+  if (score >= 80) {
+    emoji = '🏆'; title = 'Incredible Month!';
+    color = '#2d7a4f'; bg = '#e8f5ed';
+    message = `${insights.join(' · ')}. ${trendMsg} This level of dedication creates real, lasting hair recovery.`;
+  } else if (score >= 55) {
+    emoji = '💚'; title = 'Strong Month';
+    color = '#3d6b4f'; bg = '#f0faf4';
+    message = `${insights.join(' · ')}. ${trendMsg} You're building momentum — the next month will be even better.`;
+  } else if (score >= 30) {
+    emoji = '🌱'; title = 'Growing Month';
+    color = '#a06010'; bg = '#fdf6e3';
+    message = `${insights.join(' · ')}. ${trendMsg} Consistency is still building — aim for 7+ days logged per week next month.`;
+  } else {
+    emoji = '💛'; title = 'Room to Grow';
+    color = '#c07010'; bg = '#fef9e7';
+    message = `${insights.join(' · ')}. Recovery takes time and daily effort. Set a simple goal: log every single day next month.`;
+  }
+
+  return { title, message, emoji, color, bg };
 }
 
 /* ── ROUTINE ──────────────────────────────────────────────── */
