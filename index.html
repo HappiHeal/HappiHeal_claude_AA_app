@@ -87,7 +87,7 @@ function validateCoupon(code) {
   if (!c) return { valid: false, msg: 'Invalid coupon code.' };
   if (new Date() > c.expiresAt) return { valid: false, msg: 'This coupon has expired.' };
   if (c.validDays && !c.validDays.includes(new Date().getDay())) {
-    return { valid: false, msg: 'This code is only valid on Sundays.' };
+    return { valid: false, msg: 'Invalid coupon code.' };
   }
   return { valid: true, msg: c.label + ' applied! 🎉', discount: c.discount };
 }
@@ -4145,7 +4145,7 @@ function _renderPricingUI() {
       couponHTML = `
         <div style="background:rgba(255,248,230,0.15);border:1.5px dashed rgba(255,200,80,0.6);border-radius:12px;padding:12px 14px;margin:12px 0 4px">
           <div style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:${p.highlight?'rgba(255,255,200,0.9)':'#a06010'};margin-bottom:8px">🏷️ COUPON — APPLY BELOW</div>
-          <div style="font-size:10px;color:${p.highlight?'rgba(255,255,255,0.6)':'var(--text-muted)'};margin-bottom:8px">Use <b>HAPPIHEAL25</b> for 25% off · Use <b>SUNDAY50</b> on Sundays for 50% off</div>
+          <div style="font-size:10px;color:${p.highlight?'rgba(255,255,255,0.6)':'var(--text-muted)'};margin-bottom:8px">Use <b>HAPPIHEAL25</b> for 25% off · Use <b>SUNDAY50</b> on Sundays for 50% off':''}</div>
           <div style="display:flex;gap:8px;align-items:center">
             <input id="coupon-input-${p.name}" type="text" placeholder="Enter coupon code"
               style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#c8e6d0'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#1a2e22'};font-family:var(--font-body)"
