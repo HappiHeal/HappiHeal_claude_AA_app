@@ -2446,6 +2446,12 @@ function renderHome() {
     const mc = document.getElementById('guest-member-count');
     if (mc) mc.textContent = CONTENT.foundingUsersCount || '47';
   }
+  // Show founding offer banner on home screen
+const chb = document.getElementById('coupon-home-banner');
+if (chb) {
+  const fo = isFoundingActive();
+  chb.style.display = (fo.active && !isPaid) ? 'flex' : 'none';
+}
 }
 
 function renderAffirmation() {
@@ -4081,9 +4087,9 @@ function isFoundingActive() {
   const launch = new Date(CONTENT.foundingLaunchDate);
   const now = new Date();
   const daysSinceLaunch = Math.floor((now - launch) / 86400000);
-  const daysLeft = Math.max(0, 30 - daysSinceLaunch);
+  const daysLeft = 1; // Offer is open until 500 members — no date expiry;
   const spotsLeft = Math.max(0, CONTENT.foundingUserLimit - CONTENT.foundingUsersCount);
-  return { active: daysLeft > 0 && spotsLeft > 0, daysLeft, spotsLeft };
+ return { active: spotsLeft > 0, daysLeft, spotsLeft };
 }
 
 // Fetch live paid-user count from Supabase and update founding spots
@@ -4109,6 +4115,22 @@ function renderPricing() {
   // Render immediately with cached count too
   _renderPricingUI();
 }
+
+function _renderPricingUI() {
+  const intl = state.intlCurrency;
+  const annual = state.billingMode === 'annual';
+  const { active, daysLeft, spotsLeft } = isFoundingActive();
+
+  // Update founding banner
+  const banner = document.getElementById('founding-banner');
+  if (active) {
+    banner.style.display = 'block';
+    document.getElementById('founding-spots-left').textContent = spotsLeft;
+    const badge = document.getElementById('founding-expiry-badge');
+    if (badge) badge.textContent = spotsLeft <= 50 ? '⚡ Almost full!' : 'Open now';
+  } else {
+    banner.style.display = 'none';
+  }
 
 function _renderPricingUI() {
   const intl = state.intlCurrency;
