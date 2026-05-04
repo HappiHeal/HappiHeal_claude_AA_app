@@ -1562,7 +1562,7 @@ IMPORTANT RULES:
       <button onclick="goTo('pricing')" style="background:var(--warm-amber);color:white;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;white-space:nowrap">Upgrade →</button>
     </div>
      <!-- Weekend coupon banner — auto-hides when coupon expires -->
-    <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#1a2e22,#2d5a3d);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#1a2e22,#2d5a3d);padding:11px 20px;align-items:center;justify-content:space-between;gap:10px">
       <div style="flex:1">
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🏷️ FOUNDING MEMBER OFFER </div>
         <div style="font-size:13px;font-weight:600;color:white">25% off Premium Annual · Use code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
@@ -2445,6 +2445,14 @@ function renderHome() {
     guestStrip.style.display = currentUser ? 'none' : 'block';
     const mc = document.getElementById('guest-member-count');
     if (mc) mc.textContent = CONTENT.foundingUsersCount || '47';
+  }
+
+  // Show founding offer banner for non-premium users
+  const chb = document.getElementById('coupon-home-banner');
+  if (chb) {
+    const fo = isFoundingActive();
+    const _isPremium = getUserPlan() === 'premium';
+    chb.style.display = (fo.active && !_isPremium) ? 'flex' : 'none';
   }
 }
 
@@ -4122,20 +4130,6 @@ function _renderPricingUI() {
     document.getElementById('founding-spots-left').textContent = spotsLeft;
     const badge = document.getElementById('founding-expiry-badge');
     if (badge) badge.textContent = spotsLeft <= 50 ? '⚡ Almost full!' : 'Open now';
-  } else {
-    banner.style.display = 'none';
-  }
-
-function _renderPricingUI() {
-  const intl = state.intlCurrency;
-  const annual = state.billingMode === 'annual';
-  const { active, daysLeft, spotsLeft } = isFoundingActive();
-
-  // Update founding banner
-  const banner = document.getElementById('founding-banner');
-  if (active) {
-    banner.style.display = 'block';
-    document.getElementById('founding-spots-left').textContent = spotsLeft;
   } else {
     banner.style.display = 'none';
   }
