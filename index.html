@@ -2447,11 +2447,7 @@ function renderHome() {
     if (mc) mc.textContent = CONTENT.foundingUsersCount || '47';
   }
   // Show founding offer banner on home screen
-const chb = document.getElementById('coupon-home-banner');
-if (chb) {
-  const fo = isFoundingActive();
-  chb.style.display = (fo.active && !isPaid) ? 'flex' : 'none';
-}
+
 }
 
 function renderAffirmation() {
