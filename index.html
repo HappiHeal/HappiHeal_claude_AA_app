@@ -5191,7 +5191,7 @@ function showConsultationModal() {
     // Premium: 1 free call per quarter — email to book
     accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d5a3d;line-height:1.7">
       💚 <b>Premium member perk</b> — 1 free session per quarter included in your plan.<br>
-      Email us and we'll confirm your slot within 24 hours.
+      Email us with your name and we'll send you available slots within 24 hours.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Premium%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Premium%20member%20and%20would%20like%20to%20book%20my%20free%20quarterly%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
       style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
@@ -5201,7 +5201,7 @@ function showConsultationModal() {
     // Basic: 1 free call per year — email to book
     accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d5a3d;line-height:1.7">
       💚 <b>Basic member perk</b> — 1 free session per year included in your plan.<br>
-      Email us and we'll confirm your slot within 24 hours.
+      Email us with your name and we'll send you available slots within 24 hours.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Basic%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Basic%20member%20and%20would%20like%20to%20book%20my%20free%20annual%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
       style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
@@ -5251,11 +5251,9 @@ function showConsultationModal() {
         ⚠️ <b>Not a medical consultation.</b> Harshitha shares her personal 20-year experience with natural recovery methods. This is not medical advice and does not replace your doctor or dermatologist.
       </div>
 
-      <!-- Time slots info -->
-      <div style="font-size:11px;color:#9db5a6;text-align:center;margin-bottom:14px;line-height:1.7">
-        📅 Sessions run Mon–Fri · 7–8am IST or 8–9pm IST<br>
-        <span style="font-size:10px">(8–9pm IST = 9:30am EST · 7–8am IST = 8:30pm EST previous evening)</span><br>
-        <span style="font-size:10px;color:#b5c9bc">We'll confirm your exact slot by email within 24 hours.</span>
+      <!-- Scheduling info -->
+      <div style="background:#f0f7f3;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#4a6558;line-height:1.8;text-align:center">
+        📩 After payment, we'll email you available time slots within 24 hours — just reply with your preferred time and we'll confirm your session.
       </div>
 
       <!-- CTA -->
@@ -5287,7 +5285,7 @@ function payForConsultation() {
       <div style="background:white;border-radius:24px 24px 0 0;padding:28px 22px 44px;width:100%;max-width:430px;animation:fadeUp 0.3s ease">
         <div style="font-size:32px;text-align:center;margin-bottom:12px">💳</div>
         <div style="font-size:17px;font-weight:700;color:#1a2e22;text-align:center;margin-bottom:8px">Pay $7 to Book Your Session</div>
-        <div style="font-size:13px;color:#6b8577;text-align:center;margin-bottom:20px;line-height:1.6">Send $7 via PayPal to <b>contact.happiloot@gmail.com</b> with note "HappiHeal Session". We'll email you within 24 hours to confirm your time slot.<br><br><span style="font-size:11px">Sessions: Mon–Fri · 7–8am IST (8:30pm EST) or 8–9pm IST (9:30am EST)</span></div>
+        <div style="font-size:13px;color:#6b8577;text-align:center;margin-bottom:20px;line-height:1.6">Send $7 via PayPal to <b>contact.happiloot@gmail.com</b> with note "HappiHeal Session".<br><br>We'll email you available time slots within 24 hours — just reply with your preference and we'll confirm.</div>
         <a href="https://paypal.me/happiloot/7" target="_blank"
           style="display:block;width:100%;padding:15px;background:#0070ba;color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
           Pay $7 via PayPal →
@@ -5321,8 +5319,8 @@ function payForConsultation() {
           <div style="font-size:44px;margin-bottom:12px">🌿</div>
           <div style="font-size:18px;font-weight:700;color:#1a2e22;margin-bottom:8px">Payment confirmed!</div>
           <div style="font-size:13px;color:#6b8577;line-height:1.7;margin-bottom:20px">
-            Thank you! We'll email you at <b>${state.userEmail || 'your registered email'}</b> within 24 hours to confirm your session slot.<br><br>
-            Sessions run <b>Mon–Fri, 7–8am or 8–9pm IST</b>. Please mention your preferred time and time zone in your reply.
+            Thank you! We'll email you at <b>${state.userEmail || 'your registered email'}</b> with available time slots within 24 hours.<br><br>
+            Just reply with your preferred slot and we'll confirm your session. 🌿
           </div>
           <button onclick="this.closest('div[style]').remove()"
             style="width:100%;padding:13px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
