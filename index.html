@@ -270,7 +270,7 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
 
   // Apply coupon if valid, eligible plan, and founding offer still active
   const founding_now    = CONTENT.foundingUsersCount || 0;
-  const foundingMax_now = CONTENT.foundingUserLimit  || 500;
+  const foundingMax_now = CONTENT.foundingUserLimit  || 100;
   const foundingOk = founding_now < foundingMax_now;
   if (foundingOk && _couponApplied && _appliedDiscount > 0) {
     const base = useIntl ? price.usd : price.amount;
@@ -667,7 +667,7 @@ const CONTENT = {
   // ── FOUNDING OFFER ─────────────────────────────────────────
   // Set this to the date you launched (founding offer expires 30 days after)
   foundingLaunchDate: "2026-04-01",  // 👈 Change to your actual launch date
-  foundingUserLimit: 500,
+  foundingUserLimit: 100,
   foundingUsersCount: 47,            // 👈 Update this number manually as users grow
 
   // ── EBOOK LINKS ────────────────────────────────────────────
@@ -1461,7 +1461,7 @@ IMPORTANT RULES:
 
       <!-- Title -->
       <div style="font-family:var(--font-display);font-size:46px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:4px;animation:splashTitle 0.7s ease 0.15s both">HappiHeal</div>
-      <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:20px;animation:splashTitle 0.7s ease 0.2s both">by HappiLoot</div>
+      <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:20px;animation:splashTitle 0.7s ease 0.2s both">Natural Hair Recovery</div>
 
       <!-- ── FOUNDER CARD ── -->
       <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:20px 20px 18px;margin-bottom:24px;width:100%;animation:splashTitle 0.7s ease 0.28s both">
@@ -1500,7 +1500,7 @@ IMPORTANT RULES:
           <div style="width:26px;height:26px;border-radius:50%;background:#4a7a5a;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">💚</div>
           <div style="width:26px;height:26px;border-radius:50%;background:#3d6b4f;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">🌿</div>
         </div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;text-align:left"><span style="color:#a8e6c0;font-weight:600">47+ members</span> already on their recovery journey</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;text-align:left"><span style="color:#a8e6c0;font-weight:600">Join our growing community</span> of natural hair recovery</div>
       </div>
 
       <!-- ── AA SPECIFICITY TAG ── -->
@@ -1513,14 +1513,14 @@ IMPORTANT RULES:
       <div style="width:100%;margin-bottom:22px;animation:splashTitle 0.7s ease 0.46s both">
         <div style="display:flex;flex-direction:column;gap:8px">
           <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
-            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"I've been consistent for 3 weeks straight for the first time in years. The daily routine makes it feel achievable."</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"Noticed less shedding by week 3. First time being consistent for months — the daily routine makes it feel actually doable."</div>
             <div style="display:flex;align-items:center;gap:7px">
               <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
               <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Sarah M. · Toronto, Canada</div>
             </div>
           </div>
           <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
-            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"Knowing Harshitha built this from her own experience makes me trust the content in a way no other app has."</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"New growth in month 4. Harshitha built this from real experience — that's why I trusted it when nothing else felt right."</div>
             <div style="display:flex;align-items:center;gap:7px">
               <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
               <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Nimal P. · Colombo, Sri Lanka</div>
@@ -1535,10 +1535,9 @@ IMPORTANT RULES:
 
       <div id="splash-cta-sub" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:14px;animation:splashTitle 0.7s ease 0.58s both">Free to start · No credit card needed</div>
 
-      <!-- HappiLoot brand -->
+      <!-- Brand -->
       <div style="margin-top:32px;display:flex;flex-direction:column;align-items:center;animation:splashTitle 0.7s ease 0.65s both">
-        <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:3px">Brought to you by</div>
-        <div style="font-size:13px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.55)">HappiLoot</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center">Built from 20 years of lived experience 🌿</div>
       </div>
 
     </div>
@@ -1564,8 +1563,8 @@ IMPORTANT RULES:
      <!-- Weekend coupon banner — auto-hides when coupon expires -->
     <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#1a2e22,#2d5a3d);padding:11px 20px;align-items:center;justify-content:space-between;gap:10px">
       <div style="flex:1">
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🏷️ FOUNDING MEMBER OFFER </div>
-        <div style="font-size:13px;font-weight:600;color:white">25% off Premium Annual · Use code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🏷️ FOUNDING MEMBER OFFER</div>
+        <div id="coupon-banner-desc" style="font-size:13px;font-weight:600;color:white">25% off Premium Annual · Use code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
       </div>
       <button onclick="goTo('pricing');setTimeout(()=>setBilling('annual'),300)" style="background:#ffd700;color:#1a2e22;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0">Grab It →</button>
     </div>
@@ -1591,12 +1590,12 @@ IMPORTANT RULES:
         <button onclick="showAuthModal('signup')" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
           Start Free — 3-Day Trial 🌱
         </button>
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted)">🎯 For all types of Alopecia · <span id="guest-member-count">47</span>+ members recovering</div>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted)">🎯 For all types of hair loss · Free to start · No card needed</div>
       </div>
       <div>
         <div class="section-title">Today's Affirmation</div>
         <div class="affirmation-card" onclick="nextAffirmation()" id="affirmation-card">
-          <div class="affirmation-text" id="affirmation-text">Loading...</div>
+          <div class="affirmation-text" id="affirmation-text">Your recovery starts with one small step today 🌱</div>
           <div class="affirmation-hint">Tap to refresh ✨</div>
         </div>
       </div>
@@ -1623,12 +1622,26 @@ IMPORTANT RULES:
           <div class="quick-card" onclick="goTo('routine')">
             <div class="qc-icon">🌿</div>
             <div class="qc-label">Today's Routine</div>
-            <div class="qc-sub" id="routine-type-home">Loading...</div>
+            <div class="qc-sub" id="routine-type-home">Daily routine</div>
           </div>
           <div class="quick-card" onclick="goTo('learn')">
             <div class="qc-icon">📚</div>
             <div class="qc-label">Learn</div>
             <div class="qc-sub">7 modules</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONSULTATION CARD ──────────────────────────────── -->
+      <div style="padding:0 16px 8px">
+        <div style="background:linear-gradient(135deg,#edf7f0,#d4f0df);border-radius:20px;padding:20px;border:1px solid var(--green-pale);display:flex;gap:14px;align-items:flex-start">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--green-deep);margin-bottom:3px">Talk to Harshitha — 1:1 Session</div>
+            <div style="font-size:12px;color:var(--text-soft);line-height:1.5;margin-bottom:12px">20 years of lived experience. Let's look at your personal journey, triggers and routine together.</div>
+            <button onclick="showConsultationModal()" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">
+              Book a Free Discovery Call →
+            </button>
           </div>
         </div>
       </div>
@@ -1974,7 +1987,7 @@ IMPORTANT RULES:
           <div style="font-size:13px;font-weight:700;color:#a06010">🔥 FOUNDING MEMBER PRICING</div>
           <div style="font-size:11px;font-weight:600;color:#c07010" id="founding-expiry-badge"></div>
         </div>
-        <div style="font-size:12px;color:#8a5a00;line-height:1.5" id="founding-desc">Lock in the lowest price forever — available until we hit 500 members.</div>
+        <div style="font-size:12px;color:#8a5a00;line-height:1.5" id="founding-desc">Lock in the lowest price forever — only 100 founding member spots available.</div>
         <div style="margin-top:10px;display:flex;gap:12px">
           <div style="flex:1;text-align:center;background:rgba(255,255,255,0.6);border-radius:10px;padding:8px 4px">
             <div style="font-size:22px;font-weight:700;color:#a06010" id="founding-spots-left">—</div>
@@ -2003,21 +2016,24 @@ IMPORTANT RULES:
         <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">What members say</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
-            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"I've been consistent for 3 weeks straight for the first time in years. The daily routine makes it feel achievable."</div>
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:6px">"Noticed less shedding by week 3. First time being consistent for months — the routine makes it actually doable."</div>
+            <div style="font-size:11px;color:var(--green-mid);font-weight:600;margin-bottom:8px">✓ Less shedding by week 3</div>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mist);display:flex;align-items:center;justify-content:center;font-size:13px">🌱</div>
               <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Sarah M. · Toronto, Canada</div>
             </div>
           </div>
           <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
-            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"The natural remedy section finally explained the right way to use the ingredients. I noticed less itching in week 2."</div>
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:6px">"Less itching and scalp irritation by week 2. The remedies section showed me I'd been doing it wrong for years."</div>
+            <div style="font-size:11px;color:var(--green-mid);font-weight:600;margin-bottom:8px">✓ Scalp improvement in 2 weeks</div>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="width:28px;height:28px;border-radius:50%;background:var(--warm-amber-lt);display:flex;align-items:center;justify-content:center;font-size:13px">💚</div>
               <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Divya R. · Bangalore, India</div>
             </div>
           </div>
           <div style="background:var(--white);border-radius:var(--radius-md);padding:16px 18px;box-shadow:var(--shadow-sm)">
-            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:10px">"Knowing Harshitha built this from her own experience makes me trust the content in a way no other app has."</div>
+            <div style="font-size:13px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:6px">"New growth appeared in month 4. Harshitha built this from real experience — that's why I trusted it."</div>
+            <div style="font-size:11px;color:var(--green-mid);font-weight:600;margin-bottom:8px">✓ New growth by month 4</div>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="width:28px;height:28px;border-radius:50%;background:var(--green-mist);display:flex;align-items:center;justify-content:center;font-size:13px">🌿</div>
               <div style="font-size:12px;font-weight:600;color:var(--green-deep)">Nimal P. · Colombo, Sri Lanka</div>
@@ -2102,7 +2118,7 @@ IMPORTANT RULES:
       <!-- Legal footer -->
       <div style="text-align:center;padding:16px 0 8px">
         <div style="font-size:11px;color:var(--text-muted);line-height:1.6">
-          HappiHeal by HappiLoot · <a href="mailto:contact.happiloot&#64;gmail.com" style="color:var(--text-muted)">contact.happiloot&#64;gmail.com</a><br>
+          HappiHeal · <a href="mailto:contact.happiloot&#64;gmail.com" style="color:var(--text-muted)">contact.happiloot&#64;gmail.com</a><br>
           Personal experience only — not medical advice
         </div>
       </div>
@@ -2280,75 +2296,19 @@ function getDailyTip() {
 function renderWABanner() {
   const banner = document.getElementById('wa-community-banner');
   if (!banner) return;
-  const founding    = CONTENT.foundingUsersCount || 0;
-  const foundingMax = CONTENT.foundingUserLimit  || 500;
-  const offerActive = founding < foundingMax;
-  const sunday      = isSunday();
-  const plan        = getUserPlan();
-  const isPaid      = plan === 'basic' || plan === 'premium';
-
-  if (isPaid) {
-    // Already paid — green button to open community
-    banner.innerHTML = `
-      <a href="${WHATSAPP_COMMUNITY_LINK}" target="_blank"
-        style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:14px 18px;text-decoration:none;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:22px">💬</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:white">WhatsApp · HappiHeal — Together We Heal</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.85)">Tap to open your exclusive community</div>
-          </div>
+  // WhatsApp community is FREE and open to everyone — no plan restriction
+  banner.innerHTML = `
+    <a href="${WHATSAPP_COMMUNITY_LINK}" target="_blank"
+      style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:14px 18px;text-decoration:none;gap:10px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:22px">💬</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:white">HappiHeal — Together We Heal</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.85)">Free WhatsApp community · Open to everyone 💚</div>
         </div>
-        <div style="font-size:18px;color:white">→</div>
-      </a>`;
-    return;
-  }
-
-  if (!offerActive) {
-    // No founding offer — plain join CTA
-    banner.innerHTML = `
-      <div onclick="goTo('pricing')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:14px 18px;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:22px">💬</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:white">WhatsApp · HappiHeal — Together We Heal</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Private community for Premium members</div>
-          </div>
-        </div>
-        <div style="background:rgba(255,255,255,0.2);color:white;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap">Join →</div>
-      </div>`;
-    return;
-  }
-
-  const spotsLeft = foundingMax - founding;
-
-  if (sunday) {
-    // Sunday — 50% off, no price mentioned
-    banner.innerHTML = `
-      <div onclick="goTo('pricing')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:14px 18px;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:22px">💬</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:white">WhatsApp · HappiHeal — Together We Heal</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8)">⚡ 50% off Premium Annual today · Code: <b>SUNDAY50</b></div>
-          </div>
-        </div>
-        <div style="background:rgba(255,255,255,0.2);color:white;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap">Join →</div>
-      </div>`;
-  } else {
-    // Normal days — 25% founding offer
-    banner.innerHTML = `
-      <div onclick="goTo('pricing')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);padding:14px 18px;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:22px">💬</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:white">WhatsApp · HappiHeal — Together We Heal</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.8)">🔥 Founding offer · 25% off · ${spotsLeft} spots left</div>
-          </div>
-        </div>
-        <div style="background:rgba(255,255,255,0.2);color:white;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap">Join →</div>
-      </div>`;
-  }
+      </div>
+      <div style="background:rgba(255,255,255,0.2);color:white;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;white-space:nowrap">Join →</div>
+    </a>`;
 }
 
 function showWhatsAppInvitePopup() {
@@ -2362,15 +2322,15 @@ function showWhatsAppInvitePopup() {
       <div style="font-size:52px;margin-bottom:12px">🎉</div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#1a2e22;margin-bottom:8px">Welcome to HappiHeal!</div>
       <div style="font-size:14px;color:#6b8577;margin-bottom:20px;line-height:1.5">
-        You now have exclusive access to the <b>HappiHeal Inner Circle</b> — Harshitha's private WhatsApp community.
+        Welcome to the <b>HappiHeal community</b> — a free space for everyone on their hair recovery journey 💚
       </div>
       <div style="background:#e8f5ed;border-radius:14px;padding:14px 16px;margin-bottom:20px;text-align:left">
         <div style="font-size:12px;color:#2d5a3d;line-height:1.9">
           💬 Daily tips from Harshitha personally<br>
-          🫚 Full recipes & exact measurements<br>
-          📸 Progress sharing & wins<br>
-          🙋 Direct Q&A — your questions answered<br>
-          🔒 Members only • No public access
+          🫚 Full recipes &amp; exact measurements<br>
+          📸 Progress sharing &amp; wins<br>
+          🙋 Direct Q&amp;A — your questions answered<br>
+          💚 Free &amp; open to everyone
         </div>
       </div>
       <a href="${WHATSAPP_COMMUNITY_LINK}" target="_blank"
@@ -2457,7 +2417,20 @@ function renderHome() {
   if (chb) {
     const fo = isFoundingActive();
     const _isPremium = getUserPlan() === 'premium';
-    chb.style.display = (fo.active && !_isPremium) ? 'flex' : 'none';
+    if (fo.active && !_isPremium) {
+      chb.style.display = 'flex';
+      // Update the banner text based on day
+      const bannerDesc = chb.querySelector('#coupon-banner-desc');
+      if (bannerDesc) {
+        if (isSunday()) {
+          bannerDesc.innerHTML = '⚡ Sunday Special: 50% off Premium Annual · Code <span style="color:#ffd700;letter-spacing:1px">SUNDAY50</span>';
+        } else {
+          bannerDesc.innerHTML = '25% off Premium Annual · Code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span>';
+        }
+      }
+    } else {
+      chb.style.display = 'none';
+    }
   }
 }
 
@@ -4094,7 +4067,7 @@ function isFoundingActive() {
   const launch = new Date(CONTENT.foundingLaunchDate);
   const now = new Date();
   const daysSinceLaunch = Math.floor((now - launch) / 86400000);
-  const daysLeft = 1; // Offer is open until 500 members — no date expiry;
+  const daysLeft = 1; // Offer is open until 100 founding spots are filled — no date expiry;
   const spotsLeft = Math.max(0, CONTENT.foundingUserLimit - CONTENT.foundingUsersCount);
  return { active: spotsLeft > 0, daysLeft, spotsLeft };
 }
@@ -4160,7 +4133,8 @@ function _renderPricingUI() {
       couponHTML = `
         <div style="background:rgba(255,248,230,0.15);border:1.5px dashed rgba(255,200,80,0.6);border-radius:12px;padding:12px 14px;margin:12px 0 4px">
           <div style="font-size:11px;font-weight:700;letter-spacing:0.5px;color:${p.highlight?'rgba(255,255,200,0.9)':'#a06010'};margin-bottom:8px">🏷️ COUPON — APPLY BELOW</div>
-          <div style="font-size:10px;color:${p.highlight?'rgba(255,255,255,0.6)':'var(--text-muted)'};margin-bottom:8px">Use <b>HAPPIHEAL25</b> for 25% off</div>
+          <div style="font-size:10px;color:${p.highlight?'rgba(255,255,255,0.6)':'var(--text-muted)'};margin-bottom:4px">🌿 Use <b>HAPPIHEAL25</b> for 25% off (any day)</div>
+          ${isSunday() ? `<div style="font-size:10px;color:${p.highlight?'rgba(255,215,0,0.9)':'#a06010'};margin-bottom:8px;font-weight:700">⚡ Sunday Special — Use <b>SUNDAY50</b> for 50% off today only!</div>` : '<div style="margin-bottom:4px"></div>'}
           <div style="display:flex;gap:8px;align-items:center">
             <input id="coupon-input-${p.name}" type="text" placeholder="Enter coupon code"
               style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#c8e6d0'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#1a2e22'};font-family:var(--font-body)"
@@ -4212,9 +4186,9 @@ function applyCouponUI(planName, intl, active) {
   const ctaEl     = document.getElementById('plan-cta-' + planName);
   if (!input || !msgEl) return;
 
-  // Check founding offer — both coupons expire after 500 members
+  // Check founding offer — both coupons expire after 100 founding members
   const founding    = CONTENT.foundingUsersCount || 0;
-  const foundingMax = CONTENT.foundingUserLimit  || 500;
+  const foundingMax = CONTENT.foundingUserLimit  || 100;
   if (founding >= foundingMax) {
     msgEl.style.display = 'block';
     msgEl.textContent = '❌ Founding offer has ended. No coupons available.';
@@ -4777,7 +4751,7 @@ function showWelcomeModal() {
       </div>
 
       <!-- Social proof -->
-      <div style="text-align:center;font-size:12px;color:#9db5a6;margin-bottom:18px">💚 <strong style="color:#6b8577">${CONTENT.foundingUsersCount || 47}+ members</strong> already on their recovery journey</div>
+      <div style="text-align:center;font-size:12px;color:#9db5a6;margin-bottom:18px">💚 <strong style="color:#6b8577">A growing community</strong> on their recovery journey</div>
 
       <button onclick="document.getElementById('welcome-modal').remove();showAuthModal('signup')"
         style="width:100%;padding:16px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
@@ -4834,7 +4808,7 @@ function showPremiumAnnualConfirm(planKey, planName, intl) {
   const useIntl = intl === true || intl === 'true' || state.intlCurrency;
   // Check founding offer active
   const founding    = CONTENT.foundingUsersCount || 0;
-  const foundingMax = CONTENT.foundingUserLimit  || 500;
+  const foundingMax = CONTENT.foundingUserLimit  || 100;
   const foundingActive = founding < foundingMax;
   const couponApplied = foundingActive && _couponApplied && _appliedDiscount > 0;
   const discountPct   = couponApplied ? Math.round(_appliedDiscount * 100) : 0;
