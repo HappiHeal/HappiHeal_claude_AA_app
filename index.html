@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<meta name="theme-color" content="#3d6b4f"/>
+<meta name="theme-color" content="#258a42"/>
 <meta name="description" content="HappiHeal — Natural alopecia recovery app by Harshitha, who healed naturally after 20 years. Natural remedies, nutrition tracker, AI coach & 260-page ebook. Start free 3-day trial."/>
 <meta name="keywords" content="alopecia recovery, natural hair recovery, alopecia app, hair loss tracker, natural remedies, holistic hair growth"/>
 <meta property="og:title" content="HappiHeal — Natural Alopecia Recovery Companion"/>
@@ -289,7 +289,7 @@ function payWithRazorpay(planKey, planName, intl, onSuccess) {
       email: currentUser.email,
       name: currentUser.user_metadata?.full_name || ''
     },
-    theme: { color: '#3d6b4f' },
+    theme: { color: '#258a42' },
     modal: {
       ondismiss: function() {
         showToast('Payment cancelled — come back anytime 🌿');
@@ -357,52 +357,52 @@ function showAuthModal(mode) {
   modal.innerHTML = `
     <div style="background:white;border-radius:24px;padding:32px 24px 24px;width:100%;max-width:380px;animation:fadeUp 0.3s ease;position:relative">
       <!-- Close button -->
-      <button onclick="hideAuthModal()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;background:#edf7f0;border-radius:50%;font-size:15px;color:#6b8577;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">✕</button>
+      <button onclick="hideAuthModal()" style="position:absolute;top:14px;right:14px;width:30px;height:30px;background:#eaf7ee;border-radius:50%;font-size:15px;color:#4a9960;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">✕</button>
 
       <div style="text-align:center;margin-bottom:24px">
         <div style="font-size:40px;margin-bottom:8px">🌿</div>
-        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#1a2e22">HappiHeal</div>
-        <div style="font-size:13px;color:#6b8577;margin-top:4px">Your alopecia recovery companion</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#0f3520">HappiHeal</div>
+        <div style="font-size:13px;color:#4a9960;margin-top:4px">Your alopecia recovery companion</div>
       </div>
 
-      <div id="auth-tabs" style="display:flex;background:#edf7f0;border-radius:12px;padding:4px;margin-bottom:20px">
+      <div id="auth-tabs" style="display:flex;background:#eaf7ee;border-radius:12px;padding:4px;margin-bottom:20px">
         <button id="tab-signin" onclick="switchAuthTab('signin')"
-          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:white;color:#2d5a3d;transition:all 0.2s">
+          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:white;color:#1a5c2e;transition:all 0.2s">
           Sign In
         </button>
         <button id="tab-signup" onclick="switchAuthTab('signup')"
-          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:none;color:#9db5a6;transition:all 0.2s">
+          style="flex:1;padding:8px;border-radius:8px;font-size:14px;font-weight:600;background:none;color:#82c499;transition:all 0.2s">
           Sign Up
         </button>
       </div>
 
       <div id="auth-form-signin">
         <input id="signin-email" type="email" placeholder="Email address"
-          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #b8e6c8;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#0f3520"/>
         <input id="signin-password" type="password" placeholder="Password"
-          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#1a2e22"/>
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #b8e6c8;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#0f3520"/>
         <div id="signin-error" style="color:#c0392b;font-size:12px;margin-bottom:10px;display:none"></div>
         <button onclick="handleSignIn()"
-          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
           Sign In →
         </button>
       </div>
 
       <div id="auth-form-signup" style="display:none">
         <input id="signup-name" type="text" placeholder="Your name"
-          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #b8e6c8;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#0f3520"/>
         <input id="signup-email" type="email" placeholder="Email address"
-          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#1a2e22"/>
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #b8e6c8;font-size:14px;margin-bottom:10px;background:#f9fdf9;color:#0f3520"/>
         <input id="signup-password" type="password" placeholder="Password (min 6 chars)"
-          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #c8e6d0;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#1a2e22"/>
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid #b8e6c8;font-size:14px;margin-bottom:16px;background:#f9fdf9;color:#0f3520"/>
         <div id="signup-error" style="color:#c0392b;font-size:12px;margin-bottom:10px;display:none"></div>
         <button onclick="handleSignUp()"
-          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
           Create Account →
         </button>
       </div>
 
-      <div style="text-align:center;margin-top:16px;font-size:12px;color:#9db5a6">
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:#82c499">
         Your healing journey starts here 🌱
       </div>
     </div>`;
@@ -420,9 +420,9 @@ function switchAuthTab(tab) {
   document.getElementById('auth-form-signin').style.display = tab === 'signin' ? 'block' : 'none';
   document.getElementById('auth-form-signup').style.display = tab === 'signup' ? 'block' : 'none';
   document.getElementById('tab-signin').style.background = tab === 'signin' ? 'white' : 'none';
-  document.getElementById('tab-signin').style.color = tab === 'signin' ? '#2d5a3d' : '#9db5a6';
+  document.getElementById('tab-signin').style.color = tab === 'signin' ? '#1a5c2e' : '#82c499';
   document.getElementById('tab-signup').style.background = tab === 'signup' ? 'white' : 'none';
-  document.getElementById('tab-signup').style.color = tab === 'signup' ? '#2d5a3d' : '#9db5a6';
+  document.getElementById('tab-signup').style.color = tab === 'signup' ? '#1a5c2e' : '#82c499';
 }
 
 async function handleSignIn() {
@@ -499,18 +499,12 @@ function isUserPremium() { return currentPlan === 'premium'; }
 function isUserBasicOrAbove() { return currentPlan === 'basic' || currentPlan === 'premium'; }
 
 // ── EARLY GLOBAL — needed before script block 3 loads ────────
-window.showDisclaimer = function() {
-  // Will be overridden by full definition in script block 3
-  // This prevents "not defined" errors on button click
-  const modal = document.getElementById('disclaimer-modal');
-  const splash = document.getElementById('screen-splash');
-  if (modal) {
-    modal.style.display = 'flex';
-  } else if (splash) {
-    splash.style.transition = 'opacity 0.4s ease';
-    splash.style.opacity = '0';
-    setTimeout(() => { splash.style.display = 'none'; window.showWelcomeModal && window.showWelcomeModal(); }, 400);
-  }
+window.showOnboarding = function() {
+  const s1 = document.getElementById('screen-splash');
+  const s2 = document.getElementById('screen-onboarding');
+  // Show onboarding FIRST — behind the splash — so there's no gap where home flashes through
+  if (s2) { s2.style.display = 'block'; s2.style.visibility = 'visible'; s2.style.zIndex = '499'; }
+  if (s1) { s1.style.transition = 'opacity 0.35s ease'; s1.style.opacity = '0'; setTimeout(() => { s1.style.display = 'none'; if (s2) s2.style.zIndex = '500'; }, 350); }
 };
 </script>
 
@@ -529,7 +523,7 @@ const CONTENT = {
 
   // ── HOME SCREEN ────────────────────────────────────────────
   homeGreeting: "Welcome back",
-  homeBannerText: "Your hair's comeback story starts today.",
+  homeBannerText: "Your alopecia recovery starts today.",
 
   // ── DAILY TIPS (rotate one per day automatically) ───────────
   dailyTips: [
@@ -881,19 +875,19 @@ IMPORTANT RULES:
 <style>
   /* ── DESIGN TOKENS ─────────────────────────────────── */
   :root {
-    --green-deep:    #2d5a3d;
-    --green-mid:     #3d6b4f;
-    --green-soft:    #5a8a6a;
-    --green-pale:    #c8e6d0;
-    --green-mist:    #edf7f0;
+    --green-deep:    #1a5c2e;
+    --green-mid:     #258a42;
+    --green-soft:    #32b058;
+    --green-pale:    #b8e6c8;
+    --green-mist:    #eaf7ee;
     --warm-cream:    #fdf8f0;
     --warm-sand:     #f5ede0;
     --warm-amber:    #e8a048;
     --warm-amber-lt: #fdf3e3;
-    --text-dark:     #1a2e22;
+    --text-dark:     #0f3520;
     --text-mid:      #3d5248;
-    --text-soft:     #6b8577;
-    --text-muted:    #9db5a6;
+    --text-soft:     #4a9960;
+    --text-muted:    #82c499;
     --white:         #ffffff;
     --shadow-sm:     0 2px 8px rgba(45,90,61,0.08);
     --shadow-md:     0 4px 20px rgba(45,90,61,0.12);
@@ -1436,7 +1430,7 @@ IMPORTANT RULES:
     border: 1.5px solid transparent; transition: all 0.18s;
   }
   .symptom-chip.selected { background: var(--white); border-color: var(--green-mid); color: var(--green-deep); font-weight: 700; }
-  .symptom-chip.good.selected { border-color: #5a8a6a; color: var(--green-deep); background: #d4f0df; }
+  .symptom-chip.good.selected { border-color: #32b058; color: var(--green-deep); background: #c4e8cf; }
   .symptom-chip:active { transform: scale(0.94); }
 
   /* ── SCROLLBAR ───────────────────────────────────────── */
@@ -1448,106 +1442,89 @@ IMPORTANT RULES:
 <body>
 <div id="app">
 
-  <!-- ════════════════ SPLASH SCREEN ════════════════ -->
-  <div id="screen-splash" style="position:fixed;inset:0;z-index:500;overflow-y:auto;background:linear-gradient(160deg,#1e3d28 0%,#2d5a3d 45%,#3d6b4f 100%)">
 
-    <!-- Animated background leaves -->
+  <!-- ════════════════ SPLASH SCREEN 1 — BRAND ════════════════ -->
+  <div id="screen-splash" style="position:fixed;inset:0;z-index:500;background:linear-gradient(160deg,#0f3d1c 0%,#1a5c2e 45%,#258a42 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer" onclick="showOnboarding()">
     <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
       <div style="position:absolute;top:-20px;right:-20px;font-size:180px;opacity:0.06;transform:rotate(20deg)">🌿</div>
-      <div style="position:absolute;bottom:30%;left:-20px;font-size:160px;opacity:0.05;transform:rotate(-15deg)">🌱</div>
+      <div style="position:absolute;bottom:20%;left:-20px;font-size:160px;opacity:0.05;transform:rotate(-15deg)">🌱</div>
     </div>
+    <div style="text-align:center;position:relative">
+      <div style="font-family:var(--font-display);font-size:52px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:6px;animation:splashTitle 0.8s ease 0.1s both">HappiHeal</div>
+      <div style="font-size:11px;letter-spacing:3.5px;color:rgba(255,255,255,0.45);text-transform:uppercase;animation:splashTitle 0.8s ease 0.3s both">Alopecia Recovery Companion</div>
+    </div>
+    <div style="position:absolute;bottom:48px;font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:0.5px;animation:splashTitle 0.8s ease 0.7s both">Tap to continue</div>
+  </div><!-- END SPLASH 1 -->
 
-    <div style="max-width:430px;margin:0 auto;padding:52px 28px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:100vh;position:relative">
+  <!-- ════════════════ SPLASH SCREEN 2 — ONBOARDING ════════════════ -->
+  <div id="screen-onboarding" style="position:fixed;inset:0;z-index:1;overflow-y:auto;background:var(--warm-cream);display:none;visibility:hidden">
+    <div style="max-width:430px;margin:0 auto;padding:40px 24px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:100vh">
 
-      <!-- Title -->
-      <div style="font-family:var(--font-display);font-size:46px;font-weight:600;color:#ffffff;letter-spacing:-1px;margin-bottom:4px;animation:splashTitle 0.7s ease 0.15s both">HappiHeal</div>
-      <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:20px;animation:splashTitle 0.7s ease 0.2s both">Natural Hair Recovery</div>
+      <!-- Top tag -->
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--green-mist);border:1px solid var(--green-pale);border-radius:99px;padding:5px 14px;margin-bottom:28px;font-size:11px;color:var(--green-deep);font-weight:600;animation:splashTitle 0.6s ease 0.05s both">
+        🎯 Built specifically for Alopecia
+      </div>
 
-      <!-- ── FOUNDER CARD ── -->
-      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:20px 20px 18px;margin-bottom:24px;width:100%;animation:splashTitle 0.7s ease 0.28s both">
-        <!-- Avatar + name row -->
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);border:2px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🌿</div>
-          <div style="text-align:left">
-            <div style="font-size:15px;font-weight:700;color:#ffffff">Harshitha MV</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:1px">Founder · Healed naturally after 20 years</div>
+      <!-- Founder card -->
+      <div style="background:white;border:1px solid var(--green-pale);border-radius:20px;padding:20px;margin-bottom:20px;width:100%;text-align:left;box-shadow:0 2px 16px rgba(26,92,46,0.08);animation:splashTitle 0.6s ease 0.1s both">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#32b058,#1a5c2e);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--green-deep)">Harshitha MV</div>
+            <div style="font-size:11px;color:var(--text-soft);margin-top:1px">Founder · Healed naturally after 20 years</div>
           </div>
         </div>
-        <!-- Story quote -->
-        <div style="font-family:var(--font-display);font-style:italic;font-size:15px;color:rgba(255,255,255,0.88);line-height:1.6;text-align:left">"Alopecia appeared when I was 10. After 20 years of trial, tears and breakthroughs — I healed naturally. This app is everything I wish I'd had at the start."</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:14px;color:var(--text-mid);line-height:1.65">"Alopecia appeared when I was 10. After 20 years of trial, tears and breakthroughs — I healed naturally. This app is everything I wish I'd had at the start."</div>
       </div>
 
-      <!-- ── 3-FEATURE STRIP ── -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;margin-bottom:24px;animation:splashTitle 0.7s ease 0.36s both">
-        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
-          <div style="font-size:22px;margin-bottom:5px">🫚</div>
-          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">Natural Remedies</div>
+      <!-- 3 features -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;margin-bottom:20px;animation:splashTitle 0.6s ease 0.15s both">
+        <div style="background:white;border:1px solid var(--green-pale);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:0 1px 8px rgba(26,92,46,0.06)">
+          <div style="font-size:22px;margin-bottom:6px">🫚</div>
+          <div style="font-size:11px;font-weight:600;color:var(--green-deep);line-height:1.3">Natural Remedies</div>
         </div>
-        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
-          <div style="font-size:22px;margin-bottom:5px">💬</div>
-          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">AI Recovery Coach</div>
+        <div style="background:white;border:1px solid var(--green-pale);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:0 1px 8px rgba(26,92,46,0.06)">
+          <div style="font-size:22px;margin-bottom:6px">💬</div>
+          <div style="font-size:11px;font-weight:600;color:var(--green-deep);line-height:1.3">AI Recovery Coach</div>
         </div>
-        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 8px;text-align:center">
-          <div style="font-size:22px;margin-bottom:5px">📖</div>
-          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:1.3">260-Page Ebook</div>
+        <div style="background:white;border:1px solid var(--green-pale);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:0 1px 8px rgba(26,92,46,0.06)">
+          <div style="font-size:22px;margin-bottom:6px">📖</div>
+          <div style="font-size:11px;font-weight:600;color:var(--green-deep);line-height:1.3">260-Page Ebook</div>
         </div>
       </div>
 
-      <!-- ── SOCIAL PROOF ── -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;animation:splashTitle 0.7s ease 0.42s both">
-        <div style="display:flex;align-items:center">
-          <div style="width:26px;height:26px;border-radius:50%;background:#5a8a6a;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-2px">🌱</div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#4a7a5a;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">💚</div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#3d6b4f;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;margin-left:-8px">🌿</div>
-        </div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;text-align:left"><span style="color:#a8e6c0;font-weight:600">Join our growing community</span> of natural hair recovery</div>
-      </div>
-
-      <!-- ── AA SPECIFICITY TAG ── -->
-      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:99px;padding:6px 14px;margin-bottom:28px;font-size:12px;color:rgba(255,255,255,0.8);font-weight:500;animation:splashTitle 0.7s ease 0.46s both">
-        <span style="font-size:14px">🎯</span> Built for all types of Alopecia
-      </div>
-
-      <!-- CTA Button -->
-      <!-- ── REVIEWS ── -->
-      <div style="width:100%;margin-bottom:22px;animation:splashTitle 0.7s ease 0.46s both">
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
-            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"Noticed less shedding by week 3. First time being consistent for months — the daily routine makes it feel actually doable."</div>
-            <div style="display:flex;align-items:center;gap:7px">
-              <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
-              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Sarah M. · Toronto, Canada</div>
-            </div>
+      <!-- Reviews -->
+      <div style="width:100%;margin-bottom:20px;display:flex;flex-direction:column;gap:10px;animation:splashTitle 0.6s ease 0.2s both">
+        <div style="background:white;border:1px solid var(--green-pale);border-radius:14px;padding:14px 16px;text-align:left;box-shadow:0 1px 8px rgba(26,92,46,0.06)">
+          <div style="font-size:12px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:8px">"Noticed less shedding by week 3. First time being consistent for months — the daily routine makes it feel actually doable."</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="font-size:10px">⭐⭐⭐⭐⭐</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-soft)">Sarah M. · Toronto, Canada</div>
           </div>
-          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:13px 15px">
-            <div style="font-size:12px;color:rgba(255,255,255,0.85);line-height:1.55;font-style:italic;margin-bottom:8px">"New growth in month 4. Harshitha built this from real experience — that's why I trusted it when nothing else felt right."</div>
-            <div style="display:flex;align-items:center;gap:7px">
-              <div style="display:flex;gap:1px;font-size:10px">⭐⭐⭐⭐⭐</div>
-              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Nimal P. · Colombo, Sri Lanka</div>
-            </div>
+        </div>
+        <div style="background:white;border:1px solid var(--green-pale);border-radius:14px;padding:14px 16px;text-align:left;box-shadow:0 1px 8px rgba(26,92,46,0.06)">
+          <div style="font-size:12px;color:var(--text-mid);line-height:1.6;font-style:italic;margin-bottom:8px">"New growth in month 4. Harshitha built this from real experience — that's why I trusted it when nothing else felt right."</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="font-size:10px">⭐⭐⭐⭐⭐</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-soft)">Nimal P. · Colombo, Sri Lanka</div>
           </div>
         </div>
       </div>
 
-      <button id="splash-cta-btn" onclick="showDisclaimer()" style="width:100%;background:white;color:#1e3d28;border-radius:14px;padding:17px 40px;font-size:16px;font-weight:700;letter-spacing:0.2px;cursor:pointer;transition:all 0.2s;animation:splashTitle 0.7s ease 0.5s both;font-family:var(--font-body);box-shadow:0 4px 20px rgba(0,0,0,0.25)" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
-        Start Your Free 3-Day Trial →
+      <!-- CTA -->
+      <button onclick="showDisclaimer()" style="width:100%;background:linear-gradient(135deg,#1a5c2e,#258a42);color:white;border-radius:14px;padding:17px 40px;font-size:16px;font-weight:700;letter-spacing:0.2px;cursor:pointer;transition:all 0.2s;font-family:var(--font-body);box-shadow:0 4px 20px rgba(26,92,46,0.3);animation:splashTitle 0.6s ease 0.25s both;margin-bottom:12px" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''" ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
+        Start Free 3-Day Trial →
       </button>
-
-      <div id="splash-cta-sub" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:14px;animation:splashTitle 0.7s ease 0.58s both">Free to start · No credit card needed</div>
-
-      <!-- Brand -->
-      <div style="margin-top:32px;display:flex;flex-direction:column;align-items:center;animation:splashTitle 0.7s ease 0.65s both">
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center">Built from 20 years of lived experience 🌿</div>
-      </div>
+      <div style="font-size:11px;color:var(--text-muted);animation:splashTitle 0.6s ease 0.3s both">Free to start · No credit card needed</div>
 
     </div>
-  </div><!-- END SPLASH -->
+  </div><!-- END SPLASH 2 -->
 
   <!-- ════════════════ HOME ════════════════ -->
   <div id="screen-home" class="screen active">
     <div class="hero">
       <div class="hero-greeting" id="home-greeting">Good morning ☀️</div>
-      <div class="hero-title" id="home-banner">Your hair's comeback story starts today.</div>
+      <div class="hero-title" id="home-banner">Your alopecia recovery starts today.</div>
       <div class="hero-date" id="home-date"></div>
       <div class="streak-badge" id="streak-badge">🔥 <span id="streak-count">0</span> day streak</div>
     </div>
@@ -1555,27 +1532,27 @@ IMPORTANT RULES:
     <!-- Trial countdown banner -->
     <div id="trial-banner" style="display:none;background:linear-gradient(135deg,#fff8e6,#fdf3e3);border-bottom:1px solid var(--warm-amber);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px">
       <div>
-        <div style="font-size:12px;font-weight:700;color:#a06010" id="trial-label">⏳ FREE TRIAL</div>
-        <div style="font-size:13px;color:var(--text-mid)" id="trial-text">3 days remaining</div>
+        <div style="font-size:12px;font-weight:700;color:#a06010" id="trial-label">🌱 YOUR RECOVERY JOURNEY</div>
+        <div style="font-size:13px;color:var(--text-mid)" id="trial-text">Day 1 — let's begin</div>
       </div>
       <button onclick="goTo('pricing')" style="background:var(--warm-amber);color:white;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;white-space:nowrap">Upgrade →</button>
     </div>
      <!-- Weekend coupon banner — auto-hides when coupon expires -->
-    <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#1a2e22,#2d5a3d);padding:11px 20px;align-items:center;justify-content:space-between;gap:10px">
+    <div id="coupon-home-banner" style="display:none;background:linear-gradient(135deg,#0f3520,#1a5c2e);padding:11px 20px;align-items:center;justify-content:space-between;gap:10px">
       <div style="flex:1">
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🏷️ FOUNDING MEMBER OFFER</div>
-        <div id="coupon-banner-desc" style="font-size:13px;font-weight:600;color:white">25% off Premium Annual · Use code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.5px;margin-bottom:2px">🌿 EARLY ACCESS PRICING</div>
+        <div id="coupon-banner-desc" style="font-size:13px;font-weight:600;color:white">Most members see less shedding by week 3 — lock in 25% off with code <span style="color:#ffd700;letter-spacing:1px">HAPPIHEAL25</span></div>
       </div>
-      <button onclick="goTo('pricing');setTimeout(()=>setBilling('annual'),300)" style="background:#ffd700;color:#1a2e22;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0">Grab It →</button>
+      <button onclick="goTo('pricing');setTimeout(()=>setBilling('annual'),300)" style="background:#ffd700;color:#0f3520;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0">Grab It →</button>
     </div>
     <div class="home-content">
       <!-- ── WHATSAPP COMMUNITY BANNER ── -->
       <div id="wa-community-banner"></div>
 
       <!-- ── PRE-LOGIN VALUE STRIP (only for guests / logged-out) ── -->
-      <div id="guest-hero-strip" style="display:none;background:linear-gradient(135deg,#edf7f0,#d4f0df);border-radius:var(--radius-md);padding:18px 20px;border:1px solid var(--green-pale)">
+      <div id="guest-hero-strip" style="display:none;background:linear-gradient(135deg,#eaf7ee,#c4e8cf);border-radius:var(--radius-md);padding:18px 20px;border:1px solid var(--green-pale)">
         <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
-          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#32b058,#258a42);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
           <div>
             <div style="font-size:14px;font-weight:700;color:var(--green-deep)">Harshitha's 20-year journey</div>
             <div style="font-size:12px;color:var(--text-soft);margin-top:2px;line-height:1.5;font-style:italic">"Alopecia appeared at 10. I healed it naturally. This app is everything I wish I'd had."</div>
@@ -1590,7 +1567,7 @@ IMPORTANT RULES:
         <button onclick="showAuthModal('signup')" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));color:white;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer">
           Start Free — 3-Day Trial 🌱
         </button>
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted)">🎯 For all types of hair loss · Free to start · No card needed</div>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted)">🎯 Built for alopecia areata & all alopecia types · Free to start · No card needed</div>
       </div>
       <div>
         <div class="section-title">Today's Affirmation</div>
@@ -1634,8 +1611,8 @@ IMPORTANT RULES:
 
       <!-- ── CONSULTATION CARD ──────────────────────────────── -->
       <div style="padding:0 16px 8px">
-        <div style="background:linear-gradient(135deg,#edf7f0,#d4f0df);border-radius:20px;padding:20px;border:1px solid var(--green-pale);display:flex;gap:14px;align-items:flex-start">
-          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
+        <div style="background:linear-gradient(135deg,#eaf7ee,#c4e8cf);border-radius:20px;padding:20px;border:1px solid var(--green-pale);display:flex;gap:14px;align-items:flex-start">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#32b058,#258a42);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:700;color:var(--green-deep);margin-bottom:3px">Talk to Harshitha — 1:1 Session</div>
             <div style="font-size:12px;color:var(--text-soft);line-height:1.5;margin-bottom:12px">20 years of lived experience. Let's look at your personal journey, triggers and routine together.</div>
@@ -1648,7 +1625,7 @@ IMPORTANT RULES:
 
       <!-- ── BOX BREATHING WIDGET ─────────────────────────── -->
       <div style="padding:0 16px 24px">
-        <div id="box-breath-card" style="background:linear-gradient(135deg,#1a2e22 0%,#2d5a3d 60%,#3d6b4f 100%);border-radius:20px;padding:22px 20px 20px;position:relative;overflow:hidden">
+        <div id="box-breath-card" style="background:linear-gradient(135deg,#0f3520 0%,#1a5c2e 60%,#258a42 100%);border-radius:20px;padding:22px 20px 20px;position:relative;overflow:hidden">
 
           <!-- Background circle glow -->
           <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
@@ -1984,16 +1961,10 @@ IMPORTANT RULES:
       <!-- Founding offer countdown banner -->
       <div id="founding-banner" style="background:linear-gradient(135deg,#fff8e6,#fdf3e3);border-radius:var(--radius-md);padding:16px 18px;border:1.5px solid var(--warm-amber)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:13px;font-weight:700;color:#a06010">🔥 FOUNDING MEMBER PRICING</div>
+          <div style="font-size:13px;font-weight:700;color:#a06010">🌿 EARLY ACCESS PRICING</div>
           <div style="font-size:11px;font-weight:600;color:#c07010" id="founding-expiry-badge"></div>
         </div>
-        <div style="font-size:12px;color:#8a5a00;line-height:1.5" id="founding-desc">Lock in the lowest price forever — only 100 founding member spots available.</div>
-        <div style="margin-top:10px;display:flex;gap:12px">
-          <div style="flex:1;text-align:center;background:rgba(255,255,255,0.6);border-radius:10px;padding:8px 4px">
-            <div style="font-size:22px;font-weight:700;color:#a06010" id="founding-spots-left">—</div>
-            <div style="font-size:10px;color:#c07010;font-weight:600">SPOTS LEFT</div>
-          </div>
-        </div>
+        <div style="font-size:12px;color:#8a5a00;line-height:1.5" id="founding-desc">Built by someone who's lived it for 20 years. Early access members get the lowest rate this app will ever be — <span id="founding-spots-left">—</span> spots remaining.</div>
       </div>
 
       <!-- Currency + billing toggle row -->
@@ -2320,12 +2291,12 @@ function showWhatsAppInvitePopup() {
   modal.innerHTML = `
     <div style="background:white;border-radius:24px;padding:32px 24px;width:100%;max-width:380px;text-align:center;animation:fadeUp 0.3s ease">
       <div style="font-size:52px;margin-bottom:12px">🎉</div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#1a2e22;margin-bottom:8px">Welcome to HappiHeal!</div>
-      <div style="font-size:14px;color:#6b8577;margin-bottom:20px;line-height:1.5">
-        Welcome to the <b>HappiHeal community</b> — a free space for everyone on their hair recovery journey 💚
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#0f3520;margin-bottom:8px">Welcome to HappiHeal!</div>
+      <div style="font-size:14px;color:#4a9960;margin-bottom:20px;line-height:1.5">
+        Welcome to the <b>HappiHeal community</b> — a free space for everyone on their alopecia recovery journey 💚
       </div>
       <div style="background:#e8f5ed;border-radius:14px;padding:14px 16px;margin-bottom:20px;text-align:left">
-        <div style="font-size:12px;color:#2d5a3d;line-height:1.9">
+        <div style="font-size:12px;color:#1a5c2e;line-height:1.9">
           💬 Daily tips from Harshitha personally<br>
           🫚 Full recipes &amp; exact measurements<br>
           📸 Progress sharing &amp; wins<br>
@@ -2338,7 +2309,7 @@ function showWhatsAppInvitePopup() {
         💬 Join Inner Circle Now →
       </a>
       <button onclick="document.getElementById('wa-invite-modal').remove()"
-        style="width:100%;padding:11px;background:none;color:#9db5a6;font-size:13px;cursor:pointer">
+        style="width:100%;padding:11px;background:none;color:#82c499;font-size:13px;cursor:pointer">
         I'll join later
       </button>
     </div>`;
@@ -2362,7 +2333,7 @@ function renderHome() {
   document.getElementById('routine-type-home').textContent = isGinger ? 'Ginger juice day 🫚' : 'Oil massage day 🌿';
 
   // Trial banner logic
-  const { daysLeft, isPaid, isExpired, plan } = getTrialInfo();
+  const { daysLeft, isPaid, isExpired, plan, daysPassed } = getTrialInfo();
   const banner = document.getElementById('trial-banner');
   if (!banner) { renderAffirmation(); return; }
 
@@ -2372,7 +2343,7 @@ function renderHome() {
   } else if (plan === 'basic') {
     // Basic users — gentle green upgrade nudge, no "FREE TRIAL" text
     banner.style.display = 'flex';
-    banner.style.background = 'linear-gradient(135deg,#edf7f0,#d4f0df)';
+    banner.style.background = 'linear-gradient(135deg,#eaf7ee,#c4e8cf)';
     banner.style.borderBottomColor = 'var(--green-pale)';
     const lbl = document.getElementById('trial-label');
     if (lbl) { lbl.textContent = '🌿 BASIC PLAN'; lbl.style.color = 'var(--green-deep)'; }
@@ -2385,18 +2356,19 @@ function renderHome() {
     banner.style.background = 'linear-gradient(135deg,#fff8e6,#fdf3e3)';
     banner.style.borderBottomColor = 'var(--warm-amber)';
     const lbl = document.getElementById('trial-label');
-    if (lbl) { lbl.textContent = '⏳ FREE TRIAL'; lbl.style.color = '#a06010'; }
+    if (lbl) { lbl.textContent = '🌱 YOUR RECOVERY JOURNEY'; lbl.style.color = '#a06010'; }
     if (isExpired) {
-      document.getElementById('trial-text').textContent = 'Your free trial has ended';
+      document.getElementById('trial-text').textContent = 'Ready to continue your journey?';
       banner.style.background = 'linear-gradient(135deg,#fde8e8,#fdf0f0)';
       banner.style.borderBottomColor = '#d85a5a';
       const btn = banner.querySelector('button');
-      if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = '#d85a5a'; }
+      if (btn) { btn.textContent = 'Continue →'; btn.style.background = '#d85a5a'; }
     } else {
+      const dayNum = daysPassed + 1;
       document.getElementById('trial-text').textContent =
-        daysLeft === 1 ? 'Last day of free trial!' : `${daysLeft} days of free trial remaining`;
+        daysPassed === 0 ? 'Day 1 — let\'s begin 🌿' : `Day ${dayNum} of your recovery`;
       const btn = banner.querySelector('button');
-      if (btn) { btn.textContent = 'Upgrade →'; btn.style.background = 'var(--warm-amber)'; }
+      if (btn) { btn.textContent = 'Unlock All →'; btn.style.background = 'var(--warm-amber)'; }
     }
   } else {
     banner.style.display = 'none';
@@ -2948,7 +2920,7 @@ function generateWeeklyAnalysis(wk, daysLogged, avgPct, weekData) {
     message = `Outstanding consistency! ${insights.join(' · ')} Keep this up — hair recovery responds to sustained habits.`;
   } else if (score >= 55) {
     emoji = '💚'; title = 'Good Progress!';
-    color = '#3d6b4f'; bg = '#f0faf4';
+    color = '#258a42'; bg = '#eaf7ee';
     message = `Solid effort this week. ${insights.join(' · ')} Small improvements in consistency will compound over time.`;
   } else if (score >= 35) {
     emoji = '🌱'; title = 'Can Be Better';
@@ -3022,7 +2994,7 @@ function generateMonthlyAnalysis(mk, weeksCompleted) {
     message = `${insights.join(' · ')}. ${trendMsg} This level of dedication creates real, lasting hair recovery.`;
   } else if (score >= 55) {
     emoji = '💚'; title = 'Strong Month';
-    color = '#3d6b4f'; bg = '#f0faf4';
+    color = '#258a42'; bg = '#eaf7ee';
     message = `${insights.join(' · ')}. ${trendMsg} You're building momentum — the next month will be even better.`;
   } else if (score >= 30) {
     emoji = '🌱'; title = 'Growing Month';
@@ -3975,7 +3947,7 @@ function openPdfViewer(title, url, noDownload) {
   overlay.id = 'pdf-viewer-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:500;display:flex;flex-direction:column';
   overlay.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#1a2e22;color:white">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#0f3520;color:white">
       <div style="font-size:14px;font-weight:600;flex:1;margin-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${title}</div>
       <div style="display:flex;gap:8px;align-items:center">
         ${!noDownload ? `<a href="${url}" target="_blank" style="background:rgba(255,255,255,0.15);color:white;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">⬇️ Save</a>` : '<span style="font-size:11px;color:rgba(255,255,255,0.5)">🔒 View only</span>'}
@@ -3984,7 +3956,7 @@ function openPdfViewer(title, url, noDownload) {
       </div>
     </div>
     <iframe src="${url}" style="flex:1;width:100%;border:none;background:white" allowfullscreen></iframe>
-    ${noDownload ? '<div style="text-align:center;padding:8px;background:#1a2e22;color:rgba(255,255,255,0.4);font-size:11px">🔒 View only — downloading is disabled for Premium modules</div>' : ''}
+    ${noDownload ? '<div style="text-align:center;padding:8px;background:#0f3520;color:rgba(255,255,255,0.4);font-size:11px">🔒 View only — downloading is disabled for Premium modules</div>' : ''}
   `;
   document.body.appendChild(overlay);
 }
@@ -4127,7 +4099,7 @@ function _renderPricingUI() {
           ${isSunday() ? `<div style="font-size:10px;color:${p.highlight?'rgba(255,215,0,0.9)':'#a06010'};margin-bottom:8px;font-weight:700">⚡ Sunday Special — Use <b>SUNDAY50</b> for 50% off today only!</div>` : '<div style="margin-bottom:4px"></div>'}
           <div style="display:flex;gap:8px;align-items:center">
             <input id="coupon-input-${p.name}" type="text" placeholder="Enter coupon code"
-              style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#c8e6d0'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#1a2e22'};font-family:var(--font-body)"
+              style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid ${p.highlight?'rgba(255,255,255,0.3)':'#b8e6c8'};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:${p.highlight?'rgba(255,255,255,0.1)':'white'};color:${p.highlight?'white':'#0f3520'};font-family:var(--font-body)"
               oninput="this.value=this.value.toUpperCase()"/>
             <button onclick="applyCouponUI('${p.name}','${intl}','${active}')"
               style="padding:8px 14px;background:${p.highlight?'rgba(255,255,255,0.2)':'var(--green-mid)'};color:white;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
@@ -4206,7 +4178,7 @@ function applyCouponUI(planName, intl, active) {
 
   const pct = Math.round(result.discount * 100);
   msgEl.textContent = '✅ ' + result.msg;
-  msgEl.style.color = '#2d5a3d';
+  msgEl.style.color = '#1a5c2e';
 
   // Dynamically update the price preview
   const innerEl = document.getElementById('coupon-preview-inner-' + planName);
@@ -4509,20 +4481,20 @@ function showLegalModal(title, icon, content) {
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:flex-end';
   modal.innerHTML = `
     <div style="background:white;border-radius:24px 24px 0 0;width:100%;max-width:430px;max-height:88vh;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px;border-bottom:1px solid #edf7f0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px;border-bottom:1px solid #eaf7ee">
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:22px">${icon}</span>
-          <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:#1a2e22">${title}</span>
+          <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:#0f3520">${title}</span>
         </div>
         <button onclick="document.getElementById('legal-modal').remove()"
-          style="width:32px;height:32px;background:#edf7f0;border-radius:50%;font-size:16px;cursor:pointer;color:#2d5a3d;font-weight:700">✕</button>
+          style="width:32px;height:32px;background:#eaf7ee;border-radius:50%;font-size:16px;cursor:pointer;color:#1a5c2e;font-weight:700">✕</button>
       </div>
       <div style="overflow-y:auto;padding:20px;font-size:13px;color:#4a6557;line-height:1.75">
         ${content}
       </div>
       <div style="padding:16px 20px 32px">
         <button onclick="document.getElementById('legal-modal').remove()"
-          style="width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">
           I Understand 🌿
         </button>
       </div>
@@ -4533,19 +4505,19 @@ function showLegalModal(title, icon, content) {
 
 function showPrivacyPolicy() {
   showLegalModal('Privacy Policy', '🔒', `
-    <p style="font-size:11px;color:#9db5a6;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
+    <p style="font-size:11px;color:#82c499;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin-bottom:6px">1. Who We Are</div>
+    <div style="font-weight:700;color:#0f3520;margin-bottom:6px">1. Who We Are</div>
     <p>HappiHeal is a digital wellness app created by Harshitha MV, operating under HappiLoot. We help people with alopecia areata through natural remedies, routines, and holistic guidance based on 20+ years of personal experience.</p>
-    <p>Contact: <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#3d6b4f">contact.happiloot&#64;gmail.com</a></p>
+    <p>Contact: <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#258a42">contact.happiloot&#64;gmail.com</a></p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">2. What Data We Collect</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">2. What Data We Collect</div>
     <p><b>Account data:</b> Your name and email address when you sign up. This is stored securely through our third-party authentication provider.</p>
     <p><b>Payment data:</b> We collect only the payment ID needed to confirm your purchase and activate your plan. We do not store your card number, UPI ID, or banking details — these are handled entirely by our payment processor under PCI-DSS compliant systems.</p>
     <p><b>App usage data:</b> Your daily logs, streaks, and checklist data are stored locally on your device only (localStorage). We cannot access this data; it never leaves your phone.</p>
     <p><b>Photos:</b> HappiHeal does not ask you to upload or store photos. Any progress photos you take are saved to your device's gallery — we have no access to them.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">3. What We Do NOT Collect</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">3. What We Do NOT Collect</div>
     <p>No cookies or tracking pixels<br>
     No health records or medical data<br>
     No location data<br>
@@ -4553,76 +4525,76 @@ function showPrivacyPolicy() {
     No data sold to third parties — ever</p>
     <p>We do not process sensitive personal data under India's DPDP framework.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">4. How We Use Your Data</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">4. How We Use Your Data</div>
     <p>Your email is used to: create and manage your account, send plan confirmation, and respond to support requests. We do not send marketing emails without your explicit consent.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">5. Third-Party Services</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">5. Third-Party Services</div>
     <p>We use the following third-party services, each with their own privacy policies:<br>
     Authentication provider (handles sign-up and profile storage)<br>
     Payment processor (PCI-DSS compliant, regulated by RBI-recognized bodies)<br>
     AI service that powers the AI Ask feature. Your questions are sent to the AI API and are not stored by us.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">6. Your Rights (DPDP Act 2023)</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">6. Your Rights (DPDP Act 2023)</div>
     <p>Under India's Digital Personal Data Protection Act 2023, you have the right to:<br>
     Access the personal data we hold about you<br>
     Correct inaccurate data<br>
     Request deletion of your account and associated data<br>
     Withdraw consent at any time</p>
-    <p>Email <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#3d6b4f">contact.happiloot&#64;gmail.com</a> and we will respond within 7 business days.</p>
+    <p>Email <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#258a42">contact.happiloot&#64;gmail.com</a> and we will respond within 7 business days.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">7. Data Security & Retention</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">7. Data Security & Retention</div>
     <p>Your account data is protected using industry-standard security and HTTPS encryption in transit. We follow data minimization principles and retain your data only while your account is active or as required by law. You may request deletion at any time.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">8. Children</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">8. Children</div>
     <p>HappiHeal is intended for users aged 18 and above. We do not knowingly collect data from minors.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">9. Changes to This Policy</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">9. Changes to This Policy</div>
     <p>We may update this Privacy Policy occasionally. Significant changes will be communicated via the app or email. Continued use means you accept the updated policy.</p>
   `);
 }
 
 function showTerms() {
   showLegalModal('Terms & Conditions', '📋', `
-    <p style="font-size:11px;color:#9db5a6;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
+    <p style="font-size:11px;color:#82c499;margin-bottom:16px">Last updated: April 2026 &nbsp;|&nbsp; HappiHeal by HappiLoot</p>
     <p>Please read these terms carefully before using HappiHeal. By accessing or using the app, you agree to be bound by these terms.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin-bottom:6px">1. Medical Disclaimer</div>
+    <div style="font-weight:700;color:#0f3520;margin-bottom:6px">1. Medical Disclaimer</div>
     <div style="background:#fff8e6;border-left:3px solid #e8a048;border-radius:8px;padding:12px 14px;margin-bottom:10px">
       <b>Important:</b> HappiHeal is based entirely on Harshitha MV's personal 20+ year experience with alopecia areata. All content including remedies, nutrition advice, routines, and AI responses is shared as personal experience only.<br><br>
       This is <b>not medical advice</b>. We are not doctors, dermatologists, or licensed healthcare professionals. Nothing in this app should replace consultation with a qualified medical professional. Always seek professional medical advice for diagnosis and treatment of any health condition.
     </div>
     <p>Results vary from person to person. Natural remedies that worked for Harshitha may not work for everyone. HappiHeal makes no guarantees of hair regrowth or recovery.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">2. Digital Products — No Refund Policy</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">2. Digital Products — No Refund Policy</div>
     <p>All purchases on HappiHeal are for digital products and services, including subscription plans, ebooks, and modules. By completing a purchase you acknowledge:</p>
     <p>Digital products are delivered instantly upon payment.<br>
     Once accessed, digital content cannot be returned.<br>
     All sales are final — no refunds are offered, except in cases of non-delivery due to technical errors on our end, at our sole discretion.<br>
     Subscriptions can be cancelled at any time; cancellation stops future billing but does not refund the current period.</p>
-    <p>If your plan did not activate after payment, please email <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#3d6b4f">contact.happiloot&#64;gmail.com</a> with your payment ID and we will resolve it within 24 hours.</p>
+    <p>If your plan did not activate after payment, please email <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#258a42">contact.happiloot&#64;gmail.com</a> with your payment ID and we will resolve it within 24 hours.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">3. Intellectual Property</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">3. Intellectual Property</div>
     <p>All content in HappiHeal including the ebook, modules, AI knowledge base, app design, affirmations, routines, and written content is the intellectual property of HappiLoot. You may not copy, distribute, resell, or reproduce any content without written permission.</p>
     <p>The ebook and module PDFs are for your personal use only. Sharing or distributing them is a violation of these terms.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">4. AI Coach Usage</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">4. AI Coach Usage</div>
     <p>The AI Ask feature uses a third-party AI service. Responses are generated based on Harshitha's personal experience and the app's knowledge base. These responses are for informational purposes only and do not constitute medical advice. Do not rely on AI responses for medical decisions. You use this feature at your own risk.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">5. Acceptable Use</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">5. Acceptable Use</div>
     <p>You agree not to: misuse the platform, attempt to bypass plan restrictions, share account access with others, or use the app for any unlawful purpose. HappiHeal reserves the right to terminate or suspend accounts that violate these terms.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">6. Limitation of Liability</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">6. Limitation of Liability</div>
     <p>HappiHeal and HappiLoot shall not be liable for any direct, indirect, or consequential damages arising from your use of the app, including reliance on any content or AI responses. Your use of the app is entirely at your own risk.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">7. Changes to These Terms</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">7. Changes to These Terms</div>
     <p>We may update these terms from time to time. Significant changes will be communicated via the app or email. Continued use of HappiHeal after such changes means you accept the updated terms.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">8. Governing Law</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">8. Governing Law</div>
     <p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Bengaluru, Karnataka.</p>
 
-    <div style="font-weight:700;color:#1a2e22;margin:14px 0 6px">9. Contact</div>
+    <div style="font-weight:700;color:#0f3520;margin:14px 0 6px">9. Contact</div>
     <p>For any questions about these terms:<br>
-    <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#3d6b4f">contact.happiloot&#64;gmail.com</a><br>
+    <a href="mailto:contact.happiloot&#64;gmail.com" style="color:#258a42">contact.happiloot&#64;gmail.com</a><br>
     HappiHeal by HappiLoot, Bengaluru, India</p>
   `);
 }
@@ -4636,20 +4608,20 @@ function showPaymentSafetyMsg(paymentId) {
   modal.innerHTML = `
     <div style="background:white;border-radius:20px;padding:28px 22px;width:100%;max-width:380px">
       <div style="font-size:36px;text-align:center;margin-bottom:12px">✅</div>
-      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:#1a2e22;text-align:center;margin-bottom:8px">Payment Received!</div>
-      <div style="font-size:13px;color:#6b8577;text-align:center;line-height:1.6;margin-bottom:16px">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:#0f3520;text-align:center;margin-bottom:8px">Payment Received!</div>
+      <div style="font-size:13px;color:#4a9960;text-align:center;line-height:1.6;margin-bottom:16px">
         Your payment was successful. There was a small delay activating your plan — please email us and we'll activate it within a few hours.
       </div>
-      <div style="background:#edf7f0;border-radius:12px;padding:14px;margin-bottom:16px">
-        <div style="font-size:11px;color:#6b8577;margin-bottom:4px">Your Payment ID:</div>
-        <div style="font-size:13px;font-weight:700;color:#2d5a3d;word-break:break-all">${paymentId || 'See Razorpay email'}</div>
+      <div style="background:#eaf7ee;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="font-size:11px;color:#4a9960;margin-bottom:4px">Your Payment ID:</div>
+        <div style="font-size:13px;font-weight:700;color:#1a5c2e;word-break:break-all">${paymentId || 'See Razorpay email'}</div>
       </div>
       <a href="mailto:contact.happiloot@gmail.com?subject=Plan Activation — Payment ID: ${paymentId || ''}&body=Hi, I just paid for HappiHeal but my plan did not activate. My payment ID is: ${paymentId || 'see attached'}. Please help activate my account. Thank you!"
-        style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:12px;font-size:14px;font-weight:700;text-align:center;cursor:pointer;margin-bottom:10px">
+        style="display:block;width:100%;padding:14px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:12px;font-size:14px;font-weight:700;text-align:center;cursor:pointer;margin-bottom:10px">
         📧 Email Us Now
       </a>
       <button onclick="document.getElementById('payment-safety-modal').remove()"
-        style="width:100%;padding:12px;background:none;color:#9db5a6;font-size:13px;cursor:pointer">
+        style="width:100%;padding:12px;background:none;color:#82c499;font-size:13px;cursor:pointer">
         Close
       </button>
     </div>`;
@@ -4668,13 +4640,15 @@ function showDisclaimer() {
     startApp();
     return;
   }
+  // Hide onboarding screen first
+  const onboarding = document.getElementById('screen-onboarding');
+  if (onboarding) { onboarding.style.visibility = 'hidden'; onboarding.style.display = 'none'; }
   // First time — show disclaimer
   const modal = document.getElementById('disclaimer-modal');
   if (modal) {
     modal.style.display = 'flex';
     setTimeout(() => modal.style.display = 'flex', 10);
   } else {
-    // No disclaimer modal — go straight to app
     startApp();
   }
 }
@@ -4688,13 +4662,11 @@ function startApp() {
   const modal = document.getElementById('disclaimer-modal');
   if (modal) modal.style.display = 'none';
 
-  // Hide splash
+  // Hide splash screens
   const splash = document.getElementById('screen-splash');
-  if (splash) {
-    splash.style.transition = 'opacity 0.4s ease';
-    splash.style.opacity = '0';
-    setTimeout(() => splash.style.display = 'none', 400);
-  }
+  if (splash) { splash.style.display = 'none'; }
+  const onboarding = document.getElementById('screen-onboarding');
+  if (onboarding) { onboarding.style.transition = 'opacity 0.4s ease'; onboarding.style.opacity = '0'; setTimeout(() => { onboarding.style.display = 'none'; onboarding.style.visibility = 'hidden'; }, 400); }
   save('seen_splash', true);
   renderHome();
 
@@ -4716,22 +4688,22 @@ function showWelcomeModal() {
       <!-- Header -->
       <div style="text-align:center;margin-bottom:20px">
         <div style="font-size:38px;margin-bottom:8px">🌿</div>
-        <div style="font-family:'Playfair Display',serif;font-size:21px;font-weight:600;color:#1a2e22;margin-bottom:5px">Welcome to HappiHeal</div>
-        <div style="font-size:13px;color:#6b8577;line-height:1.5">Create a free account to save your progress, streaks and healing journey across all your devices.</div>
+        <div style="font-family:'Playfair Display',serif;font-size:21px;font-weight:600;color:#0f3520;margin-bottom:5px">Welcome to HappiHeal</div>
+        <div style="font-size:13px;color:#4a9960;line-height:1.5">Create a free account to save your progress, streaks and healing journey across all your devices.</div>
       </div>
 
       <!-- Founder mini card -->
-      <div style="background:#edf7f0;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
-        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5a8a6a,#3d6b4f);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
+      <div style="background:#eaf7ee;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#32b058,#258a42);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
         <div>
-          <div style="font-size:12px;font-weight:700;color:#2d5a3d;margin-bottom:3px">Harshitha MV · Founder</div>
+          <div style="font-size:12px;font-weight:700;color:#1a5c2e;margin-bottom:3px">Harshitha MV · Founder</div>
           <div style="font-size:12px;color:#4a7060;line-height:1.5;font-style:italic">"I healed naturally after 20 years. Every feature in this app comes from lived experience."</div>
         </div>
       </div>
 
       <!-- What you get strip -->
-      <div style="background:#f9fdf9;border:1px solid #c8e6d0;border-radius:14px;padding:14px 16px;margin-bottom:18px">
-        <div style="font-size:11px;font-weight:700;color:#2d5a3d;letter-spacing:0.5px;margin-bottom:10px">WHAT YOU GET — FREE</div>
+      <div style="background:#f9fdf9;border:1px solid #b8e6c8;border-radius:14px;padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:#1a5c2e;letter-spacing:0.5px;margin-bottom:10px">WHAT YOU GET — FREE</div>
         <div style="display:grid;gap:7px">
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">🌿</span> Natural remedies, routines &amp; daily habits</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5248"><span style="font-size:15px">💬</span> AI recovery coach</div>
@@ -4741,18 +4713,18 @@ function showWelcomeModal() {
       </div>
 
       <!-- Social proof -->
-      <div style="text-align:center;font-size:12px;color:#9db5a6;margin-bottom:18px">💚 <strong style="color:#6b8577">A growing community</strong> on their recovery journey</div>
+      <div style="text-align:center;font-size:12px;color:#82c499;margin-bottom:18px">💚 <strong style="color:#4a9960">A growing community</strong> on their recovery journey</div>
 
       <button onclick="document.getElementById('welcome-modal').remove();showAuthModal('signup')"
-        style="width:100%;padding:16px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        style="width:100%;padding:16px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">
         Start Free 3-Day Trial 🌱
       </button>
       <button onclick="document.getElementById('welcome-modal').remove();showAuthModal('signin')"
-        style="width:100%;padding:14px;background:#edf7f0;color:#2d5a3d;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">
+        style="width:100%;padding:14px;background:#eaf7ee;color:#1a5c2e;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">
         Sign In
       </button>
       <button onclick="document.getElementById('welcome-modal').remove();showToast('Sign up to save your progress, streaks &amp; access your free guides 🌱', 4000)"
-        style="width:100%;padding:12px;background:none;color:#9db5a6;border-radius:14px;font-size:14px;cursor:pointer">
+        style="width:100%;padding:12px;background:none;color:#82c499;border-radius:14px;font-size:14px;cursor:pointer">
         Skip for now — explore as guest
       </button>
 
@@ -4820,7 +4792,7 @@ function showPremiumAnnualConfirm(planKey, planName, intl) {
       ${couponApplied ? `
       <div style="background:#fff8e6;border:1.5px solid var(--warm-amber);border-radius:12px;padding:14px 16px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:700;color:#a06010;margin-bottom:8px">🏷️ Code ${_appliedCouponCode} Applied — ${discountPct}% Off!</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;color:#2d5a3d;margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#1a5c2e;margin-bottom:4px">
           <span>Your discount</span><span style="font-weight:700">${discountPct}% off the full price</span>
         </div>
         <div style="border-top:1px solid var(--warm-amber);margin-top:8px;padding-top:8px;font-size:13px;color:var(--text-mid);text-align:center">
@@ -5096,7 +5068,7 @@ function payWithRazorpayCustom(amount, label, currency, planName, includesEbook,
       email: currentUser.email,
       name: currentUser.user_metadata?.full_name || ''
     },
-    theme: { color: '#3d6b4f' },
+    theme: { color: '#258a42' },
     handler: async function(response) {
       if (!ebookOnly) {
         // Exact days from payment date — monthly = 30 days, annual = 365 days
@@ -5185,22 +5157,22 @@ function showConsultationModal() {
 
   if (isPremium) {
     // Premium: 1 free call per quarter — email to book
-    accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d5a3d;line-height:1.7">
+    accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1a5c2e;line-height:1.7">
       💚 <b>Premium member perk</b> — 1 free session per quarter included in your plan.<br>
       Harshitha will personally reach out within 24 hours to arrange your session.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Premium%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Premium%20member%20and%20would%20like%20to%20book%20my%20free%20quarterly%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
-      style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+      style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
       ✉️ Email to Book Your Free Session
     </a>`;
   } else if (isBasic) {
     // Basic: 1 free call per year — email to book
-    accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2d5a3d;line-height:1.7">
+    accessLine = `<div style="background:#e8f5ed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1a5c2e;line-height:1.7">
       💚 <b>Basic member perk</b> — 1 free session per year included in your plan.<br>
       Harshitha will personally reach out within 24 hours to arrange your session.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Basic%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Basic%20member%20and%20would%20like%20to%20book%20my%20free%20annual%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
-      style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+      style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
       ✉️ Email to Book Your Free Session
     </a>`;
   } else {
@@ -5210,7 +5182,7 @@ function showConsultationModal() {
       Pay below and I'll personally email you within 24 hours to arrange a time that works for you. 💚
     </div>`;
     ctaHTML = `<button onclick="payForConsultation()" id="consult-pay-btn"
-      style="width:100%;padding:15px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">
+      style="width:100%;padding:15px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">
       Pay ${priceDisplay} &amp; Request Your Slot
     </button>`;
   }
@@ -5224,13 +5196,13 @@ function showConsultationModal() {
       <!-- Header -->
       <div style="text-align:center;margin-bottom:18px">
         <div style="font-size:34px;margin-bottom:8px">🌿</div>
-        <div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:#1a2e22;margin-bottom:6px">Chat with Harshitha</div>
-        <div style="font-size:13px;color:#6b8577;line-height:1.6">A friendly 15-minute conversation about your natural hair recovery journey — what you're doing, what's working, and what to try next.</div>
+        <div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:#0f3520;margin-bottom:6px">Chat with Harshitha</div>
+        <div style="font-size:13px;color:#4a9960;line-height:1.6">A friendly 15-minute conversation about your natural hair recovery journey — what you're doing, what's working, and what to try next.</div>
       </div>
 
       <!-- What to expect -->
       <div style="background:#f5faf7;border-radius:12px;padding:14px 16px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;color:#3d6b4f;letter-spacing:0.5px;margin-bottom:8px">WHAT WE'LL COVER</div>
+        <div style="font-size:11px;font-weight:700;color:#258a42;letter-spacing:0.5px;margin-bottom:8px">WHAT WE'LL COVER</div>
         <div style="font-size:12px;color:#4a6558;line-height:1.9">
           🌱 Your current hair recovery routine<br>
           🥗 Nutrition and lifestyle patterns<br>
@@ -5251,7 +5223,7 @@ function showConsultationModal() {
       ${ctaHTML}
 
       <button onclick="document.getElementById('consult-modal').remove()"
-        style="width:100%;padding:13px;background:#edf7f0;color:#2d5a3d;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
+        style="width:100%;padding:13px;background:#eaf7ee;color:#1a5c2e;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
         Maybe later
       </button>
     </div>`;
@@ -5281,13 +5253,13 @@ function payForConsultation() {
       confirm.innerHTML = `
         <div style="background:white;border-radius:24px 24px 0 0;padding:32px 24px 48px;width:100%;max-width:430px;text-align:center;animation:fadeUp 0.3s ease">
           <div style="font-size:44px;margin-bottom:12px">🌿</div>
-          <div style="font-size:18px;font-weight:700;color:#1a2e22;margin-bottom:8px">Payment confirmed!</div>
-          <div style="font-size:13px;color:#6b8577;line-height:1.7;margin-bottom:20px">
+          <div style="font-size:18px;font-weight:700;color:#0f3520;margin-bottom:8px">Payment confirmed!</div>
+          <div style="font-size:13px;color:#4a9960;line-height:1.7;margin-bottom:20px">
             Thank you! Harshitha will personally email you at <b>${state.userEmail || 'your registered email'}</b> within 24 hours to arrange your session. 💚<br><br>
-            <span style="font-size:11px;color:#9db5a6">Keep an eye on contact.happiloot@gmail.com</span>
+            <span style="font-size:11px;color:#82c499">Keep an eye on contact.happiloot@gmail.com</span>
           </div>
           <button onclick="this.closest('div[style]').remove()"
-            style="width:100%;padding:13px;background:linear-gradient(135deg,#3d6b4f,#2d5a3d);color:white;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
+            style="width:100%;padding:13px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">
             Got it 💚
           </button>
         </div>`;
@@ -5297,7 +5269,7 @@ function payForConsultation() {
       name: state.userName || '',
       email: state.userEmail || ''
     },
-    theme: { color: '#3d6b4f' },
+    theme: { color: '#258a42' },
     modal: {
       ondismiss: function() {
         if (btn) { btn.textContent = 'Pay ₹499 & Request Your Slot'; btn.disabled = false; }
