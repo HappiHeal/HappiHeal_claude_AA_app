@@ -1640,7 +1640,7 @@ IMPORTANT RULES:
       </div>
 
       <!-- ── CONSULTATION CARD ──────────────────────────────── -->
-      <div style="padding:0 16px 8px">
+      <div id="home-consult-card" style="padding:0 16px 8px">
         <div style="background:linear-gradient(135deg,#eaf7ee,#c4e8cf);border-radius:20px;padding:20px;border:1px solid var(--green-pale);display:flex;gap:14px;align-items:flex-start">
           <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#32b058,#258a42);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🌿</div>
           <div style="flex:1">
@@ -2075,7 +2075,7 @@ IMPORTANT RULES:
           <span class="menu-label">Learning Modules</span>
           <span class="menu-arrow">›</span>
         </div>
-        <div class="menu-item" onclick="showToast('Consultation booking coming soon! 🌿')">
+        <div class="menu-item" onclick="showConsultationModal()">
           <span class="menu-icon">📞</span>
           <span class="menu-label">Book a Consultation</span>
           <span class="menu-arrow">›</span>
@@ -2354,6 +2354,10 @@ function renderHome() {
   document.getElementById('home-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('daily-tip').textContent = getDailyTip();
   renderWABanner();
+
+  // Hide home consultation card if user has already requested a session
+  const consultCard = document.getElementById('home-consult-card');
+  if (consultCard) consultCard.style.display = localStorage.getItem('hh_consult_requested') === 'yes' ? 'none' : '';
 
   const streak = calcStreak();
   const sc = document.getElementById('streak-count'); if (sc) sc.textContent = streak;
@@ -5192,6 +5196,7 @@ function showConsultationModal() {
       Harshitha will personally reach out within 24 hours to arrange your session.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Premium%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Premium%20member%20and%20would%20like%20to%20book%20my%20free%20quarterly%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
+      onclick="localStorage.setItem('hh_consult_requested','yes')"
       style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
       ✉️ Email to Book Your Free Session
     </a>`;
@@ -5202,6 +5207,7 @@ function showConsultationModal() {
       Harshitha will personally reach out within 24 hours to arrange your session.
     </div>`;
     ctaHTML = `<a href="mailto:contact.happiloot@gmail.com?subject=Session%20Request%20-%20Basic%20Member&body=Hi%20Harshitha%2C%0A%0AI%20am%20a%20Basic%20member%20and%20would%20like%20to%20book%20my%20free%20annual%20session.%0A%0AName%3A%20%0AEmail%20on%20account%3A%20%0AWhat%20I%20want%20to%20discuss%3A%20%0APreferred%20time%20zone%3A%20%0A%0AThank%20you!"
+      onclick="localStorage.setItem('hh_consult_requested','yes')"
       style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#258a42,#1a5c2e);color:white;border-radius:14px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
       ✉️ Email to Book Your Free Session
     </a>`;
@@ -5234,7 +5240,7 @@ function showConsultationModal() {
       <div style="background:#f5faf7;border-radius:12px;padding:14px 16px;margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:#258a42;letter-spacing:0.5px;margin-bottom:8px">WHAT WE'LL COVER</div>
         <div style="font-size:12px;color:#4a6558;line-height:1.9">
-          🌱 Your current hair recovery routine<br>
+          🌱 Your current hair wellness routine<br>
           🥗 Nutrition and lifestyle patterns<br>
           💤 Sleep and stress factors you've noticed<br>
           🔍 What to focus on next in your journey
@@ -5246,7 +5252,7 @@ function showConsultationModal() {
 
       <!-- Disclaimer -->
       <div style="background:#fff3f3;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:#8a4040;line-height:1.7">
-        ⚠️ <b>Not a medical consultation.</b> Harshitha shares her personal 20-year experience with natural recovery methods. This is not medical advice and does not replace your doctor or dermatologist.
+        ⚠️ <b>Not a medical consultation.</b> Harshitha shares her personal experience with natural methods. This is not medical advice and does not replace your doctor or dermatologist.
       </div>
 
       <!-- CTA -->
@@ -5275,7 +5281,10 @@ function payForConsultation() {
     description: '1:1 Recovery Chat with Harshitha (15 min)',
     image: 'https://happiheal.happiloot.com/icon-192.png',
     handler: function(response) {
-      // Payment successful — show confirmation
+      // Payment successful — mark as requested and hide home card
+      localStorage.setItem('hh_consult_requested', 'yes');
+      const homeCard = document.getElementById('home-consult-card');
+      if (homeCard) homeCard.style.display = 'none';
       const m = document.getElementById('consult-modal');
       if (m) m.remove();
       const confirm = document.createElement('div');
