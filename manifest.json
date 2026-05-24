@@ -1,0 +1,28 @@
+{
+  "name": "HappiHeal — Alopecia Hair Wellness Tracker",
+  "short_name": "HappiHeal",
+  "description": "A personal hair wellness tracker for alopecia, built on 20+ years of lived experience. Natural remedies, routines, nutrition tracking and an AI wellness coach. Not a medical device.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f3520",
+  "theme_color": "#258a42",
+  "orientation": "portrait",
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle"],
+  "screenshots": []
+}
