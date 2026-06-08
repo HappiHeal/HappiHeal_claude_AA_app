@@ -1872,7 +1872,7 @@ function renderProfile() {
   const ebookSub = document.getElementById('ebook-menu-sub');
   if (ebookSub) {
     if (isPaid) ebookSub.textContent = 'Included in your Annual plan · Tap to open';
-    else ebookSub.textContent = 'Annual plan: included free · Or own your copy — ₹1,799/$27';
+    else ebookSub.textContent = 'Annual plan: included free · Or own your copy ;
   }
 }
 
@@ -2073,7 +2073,7 @@ function showConsultationModal() {
       <div style="font-size:12px;color:var(--text-soft);line-height:1.8;font-weight:300">🌱 Your current routine and what's working<br>🥗 Nutrition and lifestyle patterns<br>💤 Sleep and stress factors<br>🔍 What to focus on next</div>
     </div>
     <div style="background:rgba(139,58,42,0.1);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">⚠️ Not a medical consultation. Harshitha shares personal experience with natural methods — not medical advice.</div>
-    <button onclick="this.closest('.paywall-sheet').remove();_triggerConsultationPayment()" class="btn-gold" style="width:100%;margin-bottom:10px">Book & Pay Securely →</button>
+    <button onclick="this.closest('.paywall-sheet').remove();_triggerConsultationPayment()" class="btn-gold" style="width:100%;margin-bottom:10px">Book & Pay Securely — ₹499 / $7 →</button>
     <button onclick="this.closest('.paywall-sheet').remove()" class="btn-outline" style="font-size:13px">Maybe later</button>
   </div>`;
   document.body.appendChild(el); el.addEventListener('click',e=>{if(e.target===el)el.remove();});
