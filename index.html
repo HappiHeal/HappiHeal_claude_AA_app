@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="theme-color" content="#0b2117"/>
-<meta name="description" content="HappiHeal — Hair Wellness app by Harshitha. Natural remedies, nutrition tracker, AI companion & 260-page guide."/>
+<meta name="description" content="HappiHeal — Hair Wellness app by HappiLoot. Natural remedies, nutrition tracker, AI companion & 260-page guide."/>
 <meta property="og:title" content="HappiHeal — Alopecia Hair Wellness Tracker"/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://happiheal.happiloot.com"/>
@@ -160,20 +160,245 @@ function payWithRazorpay(planKey, planLabel, currency, isAnnual) {
   rzp.open();
 }
 
+/* ── ONBOARDING ── */
 window.showOnboarding = function() {
   const s1 = document.getElementById('screen-splash');
   if (s1) { s1.style.transition = 'opacity 0.5s ease'; s1.style.opacity = '0'; setTimeout(() => { s1.style.display = 'none'; }, 500); }
-  if (!load('install_date', null)) save('install_date', new Date().toISOString());
-  renderHome();
+  // If already completed onboarding, go straight to home
+  if (load('ob_done', false)) {
+    if (!load('install_date', null)) save('install_date', new Date().toISOString());
+    renderHome(); return;
+  }
+  // Show onboarding overlay
+  document.getElementById('screen-onboarding').style.display = 'flex';
+  obGoTo(0);
 };
+
+// Onboarding state
+const OB = { step: 0, answers: {}, multi11: [] };
+const OB_TOTAL = 14;
+
+/* ── Shared maps for the Recovery Profile (used by home card, the onboarding flow, and the editable profile sheet) ── */
+const TYPE_MAP = {
+  aa:'Alopecia areata (patchy)', paa:'Persistent patchy AA', diffuse:'Diffuse AA',
+  ophiasis:'Ophiasis AA', sisaipho:'Sisaipho AA', totalis:'Alopecia totalis',
+  universalis:'Alopecia universalis', barbae:'Alopecia barbae', androgenetic:'Androgenetic',
+  telogen:'Telogen effluvium', anagen:'Anagen effluvium', traction:'Traction alopecia',
+  scarring:'Scarring alopecia', unsure:'Undiagnosed'
+};
+const GOAL_MAP   = { 'g-stop':'Stop shedding', 'g-grow':'Trigger regrowth', 'g-maint':'Maintain progress', 'g-under':'Understand condition', 'g-rout':'Build routine' };
+const STRESS_MAP = { 'st-low':'Low', 'st-mod':'Moderate', 'st-high':'High', 'st-var':'Varies a lot' };
+const SLEEP_MAP  = { 'sl-good':'Good (7+ hrs)', 'sl-ok':'Ok, not restful', 'sl-poor':'Poor (under 6 hrs)', 'sl-dis':'Very disrupted' };
+const DIET_MAP   = { 'd-anti':'Anti-inflammatory', 'd-bal':'Balanced', 'd-mix':'Mixed', 'd-proc':'Mostly processed', 'd-uns':'Not sure' };
+const COND_MAP   = { gut:'Gut issues', thyroid:'Thyroid condition', autoimmune:'Other autoimmune', hormonal:'Hormonal imbalance / PCOS', vitamin:'Vitamin/iron deficiency', none:'None known', unsure:'Not sure' };
+// "Concern" scores (1 = least attention needed, 3.5 = most) — purely to drive the focus-area chart, not a medical score
+const STRESS_SCORE = { 'st-low':1, 'st-mod':2, 'st-high':3.2, 'st-var':2.5 };
+const SLEEP_SCORE  = { 'sl-good':1, 'sl-ok':1.8, 'sl-poor':3, 'sl-dis':3.5 };
+const DIET_SCORE   = { 'd-anti':1, 'd-bal':1.5, 'd-mix':2.2, 'd-proc':3.2, 'd-uns':2.3 };
+
+/* Tiny inline bar-chart renderer — used by the home Recovery Profile card and the editable profile sheet.
+   No charting library needed for a single-file PWA — just styled divs. */
+function barChart(rows) {
+  const max = 3.5;
+  return `<div style="background:var(--bg-section);border:1px solid var(--border);border-radius:var(--r-md);padding:14px">
+    <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Where to focus right now</div>
+    ${rows.map(r => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-bottom:3px"><span>${r.label}</span></div>
+        <div style="background:var(--border);border-radius:6px;height:8px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(100,(r.value/max)*100)}%;background:${r.color};border-radius:6px;transition:width 0.4s ease"></div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function obGoTo(n) {
+  OB.step = n;
+  document.querySelectorAll('.ob-screen').forEach(s => s.style.display = 'none');
+  const target = document.getElementById('ob-s' + n);
+  if (target) target.style.display = 'flex';
+  // Update progress bar
+  const pct = n === 0 ? 0 : Math.round((n / OB_TOTAL) * 100);
+  const bar = document.getElementById('ob-prog');
+  if (bar) bar.style.width = pct + '%';
+  if (n === 15) obBuildResult();
+}
+
+function obSel(btn, key, val) {
+  const parent = btn.closest('.ob-body');
+  parent.querySelectorAll('.ob-opt:not(.ob-multi)').forEach(b => b.classList.remove('ob-sel'));
+  btn.classList.add('ob-sel');
+  OB.answers[key] = val;
+  const sid = btn.closest('.ob-screen').id;
+  const stepNum = parseInt(sid.replace('ob-s',''));
+  const nb = document.getElementById('ob-n' + stepNum);
+  if (nb) nb.disabled = false;
+}
+
+function obMSel(btn, val) {
+  btn.classList.toggle('ob-sel');
+  const i = OB.multi11.indexOf(val);
+  if (i > -1) OB.multi11.splice(i, 1); else OB.multi11.push(val);
+  document.getElementById('ob-n11').disabled = OB.multi11.length === 0;
+}
+
+function obFinish() {
+  // Save all answers to localStorage
+  save('ob_done', true);
+  save('ob_answers', OB.answers);
+  save('ob_multi11', OB.multi11);
+  save('ob_refcode', (document.getElementById('ob-refcode') || {}).value || '');
+  if (!load('install_date', null)) save('install_date', new Date().toISOString());
+  // Hide onboarding
+  const ob = document.getElementById('screen-onboarding');
+  if (ob) { ob.style.opacity = '0'; ob.style.transition = 'opacity 0.4s'; setTimeout(() => { ob.style.display = 'none'; ob.style.opacity = '1'; }, 400); }
+  renderHome();
+  showToast('Welcome to HappiHeal! Your profile is ready 🌿');
+}
+
+/* ── EDITABLE RECOVERY PROFILE (post-onboarding) ──
+   Lets the user revisit and change their answers any time, without redoing the whole
+   14-step questionnaire. Lives as an in-memory state.profileEdit object until Saved. */
+function showRecoveryProfileModal() {
+  const oba = load('ob_answers', {});
+  const obm = load('ob_multi11', []);
+  state.profileEdit = { q3: oba.q3, q13: oba.q13, q8: oba.q8, q9: oba.q9, q10: oba.q10, multi: [...obm] };
+
+  const chipRow = (groupKey, map, current) => Object.entries(map).map(([val,label]) =>
+    `<button type="button" class="symptom-chip ${current===val?'selected':''}" data-group="${groupKey}" data-val="${val}" onclick="profileEditSelect(this)" style="margin:3px">${label}</button>`
+  ).join('');
+  const multiChipRow = (map, current) => Object.entries(map).map(([val,label]) =>
+    `<button type="button" class="symptom-chip ${current.includes(val)?'selected':''}" data-group="multi" data-val="${val}" onclick="profileEditToggleMulti(this)" style="margin:3px">${label}</button>`
+  ).join('');
+
+  const old = document.getElementById('profile-edit-sheet');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'paywall-sheet';
+  el.id = 'profile-edit-sheet';
+  el.innerHTML = `<div class="paywall-inner" style="overflow-y:auto;max-height:92vh;text-align:left">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:32px;margin-bottom:8px">🌿</div>
+      <div style="font-family:var(--font-display);font-size:16px;letter-spacing:1px;color:var(--green-deep)">YOUR RECOVERY PROFILE</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Edit anytime — this personalizes your insights</div>
+    </div>
+    <div id="profile-chart-holder" style="margin-bottom:18px"></div>
+    <div class="section-label" style="margin-bottom:6px">Hair loss type</div>
+    <div style="margin-bottom:14px">${chipRow('q3', TYPE_MAP, oba.q3)}</div>
+    <div class="section-label" style="margin-bottom:6px">Your main goal</div>
+    <div style="margin-bottom:14px">${chipRow('q13', GOAL_MAP, oba.q13)}</div>
+    <div class="section-label" style="margin-bottom:6px">Stress level</div>
+    <div style="margin-bottom:14px">${chipRow('q8', STRESS_MAP, oba.q8)}</div>
+    <div class="section-label" style="margin-bottom:6px">Sleep quality</div>
+    <div style="margin-bottom:14px">${chipRow('q9', SLEEP_MAP, oba.q9)}</div>
+    <div class="section-label" style="margin-bottom:6px">Diet pattern</div>
+    <div style="margin-bottom:14px">${chipRow('q10', DIET_MAP, oba.q10)}</div>
+    <div class="section-label" style="margin-bottom:6px">Other health conditions (select all that apply)</div>
+    <div style="margin-bottom:18px">${multiChipRow(COND_MAP, obm)}</div>
+    <button onclick="saveProfileEdit()" class="btn-gold" style="font-size:13px;padding:13px;margin-bottom:8px;width:100%">Save Changes ✓</button>
+    <button onclick="document.getElementById('profile-edit-sheet').remove()" style="width:100%;padding:10px;color:var(--text-muted);font-size:13px;background:none;border:none">Cancel</button>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  renderProfileEditChart();
+}
+
+function profileEditSelect(btn) {
+  const group = btn.dataset.group, val = btn.dataset.val;
+  document.querySelectorAll(`#profile-edit-sheet [data-group="${group}"]`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.profileEdit[group] = val;
+  renderProfileEditChart();
+}
+function profileEditToggleMulti(btn) {
+  const val = btn.dataset.val;
+  const i = state.profileEdit.multi.indexOf(val);
+  if (i > -1) { state.profileEdit.multi.splice(i, 1); btn.classList.remove('selected'); }
+  else { state.profileEdit.multi.push(val); btn.classList.add('selected'); }
+}
+function renderProfileEditChart() {
+  const holder = document.getElementById('profile-chart-holder');
+  if (!holder) return;
+  holder.innerHTML = barChart([
+    { label: 'Stress',    value: STRESS_SCORE[state.profileEdit.q8]  || 1.5, color: '#c0654a' },
+    { label: 'Sleep gap',  value: SLEEP_SCORE[state.profileEdit.q9]   || 1.5, color: '#c79a3c' },
+    { label: 'Diet gap',   value: DIET_SCORE[state.profileEdit.q10]   || 1.5, color: '#7a9b6e' }
+  ]);
+}
+function saveProfileEdit() {
+  const oba = load('ob_answers', {});
+  ['q3','q13','q8','q9','q10'].forEach(k => { if (state.profileEdit[k]) oba[k] = state.profileEdit[k]; });
+  save('ob_answers', oba);
+  save('ob_multi11', state.profileEdit.multi);
+  document.getElementById('profile-edit-sheet')?.remove();
+  renderHome();
+  showToast('Recovery profile updated 🌿');
+}
+
+function obBuildResult() {
+  const a = OB.answers;
+  const typeMap = {
+    aa:'Alopecia areata (patchy)', paa:'Persistent patchy AA', diffuse:'Diffuse alopecia areata',
+    ophiasis:'Ophiasis pattern AA', sisaipho:'Sisaipho pattern AA', totalis:'Alopecia totalis',
+    universalis:'Alopecia universalis', barbae:'Alopecia barbae (beard)', androgenetic:'Androgenetic alopecia',
+    telogen:'Telogen effluvium', anagen:'Anagen effluvium', traction:'Traction alopecia',
+    scarring:'Scarring / cicatricial alopecia', unsure:'Undiagnosed — to explore'
+  };
+  const typeNoteMap = {
+    aa:'Autoimmune root — natural anti-inflammatory protocol is highly relevant',
+    paa:'Long-term autoimmune pattern — consistency is key',
+    diffuse:'Can overlap with telogen effluvium — blood markers worth checking',
+    ophiasis:'More resistant pattern — scalp care and patience matter most',
+    sisaipho:'Rare inverse pattern — community support recommended',
+    totalis:'Advanced AA — structured protocol builds momentum',
+    universalis:'Systemic autoimmune — whole-body approach is essential',
+    barbae:'Localised AA — scalp protocol adapted for beard area',
+    androgenetic:'DHT-related — nutrition and scalp micro-circulation are key focus',
+    telogen:'Triggered by stress or deficiency — root cause identification first',
+    anagen:'Linked to treatment/toxin exposure — recovery follows cessation',
+    traction:'Mechanical damage — scalp recovery and rest from tension priority',
+    scarring:'Permanent follicle damage — early intervention is critical',
+    unsure:'HappiHeal will help you identify your type through your logs'
+  };
+  const goalMap = {
+    'g-stop':'Stop the shedding', 'g-grow':'Trigger new regrowth',
+    'g-maint':'Maintain existing progress', 'g-under':'Understand my condition',
+    'g-rout':'Build a daily routine'
+  };
+
+  const t = a.q3 || 'unsure';
+  const setT = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setT('ob-r-type', typeMap[t] || 'To be confirmed');
+  setT('ob-r-typenote', typeNoteMap[t] || '');
+
+  let stage = 'Early recovery phase', stageNote = 'Laying the foundation sets everything up';
+  if (a.q4==='3-10y'||a.q4==='10y+') { stage='Long-term recovery phase'; stageNote='Natural approaches work even after years — consistency is everything'; }
+  if (a.q6==='rfull'||a.q6==='rpart') { stage='Active regrowth supporter'; stageNote='You have proof regrowth is possible — protect that momentum'; }
+  if (a.q6==='rvellus') { stage='Early regrowth signs visible'; stageNote='Vellus hairs are a great signal — nurture them with the scalp protocol'; }
+  setT('ob-r-stage', stage); setT('ob-r-stagenote', stageNote);
+
+  const focus = [];
+  if (a.q8==='st-high'||a.q8==='st-var') focus.push('Stress reduction');
+  if (a.q9==='sl-poor'||a.q9==='sl-dis') focus.push('Sleep quality');
+  if (a.q10==='d-mix'||a.q10==='d-proc'||a.q10==='d-uns') focus.push('Anti-inflammatory nutrition');
+  if (OB.multi11.includes('gut')) focus.push('Gut health');
+  if (OB.multi11.includes('thyroid')) focus.push('Thyroid support');
+  if (OB.multi11.includes('hormonal')) focus.push('Hormone balance');
+  if (OB.multi11.includes('vitamin')) focus.push('Nutrient repletion');
+  if (a.q12==='rc-str'||a.q12==='rc-no') focus.push('Routine building');
+  if (focus.length === 0) focus.push('Scalp protocol', 'Daily consistency');
+  const fc = document.getElementById('ob-r-focus');
+  if (fc) { fc.innerHTML = ''; focus.forEach(f => { const p=document.createElement('span'); p.className='ob-r-pill'; p.textContent=f; fc.appendChild(p); }); }
+  setT('ob-r-goal', goalMap[a.q13] || 'Personalised recovery');
+}
 </script>
 
 <script>
 const CONTENT = {
   appName: 'HappiHeal',
-  founderName: 'Harshitha',
+  founderName: 'HappiHeal Founder',
   founderStory: "I've lived with alopecia areata for over 20 years. After years of trial, tears, and breakthroughs — I found what works. This app is everything I wish I'd had at the beginning.",
-  founderSignature: 'With love & care, Harshitha 🌿',
+  founderSignature: 'With love & care 🌿',
 
   dailyTips: [
     "Apply fresh scalp oil blend directly on new patches for 15–20 minutes. Massage gently in circular motions. 💆",
@@ -229,9 +454,9 @@ const CONTENT = {
     { id: 7, title: "30-Day Action Planner", emoji: "📅", free: false, desc: "SMART goals, daily prompts, progress review and transformation metrics.", lessons: 10, file: "M7 - 30-DAY ALOPECIA ACTION PLANNER.pdf", bucket: "Modules" },
   ],
 
-  knowledgeBase: `You are HappiHeal AI, a warm and knowledgeable wellness companion created by Harshitha, founder of HappiHeal. You help people with alopecia areata using natural remedies and holistic approaches based on Harshitha's 20+ years of personal experience. You are empathetic, encouraging, and always remind users you are sharing personal experience, not medical advice.
+  knowledgeBase: `You are HappiHeal AI, a warm and knowledgeable wellness companion created by HappiHeal's founder. You help people with alopecia areata using natural remedies and holistic approaches based on the founder's 20+ years of personal experience. You are empathetic, encouraging, and always remind users you are sharing personal experience, not medical advice. Never reveal the founder's personal name in any response — refer to her only as "our founder" or "the HappiHeal founder".
 
-ABOUT HARSHITHA: She was 10 years old when alopecia first appeared. After 20+ years she healed naturally. Her mission: "Alopecia isn't happening to you — it's happening for you."
+ABOUT THE FOUNDER: She was 10 years old when alopecia first appeared. After 20+ years she healed naturally. Her mission: "Alopecia isn't happening to you — it's happening for you."
 
 MODULE 1 — FOUNDATION: Alopecia influenced by 5 factors: stress, diet/nutrients, lifestyle habits, emotional wellbeing, environmental triggers. Early hair loss does NOT guarantee permanent baldness. Family history is just one risk factor — daily choices matter more than genetics.
 
@@ -265,6 +490,7 @@ IMPORTANT: Always warm, empathetic. Personal experience, not medical advice. Sug
   --sand:          #fdf8f2;   /* warm cream for affirmation/quote cards */
   --amber:         #e8962a;   /* warm accent — energy, streak, badges */
   --amber-lt:      #fff3e0;
+  --rust-light:    #a8483a;   /* warm rust — used for "reframe old thought" + upgrade-nudge text */
 
   --text:          #0f2a18;   /* near-black green-tinted text */
   --text-mid:      #2d5040;
@@ -580,6 +806,38 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 .heal-cta { background: var(--sand); border: 1px solid #ede8e0; border-radius: var(--r-md); padding: 16px 18px; text-align: center; }
 .heal-cta-text { font-family: var(--font-serif); font-size: 16px; font-style: italic; color: var(--text-mid); margin-bottom: 4px; }
 .heal-cta-sub  { font-size: 11px; color: var(--text-muted); }
+
+/* ── HAIRCARE ROUTINES LIBRARY ── */
+.hairtype-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.hairtype-chip { padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--white); border: 1.5px solid var(--border); color: var(--text-soft); cursor: pointer; transition: all 0.18s; }
+.hairtype-chip.selected { background: var(--green-mid); border-color: var(--green-mid); color: var(--white); }
+.routine-acc { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-sm); margin-bottom: 10px; overflow: hidden; }
+.routine-acc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 16px; cursor: pointer; }
+.routine-acc-head:active { background: var(--green-mist); }
+.routine-acc-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-mid); }
+.routine-acc-emoji { font-size: 18px; }
+.routine-acc-dur { font-size: 11px; font-weight: 700; color: var(--green-deep); background: var(--green-mist); border: 1px solid var(--green-pale); border-radius: 99px; padding: 3px 10px; flex-shrink: 0; }
+.routine-acc-chevron { font-size: 12px; color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+.routine-acc.open .routine-acc-chevron { transform: rotate(180deg); }
+.routine-acc-body { display: none; padding: 0 16px 16px; }
+.routine-acc.open .routine-acc-body { display: block; }
+.routine-step { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.routine-step:first-child { border-top: none; padding-top: 4px; }
+.routine-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green-mist); border: 1px solid var(--green-pale); color: var(--green-deep); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.routine-step-content { flex: 1; }
+.routine-step-title { font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 2px; }
+.routine-step-items { font-size: 12px; color: var(--text-soft); line-height: 1.55; }
+.routine-substep { background: var(--bg-section); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px; margin-bottom: 10px; }
+.routine-substep:last-child { margin-bottom: 0; }
+.routine-substep-title { font-size: 13px; font-weight: 700; color: var(--green-deep); margin-bottom: 6px; }
+.routine-substep-list { font-size: 12px; color: var(--text-soft); line-height: 1.7; }
+.hairtype-tip { background: var(--green-mist); border: 1px solid var(--green-pale); border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 12px; font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.weekly-rot-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 13px 14px; margin-bottom: 10px; }
+.weekly-rot-card.active-week { border-color: var(--green-mid); background: var(--green-mist); }
+.weekly-rot-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.weekly-rot-name { font-size: 13px; font-weight: 700; color: var(--green-deep); }
+.weekly-rot-freq { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+.weekly-rot-desc { font-size: 12px; color: var(--text-soft); line-height: 1.5; }
 .yoga-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm); overflow: hidden; }
 .yoga-card:active { background: var(--green-mist); }
 
@@ -604,6 +862,23 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 .breath-name  { font-size: 14px; font-weight: 700; color: var(--text); }
 .breath-time  { font-size: 11px; color: var(--green-soft); font-weight: 700; margin-top: 2px; }
 .breath-desc  { font-size: 12px; color: var(--text-soft); margin-top: 3px; line-height: 1.5; }
+
+/* Small looping animated "breathing" visual — used as a lightweight stand-in for video
+   on Breathwork / Mind & Confidence / Yoga practice cards (single-file PWA, no video assets) */
+.mini-anim { width: 38px; height: 38px; border-radius: 50%; position: relative; flex-shrink: 0; background: var(--green-mist); }
+.mini-anim::before { content:''; position:absolute; inset:7px; border-radius:50%; background: var(--green-mid); animation: miniBreathe 4.5s ease-in-out infinite; }
+.mini-anim::after  { content:''; position:absolute; inset:0; border-radius:50%; border:1.5px solid var(--green-pale); animation: miniRing 4.5s ease-in-out infinite; }
+@keyframes miniBreathe { 0%,100% { transform: scale(0.55); opacity:.55; } 50% { transform: scale(1); opacity:1; } }
+@keyframes miniRing    { 0%,100% { transform: scale(0.85); opacity:.3; } 50% { transform: scale(1.08); opacity:.85; } }
+.mind-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+.mind-card:active { background: var(--green-mist); }
+.mind-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.mind-time { font-size: 11px; color: var(--green-soft); font-weight: 700; margin-top: 2px; }
+.mind-desc { font-size: 12px; color: var(--text-soft); margin-top: 3px; line-height: 1.5; }
+.reframe-row { background: var(--bg-section); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.reframe-old { font-size: 12px; color: var(--rust-light); font-style: italic; margin-bottom: 4px; }
+.reframe-new { font-size: 12px; color: var(--green-deep); font-weight: 500; }
+.kit-pill { display:inline-flex; align-items:center; gap:6px; background: var(--green-mist); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 11px; color: var(--text-soft); margin: 3px; }
 
 /* ── ROUTINES ── */
 .routine-content { padding: 20px 16px 0; display: flex; flex-direction: column; gap: 16px; }
@@ -707,6 +982,36 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 @keyframes headBob     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2px)} }
 @keyframes armWave     { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(10deg)} }
 @keyframes pulse-gentle{ 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* ── ONBOARDING ── */
+#screen-onboarding { position:fixed;inset:0;z-index:490;background:#f4f9f0;display:none;flex-direction:column;overflow:hidden; }
+.ob-topbar { height:4px;background:#c0dd97;flex-shrink:0; }
+#ob-prog { height:4px;background:#3B6D11;transition:width 0.3s;width:0%; }
+.ob-screen { display:none;flex-direction:column;height:calc(100vh - 4px);overflow:hidden; }
+.ob-body { flex:1;padding:20px 22px 10px;overflow-y:auto;display:flex;flex-direction:column; }
+.ob-label { font-size:10px;font-weight:700;color:#3B6D11;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px; }
+.ob-q { font-size:19px;font-weight:500;color:#0b2117;line-height:1.3;margin-bottom:4px; }
+.ob-sub { font-size:12px;color:#639922;margin-bottom:14px; }
+.ob-hint { font-size:11px;color:#639922;margin-bottom:10px; }
+.ob-opt { width:100%;text-align:left;padding:11px 14px;background:#fff;border:1.5px solid #c0dd97;border-radius:14px;font-size:13px;color:#27500A;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:all .15s;font-family:inherit; }
+.ob-opt:hover,.ob-opt.ob-sel { background:#EAF3DE;border-color:#3B6D11;color:#0b2117;font-weight:500; }
+.ob-chk { width:18px;height:18px;border-radius:50%;border:1.5px solid #c0dd97;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:transparent;background:#fff;transition:all .15s; }
+.ob-opt.ob-sel .ob-chk { background:#3B6D11;border-color:#3B6D11;color:#fff; }
+.ob-foot { padding:10px 22px 28px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;background:#f4f9f0; }
+.ob-btn { width:100%;padding:14px;border-radius:28px;background:#3B6D11;color:#fff;font-size:14px;font-weight:500;border:none;cursor:pointer;font-family:inherit;transition:background .15s; }
+.ob-btn:hover { background:#27500A; }
+.ob-btn:disabled { background:#c0dd97;cursor:not-allowed; }
+.ob-skip { background:none;border:none;color:#3B6D11;font-size:12px;cursor:pointer;text-align:center;padding:2px;font-family:inherit; }
+.ob-count { font-size:11px;color:#639922;text-align:center;margin-bottom:3px; }
+.ob-welcome-icon { width:64px;height:64px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px; }
+.ob-input { width:100%;padding:12px 14px;border:1.5px solid #c0dd97;border-radius:14px;font-size:13px;color:#27500A;background:#fff;outline:none;margin-bottom:8px;font-family:inherit; }
+.ob-input:focus { border-color:#3B6D11; }
+.ob-r-card { background:#fff;border:1.5px solid #c0dd97;border-radius:14px;padding:13px 15px;margin-bottom:10px; }
+.ob-r-tag { font-size:10px;font-weight:700;color:#3B6D11;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px; }
+.ob-r-val { font-size:14px;color:#0b2117;font-weight:500; }
+.ob-r-note { font-size:11px;color:#639922;margin-top:2px; }
+.ob-r-pills { display:flex;flex-wrap:wrap;gap:6px;margin-top:5px; }
+.ob-r-pill { font-size:11px;background:#EAF3DE;color:#27500A;border-radius:20px;padding:3px 10px; }
 </style>
 
 </head>
@@ -726,6 +1031,304 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
     <div style="font-family:var(--font-serif);font-size:16px;font-style:italic;color:rgba(255,255,255,0.72);line-height:1.65">Healing is not a destination.<br>It is a daily practice.</div>
   </div>
   <div style="position:absolute;bottom:48px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;animation:splashIn 0.8s ease 0.8s both">Tap to begin</div>
+</div>
+
+<!-- ════ ONBOARDING ════ -->
+<div id="screen-onboarding">
+  <div class="ob-topbar"><div id="ob-prog"></div></div>
+
+  <!-- S0: Welcome -->
+  <div class="ob-screen" id="ob-s0">
+    <div class="ob-body" style="justify-content:center;align-items:center;text-align:center">
+      <div class="ob-welcome-icon">🌿</div>
+      <div style="font-size:22px;font-weight:500;color:#0b2117;margin-bottom:8px">Welcome to HappiHeal</div>
+      <div style="font-size:13px;color:#3B6D11;line-height:1.6;margin-bottom:20px">Let's build your personalised recovery profile. 14 quick questions — about 2 minutes.</div>
+      <div style="font-size:12px;color:#3B6D11;background:#EAF3DE;border-radius:12px;padding:12px 16px;line-height:1.6;text-align:center">Your answers stay private and help us show you what matters most for <em>your</em> recovery.</div>
+    </div>
+    <div class="ob-foot">
+      <button class="ob-btn" onclick="obGoTo(1)">Let's begin →</button>
+      <div style="font-size:11px;color:#639922;text-align:center">Already have an account? <span style="cursor:pointer;text-decoration:underline" onclick="document.getElementById('screen-onboarding').style.display='none';showAuthModal('signin')">Sign in</span></div>
+    </div>
+  </div>
+
+  <!-- S1: Age -->
+  <div class="ob-screen" id="ob-s1">
+    <div class="ob-body">
+      <div class="ob-label">Question 1 of 14</div>
+      <div class="ob-q">How old are you?</div>
+      <div class="ob-sub">Helps us tailor recovery pace and hormonal context</div>
+      <button class="ob-opt" onclick="obSel(this,'q1','lt18')"><span class="ob-chk">✓</span>Under 18</button>
+      <button class="ob-opt" onclick="obSel(this,'q1','18-25')"><span class="ob-chk">✓</span>18 – 25</button>
+      <button class="ob-opt" onclick="obSel(this,'q1','26-35')"><span class="ob-chk">✓</span>26 – 35</button>
+      <button class="ob-opt" onclick="obSel(this,'q1','36-45')"><span class="ob-chk">✓</span>36 – 45</button>
+      <button class="ob-opt" onclick="obSel(this,'q1','46-55')"><span class="ob-chk">✓</span>46 – 55</button>
+      <button class="ob-opt" onclick="obSel(this,'q1','55plus')"><span class="ob-chk">✓</span>55 and above</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">1 / 14</div>
+      <button class="ob-btn" id="ob-n1" disabled onclick="obGoTo(2)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S2: Gender -->
+  <div class="ob-screen" id="ob-s2">
+    <div class="ob-body">
+      <div class="ob-label">Question 2 of 14</div>
+      <div class="ob-q">What is your gender?</div>
+      <div class="ob-sub">Hormonal factors differ — this helps us personalise</div>
+      <button class="ob-opt" onclick="obSel(this,'q2','female')"><span class="ob-chk">✓</span>Female</button>
+      <button class="ob-opt" onclick="obSel(this,'q2','male')"><span class="ob-chk">✓</span>Male</button>
+      <button class="ob-opt" onclick="obSel(this,'q2','nonbinary')"><span class="ob-chk">✓</span>Non-binary / other</button>
+      <button class="ob-opt" onclick="obSel(this,'q2','prefer-not')"><span class="ob-chk">✓</span>Prefer not to say</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">2 / 14</div>
+      <button class="ob-btn" id="ob-n2" disabled onclick="obGoTo(3)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S3: Alopecia type -->
+  <div class="ob-screen" id="ob-s3">
+    <div class="ob-body">
+      <div class="ob-label">Question 3 of 14</div>
+      <div class="ob-q">What type of hair loss do you have?</div>
+      <div class="ob-sub">Pick the closest match — you can update this later</div>
+      <button class="ob-opt" onclick="obSel(this,'q3','aa')"><span class="ob-chk">✓</span>Alopecia areata — patchy (coin-sized)</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','paa')"><span class="ob-chk">✓</span>Persistent patchy AA — ongoing patches</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','diffuse')"><span class="ob-chk">✓</span>Diffuse AA — thinning all over scalp</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','ophiasis')"><span class="ob-chk">✓</span>Ophiasis — band along back / sides</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','sisaipho')"><span class="ob-chk">✓</span>Sisaipho — crown only, sides spared</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','totalis')"><span class="ob-chk">✓</span>Alopecia totalis — full scalp loss</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','universalis')"><span class="ob-chk">✓</span>Alopecia universalis — full body loss</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','barbae')"><span class="ob-chk">✓</span>Alopecia barbae — beard area</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','androgenetic')"><span class="ob-chk">✓</span>Androgenetic / pattern baldness</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','telogen')"><span class="ob-chk">✓</span>Telogen effluvium — stress shedding</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','anagen')"><span class="ob-chk">✓</span>Anagen effluvium — chemo / medication</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','traction')"><span class="ob-chk">✓</span>Traction alopecia — from styling</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','scarring')"><span class="ob-chk">✓</span>Scarring / cicatricial alopecia</button>
+      <button class="ob-opt" onclick="obSel(this,'q3','unsure')"><span class="ob-chk">✓</span>Not diagnosed / not sure yet</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">3 / 14</div>
+      <button class="ob-btn" id="ob-n3" disabled onclick="obGoTo(4)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S4: Duration -->
+  <div class="ob-screen" id="ob-s4">
+    <div class="ob-body">
+      <div class="ob-label">Question 4 of 14</div>
+      <div class="ob-q">How long have you been experiencing hair loss?</div>
+      <button class="ob-opt" onclick="obSel(this,'q4','lt3m')"><span class="ob-chk">✓</span>Less than 3 months</button>
+      <button class="ob-opt" onclick="obSel(this,'q4','3-12m')"><span class="ob-chk">✓</span>3 – 12 months</button>
+      <button class="ob-opt" onclick="obSel(this,'q4','1-3y')"><span class="ob-chk">✓</span>1 – 3 years</button>
+      <button class="ob-opt" onclick="obSel(this,'q4','3-10y')"><span class="ob-chk">✓</span>3 – 10 years</button>
+      <button class="ob-opt" onclick="obSel(this,'q4','10y+')"><span class="ob-chk">✓</span>More than 10 years</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">4 / 14</div>
+      <button class="ob-btn" id="ob-n4" disabled onclick="obGoTo(5)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S5: Affected area -->
+  <div class="ob-screen" id="ob-s5">
+    <div class="ob-body">
+      <div class="ob-label">Question 5 of 14</div>
+      <div class="ob-q">How much of your scalp is currently affected?</div>
+      <button class="ob-opt" onclick="obSel(this,'q5','s1')"><span class="ob-chk">✓</span>Less than 25% — a few small patches</button>
+      <button class="ob-opt" onclick="obSel(this,'q5','s2')"><span class="ob-chk">✓</span>25 – 50% — several patches</button>
+      <button class="ob-opt" onclick="obSel(this,'q5','s3')"><span class="ob-chk">✓</span>50 – 75% — significant loss</button>
+      <button class="ob-opt" onclick="obSel(this,'q5','s4')"><span class="ob-chk">✓</span>More than 75% or complete</button>
+      <button class="ob-opt" onclick="obSel(this,'q5','sna')"><span class="ob-chk">✓</span>Not applicable (beard / body hair only)</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">5 / 14</div>
+      <button class="ob-btn" id="ob-n5" disabled onclick="obGoTo(6)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S6: Regrowth -->
+  <div class="ob-screen" id="ob-s6">
+    <div class="ob-body">
+      <div class="ob-label">Question 6 of 14</div>
+      <div class="ob-q">Have you experienced any regrowth at any point?</div>
+      <button class="ob-opt" onclick="obSel(this,'q6','rfull')"><span class="ob-chk">✓</span>Yes — full regrowth, then relapsed</button>
+      <button class="ob-opt" onclick="obSel(this,'q6','rpart')"><span class="ob-chk">✓</span>Yes — partial regrowth, still going</button>
+      <button class="ob-opt" onclick="obSel(this,'q6','rvellus')"><span class="ob-chk">✓</span>Only fine vellus / baby hairs visible</button>
+      <button class="ob-opt" onclick="obSel(this,'q6','rno')"><span class="ob-chk">✓</span>No regrowth yet</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">6 / 14</div>
+      <button class="ob-btn" id="ob-n6" disabled onclick="obGoTo(7)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S7: Natural remedies -->
+  <div class="ob-screen" id="ob-s7">
+    <div class="ob-body">
+      <div class="ob-label">Question 7 of 14</div>
+      <div class="ob-q">Have you tried natural remedies for your hair loss?</div>
+      <button class="ob-opt" onclick="obSel(this,'q7','nr-yes')"><span class="ob-chk">✓</span>Yes — consistently, for months or longer</button>
+      <button class="ob-opt" onclick="obSel(this,'q7','nr-brief')"><span class="ob-chk">✓</span>Yes — briefly, then gave up</button>
+      <button class="ob-opt" onclick="obSel(this,'q7','nr-research')"><span class="ob-chk">✓</span>Currently researching where to start</button>
+      <button class="ob-opt" onclick="obSel(this,'q7','nr-no')"><span class="ob-chk">✓</span>No, haven't tried yet</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">7 / 14</div>
+      <button class="ob-btn" id="ob-n7" disabled onclick="obGoTo(8)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S8: Stress -->
+  <div class="ob-screen" id="ob-s8">
+    <div class="ob-body">
+      <div class="ob-label">Question 8 of 14</div>
+      <div class="ob-q">How are your stress levels most days?</div>
+      <button class="ob-opt" onclick="obSel(this,'q8','st-low')"><span class="ob-chk">✓</span>Low — calm and generally settled</button>
+      <button class="ob-opt" onclick="obSel(this,'q8','st-mod')"><span class="ob-chk">✓</span>Moderate — some ongoing stress</button>
+      <button class="ob-opt" onclick="obSel(this,'q8','st-high')"><span class="ob-chk">✓</span>High — frequently overwhelmed</button>
+      <button class="ob-opt" onclick="obSel(this,'q8','st-var')"><span class="ob-chk">✓</span>Varies a lot from day to day</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">8 / 14</div>
+      <button class="ob-btn" id="ob-n8" disabled onclick="obGoTo(9)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S9: Sleep -->
+  <div class="ob-screen" id="ob-s9">
+    <div class="ob-body">
+      <div class="ob-label">Question 9 of 14</div>
+      <div class="ob-q">How is your sleep quality on most nights?</div>
+      <button class="ob-opt" onclick="obSel(this,'q9','sl-good')"><span class="ob-chk">✓</span>Good — 7+ hours, wake refreshed</button>
+      <button class="ob-opt" onclick="obSel(this,'q9','sl-ok')"><span class="ob-chk">✓</span>Ok — enough hours but not restful</button>
+      <button class="ob-opt" onclick="obSel(this,'q9','sl-poor')"><span class="ob-chk">✓</span>Poor — under 6 hours regularly</button>
+      <button class="ob-opt" onclick="obSel(this,'q9','sl-dis')"><span class="ob-chk">✓</span>Very disrupted / insomnia</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">9 / 14</div>
+      <button class="ob-btn" id="ob-n9" disabled onclick="obGoTo(10)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S10: Diet -->
+  <div class="ob-screen" id="ob-s10">
+    <div class="ob-body">
+      <div class="ob-label">Question 10 of 14</div>
+      <div class="ob-q">How would you describe your current diet?</div>
+      <button class="ob-opt" onclick="obSel(this,'q10','d-anti')"><span class="ob-chk">✓</span>Anti-inflammatory — whole foods focus</button>
+      <button class="ob-opt" onclick="obSel(this,'q10','d-bal')"><span class="ob-chk">✓</span>Balanced but not very strict</button>
+      <button class="ob-opt" onclick="obSel(this,'q10','d-mix')"><span class="ob-chk">✓</span>Mixed — healthy some days, not others</button>
+      <button class="ob-opt" onclick="obSel(this,'q10','d-proc')"><span class="ob-chk">✓</span>Mostly processed / convenience food</button>
+      <button class="ob-opt" onclick="obSel(this,'q10','d-uns')"><span class="ob-chk">✓</span>Not sure what anti-inflammatory means</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">10 / 14</div>
+      <button class="ob-btn" id="ob-n10" disabled onclick="obGoTo(11)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S11: Health conditions (multi-select) -->
+  <div class="ob-screen" id="ob-s11">
+    <div class="ob-body">
+      <div class="ob-label">Question 11 of 14</div>
+      <div class="ob-q">Any known health conditions alongside your hair loss?</div>
+      <div class="ob-hint">Select all that apply</div>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'gut')"><span class="ob-chk">✓</span>Gut issues (IBS, leaky gut, bloating)</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'thyroid')"><span class="ob-chk">✓</span>Thyroid condition (hypo / hyper)</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'autoimmune')"><span class="ob-chk">✓</span>Other autoimmune condition</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'hormonal')"><span class="ob-chk">✓</span>Hormonal imbalance / PCOS</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'vitamin')"><span class="ob-chk">✓</span>Known vitamin / iron deficiency</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'none')"><span class="ob-chk">✓</span>None that I know of</button>
+      <button class="ob-opt ob-multi" onclick="obMSel(this,'unsure')"><span class="ob-chk">✓</span>Not sure</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">11 / 14</div>
+      <button class="ob-btn" id="ob-n11" disabled onclick="obGoTo(12)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S12: Routine consistency -->
+  <div class="ob-screen" id="ob-s12">
+    <div class="ob-body">
+      <div class="ob-label">Question 12 of 14</div>
+      <div class="ob-q">How consistent are you with a daily health routine right now?</div>
+      <button class="ob-opt" onclick="obSel(this,'q12','rc-very')"><span class="ob-chk">✓</span>Very — I rarely miss a day</button>
+      <button class="ob-opt" onclick="obSel(this,'q12','rc-some')"><span class="ob-chk">✓</span>Somewhat — most days but not all</button>
+      <button class="ob-opt" onclick="obSel(this,'q12','rc-str')"><span class="ob-chk">✓</span>Struggling — hard to stay consistent</button>
+      <button class="ob-opt" onclick="obSel(this,'q12','rc-no')"><span class="ob-chk">✓</span>No routine yet</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">12 / 14</div>
+      <button class="ob-btn" id="ob-n12" disabled onclick="obGoTo(13)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S13: Primary goal -->
+  <div class="ob-screen" id="ob-s13">
+    <div class="ob-body">
+      <div class="ob-label">Question 13 of 14</div>
+      <div class="ob-q">What is your primary goal right now?</div>
+      <button class="ob-opt" onclick="obSel(this,'q13','g-stop')"><span class="ob-chk">✓</span>Stop the shedding first</button>
+      <button class="ob-opt" onclick="obSel(this,'q13','g-grow')"><span class="ob-chk">✓</span>Trigger and support new regrowth</button>
+      <button class="ob-opt" onclick="obSel(this,'q13','g-maint')"><span class="ob-chk">✓</span>Maintain progress I've already made</button>
+      <button class="ob-opt" onclick="obSel(this,'q13','g-under')"><span class="ob-chk">✓</span>Understand my condition better</button>
+      <button class="ob-opt" onclick="obSel(this,'q13','g-rout')"><span class="ob-chk">✓</span>Build a sustainable daily routine</button>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">13 / 14</div>
+      <button class="ob-btn" id="ob-n13" disabled onclick="obGoTo(14)">Continue</button>
+    </div>
+  </div>
+
+  <!-- S14: Referral code -->
+  <div class="ob-screen" id="ob-s14">
+    <div class="ob-body" style="justify-content:center">
+      <div class="ob-label" style="text-align:center;margin-bottom:10px">Question 14 of 14</div>
+      <div class="ob-q" style="text-align:center;margin-bottom:6px">Did someone from our community send you?</div>
+      <div class="ob-sub" style="text-align:center;margin-bottom:18px">Enter their referral code to support them</div>
+      <input class="ob-input" id="ob-refcode" type="text" placeholder="Enter referral code (optional)" />
+      <div style="font-size:11px;color:#639922;text-align:center;line-height:1.6">Found HappiHeal on Reddit, Instagram, or via a friend? Their code gives them credit for helping you.</div>
+    </div>
+    <div class="ob-foot">
+      <div class="ob-count">14 / 14</div>
+      <button class="ob-btn" onclick="obGoTo(15)">See my recovery profile →</button>
+      <button class="ob-skip" onclick="obGoTo(15)">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- S15: Recovery profile result -->
+  <div class="ob-screen" id="ob-s15">
+    <div class="ob-body">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:30px;margin-bottom:8px">🌱</div>
+        <div style="font-size:18px;font-weight:500;color:#0b2117;margin-bottom:4px">Your Recovery Starting Point</div>
+        <div style="font-size:11px;color:#639922">Personalised from your 14 answers</div>
+      </div>
+      <div class="ob-r-card">
+        <div class="ob-r-tag">Hair loss type</div>
+        <div class="ob-r-val" id="ob-r-type">—</div>
+        <div class="ob-r-note" id="ob-r-typenote"></div>
+      </div>
+      <div class="ob-r-card">
+        <div class="ob-r-tag">Your stage</div>
+        <div class="ob-r-val" id="ob-r-stage">—</div>
+        <div class="ob-r-note" id="ob-r-stagenote"></div>
+      </div>
+      <div class="ob-r-card">
+        <div class="ob-r-tag">Key focus areas</div>
+        <div class="ob-r-pills" id="ob-r-focus"></div>
+      </div>
+      <div class="ob-r-card">
+        <div class="ob-r-tag">Primary goal</div>
+        <div class="ob-r-val" id="ob-r-goal">—</div>
+      </div>
+    </div>
+    <div class="ob-foot">
+      <button class="ob-btn" onclick="obFinish()">Enter HappiHeal →</button>
+    </div>
+  </div>
 </div>
 
 <!-- ════════ MAIN APP ════════ -->
@@ -753,7 +1356,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
     <!-- Guest strip -->
     <div id="guest-strip" style="display:none;background:var(--bg-section);border:1px solid var(--border);border-radius:var(--r-md);padding:20px">
       <div style="font-family:var(--font-display);font-size:14px;letter-spacing:1.5px;color:var(--green-deep);margin-bottom:8px">YOUR JOURNEY AWAITS</div>
-      <div style="font-size:13px;color:var(--text-soft);line-height:1.65;margin-bottom:16px;font-weight:300">Harshitha lived with alopecia for 20+ years and found her path through natural methods. This app holds everything she learned.</div>
+      <div style="font-size:13px;color:var(--text-soft);line-height:1.65;margin-bottom:16px;font-weight:300">Our founder lived with alopecia for 20+ years and found her path through natural methods. This app holds everything she learned.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
         <div style="font-size:12px;color:var(--text-muted)">🍃 Natural remedies</div>
         <div style="font-size:12px;color:var(--text-muted)">💬 AI wellness guide</div>
@@ -766,9 +1369,12 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
     <!-- Upgrade nudge (day 4+) -->
     <div id="upgrade-nudge" style="display:none"></div>
 
+    <!-- Recovery profile card (populated by renderHome from onboarding answers) -->
+    <div id="ob-profile-home" style="display:none;background:var(--bg-section);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:4px"></div>
+
     <!-- Daily tip -->
     <div>
-      <div class="section-label">Harshitha's Daily Insight</div>
+      <div class="section-label">Daily Insight</div>
       <div class="tip-card">
         <div class="tip-label">Today's Tip</div>
         <div class="tip-text" id="daily-tip"></div>
@@ -845,9 +1451,9 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 
     <!-- Consultation -->
     <div style="background:var(--bg-section);border:1px solid var(--border);border-radius:var(--r-md);padding:18px">
-      <div style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--green-deep);margin-bottom:6px">1:1 SESSION WITH HARSHITHA</div>
+      <div style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--green-deep);margin-bottom:6px">1:1 WELLNESS SESSION</div>
       <div style="font-size:13px;color:var(--text-soft);line-height:1.6;margin-bottom:14px;font-weight:300">20 years of lived experience. A personal conversation about your journey, triggers and what to try next.</div>
-      <button onclick="showConsultationModal()" class="btn-outline" style="font-size:13px;padding:11px">Book 1:1 with Harshitha →</button>
+      <button onclick="showConsultationModal()" class="btn-outline" style="font-size:13px;padding:11px">Book a 1:1 Session →</button>
     </div>
 
   </div>
@@ -874,7 +1480,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
   <div id="chat-messages">
     <div class="msg msg-ai">
       <div class="msg-name">HAPPIHEAL AI</div>
-      <div class="msg-bubble">Hello 💚 I'm your HappiHeal companion. I'm here to guide you through alopecia, natural remedies, and your recovery journey — based on Harshitha's 20+ years of experience. What's on your mind today?</div>
+      <div class="msg-bubble">Hello 💚 I'm your HappiHeal companion. I'm here to guide you through alopecia, natural remedies, and your recovery journey — based on real, lived experience with alopecia. What's on your mind today?</div>
     </div>
   </div>
   <div class="chat-input-area">
@@ -899,6 +1505,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
       <button class="heal-tab active" onclick="switchHealTab('massage')">Scalp Massage</button>
       <button class="heal-tab" onclick="switchHealTab('yoga')">Yoga &amp; Postures</button>
       <button class="heal-tab" onclick="switchHealTab('breathe')">Breathwork</button>
+      <button class="heal-tab" onclick="switchHealTab('mind')">Mind &amp; Confidence</button>
     </div>
 
     <!-- MASSAGE PANEL -->
@@ -928,6 +1535,26 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
       <div id="breathe-list"></div>
     </div>
 
+    <!-- MIND & CONFIDENCE PANEL -->
+    <div id="heal-mind" class="heal-panel">
+      <div class="heal-cta" style="margin-bottom:14px">
+        <div class="heal-cta-text">"Your worth extends far beyond your hair — confidence can be rebuilt"</div>
+        <div class="heal-cta-sub">Self-compassion lowers stress hormones too · Even 2 minutes helps</div>
+      </div>
+      <div id="mind-list"></div>
+
+      <div class="card-gold" style="margin-top:14px">
+        <div class="section-label">Reframe a Hard Thought</div>
+        <div id="reframe-list"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px;background:linear-gradient(160deg,#fdf3ec,#fbe8e0);border-color:#f0d9cc">
+        <div class="section-label">Emergency Confidence Kit</div>
+        <div style="font-size:12px;color:var(--text-soft);line-height:1.6;margin-bottom:10px">Keep this ready for the hard days — tap a chip to revisit it any time.</div>
+        <div id="kit-list"></div>
+      </div>
+    </div>
+
     <!-- Daily log row -->
     <div class="card-gold" style="margin-top:4px">
       <div class="section-label">Log Today's Practice</div>
@@ -935,6 +1562,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">💆 Scalp massage</div>
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">🧘 Yoga done</div>
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">🫁 Breathwork</div>
+        <div class="symptom-chip" onclick="this.classList.toggle('selected')">💚 Mind practice</div>
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">🛁 Oil applied</div>
       </div>
       <button onclick="saveHealLog()" class="btn-gold" style="font-size:13px;padding:12px">Save Today's Heal Log ✓</button>
@@ -955,27 +1583,76 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
   </div>
   <div class="routine-content">
     <!-- Tab switcher -->
-    <div class="routine-toggle">
-      <button class="routine-tab active" id="rtab-daily" onclick="switchRoutineTab('daily')">Nutrition</button>
-      <button class="routine-tab" id="rtab-haircare" onclick="switchRoutineTab('haircare')">Hair Care</button>
-      <button class="routine-tab" id="rtab-mindset" onclick="switchRoutineTab('mindset')">Mindset</button>
+    <div class="routine-toggle" style="overflow-x:auto;white-space:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch">
+      <button class="routine-tab active" id="rtab-daily" onclick="switchRoutineTab('daily')">🥗 Nutrition</button>
+      <button class="routine-tab" id="rtab-remedies" onclick="switchRoutineTab('remedies')">🫚 Remedies</button>
+      <button class="routine-tab" id="rtab-meals" onclick="switchRoutineTab('meals')">🍽️ Meal Plan</button>
+      <button class="routine-tab" id="rtab-haircare" onclick="switchRoutineTab('haircare')">💆 Hair Care</button>
+      <button class="routine-tab" id="rtab-mindset" onclick="switchRoutineTab('mindset')">🧘 Mindset</button>
     </div>
 
     <!-- NUTRITION TAB -->
     <div id="routine-daily">
-      <div style="background:var(--sand);border-radius:var(--r-md);padding:16px;margin-bottom:4px;border:1px solid #ede8e0">
-        <div style="font-family:var(--font-serif);font-size:15px;font-style:italic;color:var(--text-mid)">"Eat any of the items below today. Each nutrient plays a role in scalp health and follicle repair."</div>
+      <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:4px;border:1px solid #ede8e0">
+        <div style="font-family:var(--font-serif);font-size:14px;font-style:italic;color:var(--text-mid)">"Eat any of the items below today. Each nutrient plays a specific role in scalp health and follicle repair. Daily doses are shown — aim for all 8 nutrients across your day."</div>
       </div>
       <div id="nutrition-checklist"></div>
     </div>
 
+    <!-- REMEDIES TAB -->
+    <div id="routine-remedies" style="display:none">
+      <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:12px;border:1px solid #ede8e0">
+        <div style="font-size:13px;font-weight:500;color:var(--green-deep);margin-bottom:4px">Choose your remedy for today</div>
+        <div style="font-size:12px;color:var(--text-muted)">Pick 1–2 options that suit your schedule. Mark each step as you complete it. Consistency over weeks is what creates regrowth.</div>
+      </div>
+      <div id="remedies-checklist"></div>
+    </div>
+
+    <!-- MEAL PLAN TAB -->
+    <div id="routine-meals" style="display:none">
+      <div id="meal-plan-card"></div>
+    </div>
+
     <!-- HAIR CARE TAB -->
     <div id="routine-haircare" style="display:none">
+      <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:12px;border:1px solid #ede8e0">
+        <div style="font-size:12px;color:var(--text-muted)">Your daily scalp and hair care habits. Consistency with these small actions compounds into visible results over weeks.</div>
+      </div>
+
+      <!-- Hair type selector -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label" style="margin-bottom:10px">What's your hair type?</div>
+        <div class="hairtype-row" id="hairtype-row"></div>
+      </div>
+      <div id="hairtype-tip-box"></div>
+
       <div id="haircare-checklist"></div>
+
+      <!-- Routines library -->
+      <div style="margin-top:18px">
+        <div class="section-label">Step-by-Step Routines</div>
+        <div class="routine-toggle" style="overflow-x:auto;white-space:nowrap;padding-bottom:6px;-webkit-overflow-scrolling:touch;margin-bottom:10px">
+          <button class="routine-tab active" id="hctab-morning" onclick="switchHaircareLib('morning')">🌅 Morning</button>
+          <button class="routine-tab" id="hctab-evening" onclick="switchHaircareLib('evening')">🌙 Evening</button>
+          <button class="routine-tab" id="hctab-weekly" onclick="switchHaircareLib('weekly')">📅 Weekly</button>
+          <button class="routine-tab" id="hctab-overnight" onclick="switchHaircareLib('overnight')">🛏️ Overnight</button>
+        </div>
+        <div id="haircare-lib-content"></div>
+      </div>
+
+      <!-- Time-saving tips -->
+      <div class="card" style="margin-top:12px">
+        <div class="section-label" style="margin-bottom:10px">Time-Saving Tips</div>
+        <div id="haircare-tips-list"></div>
+      </div>
     </div>
+
 
     <!-- MINDSET TAB -->
     <div id="routine-mindset" style="display:none">
+      <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:4px;border:1px solid #ede8e0">
+        <div style="font-size:12px;color:var(--text-muted)">Mental wellness is not optional in alopecia recovery — chronic stress directly raises cortisol which triggers and worsens hair loss. These small daily practices matter.</div>
+      </div>
       <div id="mindset-checklist"></div>
     </div>
 
@@ -994,7 +1671,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 
     <!-- Expandable future remedies note -->
     <div style="background:var(--green-mist);border:1px solid var(--green-pale);border-radius:var(--r-md);padding:14px 16px;text-align:center">
-      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.5px">More remedies and practices will be added regularly by Harshitha — alternate-day protocols coming soon 🌿</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.5px">More remedies and practices will be added regularly — alternate-day protocols coming soon 🌿</div>
     </div>
   </div>
 </div>
@@ -1117,7 +1794,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
       <div style="display:flex;flex-direction:column;gap:12px">
         <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:18px;width:24px">🌿</div><div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">Holistic approach: nutrition, scalp care, stress reduction, and mindset — together.</div></div>
         <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:18px;width:24px">📊</div><div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">Daily logging builds a picture of what's working — patterns appear over weeks, not days.</div></div>
-        <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:18px;width:24px">💬</div><div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">AI companion draws from Harshitha's lived experience — warm, evidence-based, personal.</div></div>
+        <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:18px;width:24px">💬</div><div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">AI companion draws from real, lived experience with alopecia — warm, evidence-based, personal.</div></div>
         <div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:18px;width:24px">⏰</div><div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">Consistency over perfection. Small daily habits compound into visible results over months.</div></div>
       </div>
     </div>
@@ -1126,7 +1803,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
     <div class="menu-list">
       <div class="menu-item" onclick="closeProfile();setTimeout(()=>goTo('learn'),50)"><span class="menu-icon">📚</span><div style="flex:1"><div class="menu-label">Learning Modules</div><div class="menu-sub">8 modules · M1 free</div></div><span class="menu-arrow">›</span></div>
       <div class="menu-item" onclick="closeProfile();setTimeout(()=>goTo('pricing'),50)"><span class="menu-icon">⭐</span><div style="flex:1"><div class="menu-label">Upgrade Plan</div><div class="menu-sub" id="upgrade-sub">View Quarterly &amp; Annual plans</div></div><span class="menu-arrow">›</span></div>
-      <div class="menu-item" onclick="showConsultationModal()"><span class="menu-icon">📞</span><div style="flex:1"><div class="menu-label">Book 1:1 with Harshitha</div><div class="menu-sub">Personal 1:1 session with Harshitha</div></div><span class="menu-arrow">›</span></div>
+      <div class="menu-item" onclick="showConsultationModal()"><span class="menu-icon">📞</span><div style="flex:1"><div class="menu-label">Book a 1:1 Session</div><div class="menu-sub">Personal wellness session with our founder</div></div><span class="menu-arrow">›</span></div>
       <div class="menu-item" onclick="handleEbookOpen()"><span class="menu-icon">📖</span><div style="flex:1"><div class="menu-label">Recovery Ebook</div><div class="menu-sub" id="ebook-menu-sub">Included in Annual plan · Or own your copy </div></div><span class="menu-arrow">›</span></div>
     </div>
 
@@ -1227,23 +1904,29 @@ function showPaywall() {
 }
 
 /* ── NAVIGATION ── */
+const SIGNUP_GATED_SCREENS = ['journey','routine','heal','ai'];
+const TRIAL_GATED_SCREENS  = ['journey','routine','heal','ai'];
+
 function goTo(screen) {
   // Always hide profile overlay — it's position:fixed and blocks everything if visible
   const profileEl = document.getElementById('screen-profile');
   if (profileEl) profileEl.style.display = 'none';
   state.profileOpen = false;
 
-  if (screen !== state.currentScreen) {
-    state.navStack.push(state.currentScreen);
-    if (state.navStack.length > 20) state.navStack.shift();
-  }
-  const signupGated = ['journey','routine','heal'];
-  if (signupGated.includes(screen) && !currentUser) {
+  // Run all access-gate checks BEFORE touching navStack/currentScreen —
+  // a blocked navigation must never leave a stray/duplicate entry on the stack
+  // (that was the root cause of "back" sometimes needing two taps).
+  if (SIGNUP_GATED_SCREENS.includes(screen) && !currentUser) {
     showToast('Sign up to unlock your 3-day free access 🌿');
     showAuthModal('signup'); return;
   }
   const { isExpired } = getTrialInfo();
-  if (isExpired && ['journey','routine','heal'].includes(screen)) { showPaywall(); return; }
+  if (isExpired && TRIAL_GATED_SCREENS.includes(screen)) { showPaywall(); return; }
+
+  if (screen !== state.currentScreen) {
+    state.navStack.push(state.currentScreen);
+    if (state.navStack.length > 20) state.navStack.shift();
+  }
 
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1264,9 +1947,19 @@ function goTo(screen) {
 
 function goBack() {
   if (state.profileOpen) { closeProfile(); return; }
+  // Defensive: drop any accidental consecutive duplicates left over from older state
+  while (state.navStack.length > 1 && state.navStack[state.navStack.length - 1] === state.navStack[state.navStack.length - 2]) {
+    state.navStack.pop();
+  }
   if (state.navStack.length > 1) {
     state.navStack.pop(); // remove current
-    const prev = state.navStack[state.navStack.length - 1] || 'home';
+    let prev = state.navStack[state.navStack.length - 1] || 'home';
+    // Re-validate access in case plan/trial status changed while the app was open
+    const { isExpired } = getTrialInfo();
+    if ((TRIAL_GATED_SCREENS.includes(prev) && isExpired) || (SIGNUP_GATED_SCREENS.includes(prev) && !currentUser)) {
+      prev = 'home';
+      state.navStack = ['home'];
+    }
     // Navigate without pushing again
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1336,16 +2029,61 @@ function renderHome() {
   renderAffirmation();
   renderWABanner();
 
+  // ── ONBOARDING PROFILE CARD ──────────────────────────────
+  const obDone = load('ob_done', false);
+  const obCard = document.getElementById('ob-profile-home');
+  if (obCard) {
+    if (obDone) {
+      const oba = load('ob_answers', {});
+      const obm = load('ob_multi11', []);
+      const focusTags = [];
+      if (oba.q8==='st-high'||oba.q8==='st-var') focusTags.push('🧘 Stress');
+      if (oba.q9==='sl-poor'||oba.q9==='sl-dis') focusTags.push('😴 Sleep');
+      if (oba.q10==='d-mix'||oba.q10==='d-proc'||oba.q10==='d-uns') focusTags.push('🥗 Nutrition');
+      if (obm.includes('gut')) focusTags.push('🌿 Gut health');
+      if (obm.includes('thyroid')) focusTags.push('🔬 Thyroid');
+      if (obm.includes('hormonal')) focusTags.push('⚡ Hormones');
+      if (obm.includes('vitamin')) focusTags.push('💊 Nutrients');
+      if (focusTags.length===0) focusTags.push('💆 Scalp protocol');
+      obCard.style.display = 'block';
+      obCard.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div class="section-label" style="margin:0">Your Recovery Profile</div>
+          <span style="font-size:10px;color:var(--green-mid);cursor:pointer;text-decoration:underline" onclick="showRecoveryProfileModal()">Edit</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:130px;background:var(--green-mist);border-radius:10px;padding:10px 12px">
+            <div style="font-size:9px;font-weight:700;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">Type</div>
+            <div style="font-size:12px;font-weight:500;color:var(--green-deep)">${TYPE_MAP[oba.q3]||'Not set'}</div>
+          </div>
+          <div style="flex:1;min-width:110px;background:var(--green-mist);border-radius:10px;padding:10px 12px">
+            <div style="font-size:9px;font-weight:700;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">Goal</div>
+            <div style="font-size:12px;font-weight:500;color:var(--green-deep)">${GOAL_MAP[oba.q13]||'Not set'}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px">Focus areas</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${focusTags.map(f=>`<span style="font-size:11px;background:var(--bg-section);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-soft)">${f}</span>`).join('')}</div>
+        ${barChart([
+          { label: 'Stress',     value: STRESS_SCORE[oba.q8]  || 1.5, color: '#c0654a' },
+          { label: 'Sleep gap',  value: SLEEP_SCORE[oba.q9]   || 1.5, color: '#c79a3c' },
+          { label: 'Diet gap',   value: DIET_SCORE[oba.q10]   || 1.5, color: '#7a9b6e' }
+        ])}`;
+    } else {
+      obCard.style.display = 'none';
+    }
+  }
+
   const guestStrip = document.getElementById('guest-strip');
   if (guestStrip) guestStrip.style.display = currentUser ? 'none' : 'block';
 
-  // Day badge
+  // Day badge — plan details must NEVER show during the active trial (no premature upsell),
+  // and must fully disappear once the user has actually purchased a plan.
   const { daysPassed, isPaid, daysLeft } = getTrialInfo();
   const badge = document.getElementById('home-day-badge');
   if (badge) {
     if (isPaid) {
-      const homePlanLabel = (plan === 'quarterly') ? '✦ Quarterly' : '✦ Annual';
-      badge.innerHTML = `<div class="pill-green">${homePlanLabel}</div>`;
+      // Paid users see no plan badge at all on Home — status lives in Profile only.
+      badge.innerHTML = '';
     } else if (daysPassed >= TRIAL_DAYS) {
       badge.innerHTML = `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(139,58,42,0.15);border:1px solid rgba(139,58,42,0.3);border-radius:99px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--rust-light)">Upgrade to continue →</div>`;
       badge.querySelector('div').onclick = () => goTo('pricing');
@@ -1354,7 +2092,7 @@ function renderHome() {
     }
   }
 
-  // Silent upgrade nudge on Day 4+
+  // Silent upgrade nudge — only after the free trial has actually ended, and never for paid users
   const nudge = document.getElementById('upgrade-nudge');
   if (nudge) {
     if (!isPaid && daysPassed >= TRIAL_DAYS) {
@@ -1381,19 +2119,26 @@ function renderLearn() {
   const el = document.getElementById('module-list');
   if (!el) return;
   // Access rules:
-  // free / trial    → M0 (freebie) + M1 only
-  // quarterly       → M0 + M1 only  (same as free — upgrade nudge for rest)
-  // annual/premium  → all modules
+  // active trial        → M0 (freebie) + M1 only
+  // trial ended, unpaid  → M0 (freebie) only — everything else locked
+  // quarterly            → M0 + M1 only  (same as trial — upgrade nudge for rest)
+  // annual/premium       → all modules
   const isAnnual = currentPlan === 'premium';
+  const { isExpired } = getTrialInfo();
   el.innerHTML = CONTENT.modules.map(m => {
     let locked, tag, tagColor = '';
-    if (m.free) {
+    const trulyFree = m.id === 0; // the standalone lead-magnet freebie — never locked
+    if (trulyFree) {
       locked = false;
       tag = '✓ FREE';
       tagColor = 'color:var(--green-soft)';
     } else if (isAnnual) {
       locked = false;
       tag = '✓ UNLOCKED';
+      tagColor = 'color:var(--green-soft)';
+    } else if (m.free && !isExpired) {
+      locked = false;
+      tag = '✓ FREE';
       tagColor = 'color:var(--green-soft)';
     } else {
       locked = true;
@@ -1450,7 +2195,7 @@ const BREATHWORK = [
 ];
 
 function renderHeal() {
-  renderMassages(); renderYoga(); renderBreathe();
+  renderMassages(); renderYoga(); renderBreathe(); renderMind();
 }
 
 function renderMassages() {
@@ -1479,9 +2224,61 @@ function renderBreathe() {
   if (!el) return;
   el.innerHTML = BREATHWORK.map(b => `
     <div class="breath-activity" onclick="${b.action}">
-      <div class="breath-icon">${b.icon}</div>
+      <div class="mini-anim"></div>
       <div class="breath-info"><div class="breath-name">${b.name}</div><div class="breath-time">${b.time}</div><div class="breath-desc">${b.desc}</div></div>
     </div>`).join('');
+}
+
+/* ── MIND & CONFIDENCE (from the Mental Health & Confidence module) ── */
+const MIND_PRACTICES = [
+  { icon: '🌿', name: 'Self-Compassion Break', time: '2 min', desc: 'A 3-step pause for hard moments — name the struggle, remember you are not alone, offer yourself kindness.', action: "showSelfCompassionModal()" },
+  { icon: '🪞', name: 'Kind Mirror Work', time: '2 min', desc: 'Practice looking at your reflection with curiosity instead of criticism.', action: "showMirrorWorkModal()" },
+  { icon: '💌', name: 'Letter From Your Wisest Self', time: '5 min', desc: 'A short letter written from the perspective of a loving, wise friend — to you.', action: "showLetterModal()" },
+  { icon: '🙌', name: 'Loving-Kindness Phrases', time: '1 min', desc: 'Five gentle phrases to repeat silently when self-talk turns harsh.', action: "showLovingKindnessModal()" },
+];
+
+const REFRAME_LIST = [
+  { old: '"Everyone notices my thinning hair"', fresh: '"Most people are focused on their own concerns, not analysing my appearance"' },
+  { old: '"I look so much older now"', fresh: '"I\'m adjusting to changes — attractiveness and vitality come from many things"' },
+  { old: '"Nothing will help this"', fresh: '"I\'m learning about options, and there is more than one path forward"' },
+  { old: '"My partner won\'t find me attractive"', fresh: '"My relationship is built on far more than my hair — attraction has many parts"' },
+];
+
+const EMERGENCY_KIT = [
+  { icon: '📝', label: 'Your strengths list', detail: 'Three things you are genuinely good at — read them out loud right now.' },
+  { icon: '📷', label: 'A photo of you, happy', detail: 'Pick one where you felt fully yourself. Look at it for 10 seconds.' },
+  { icon: '📞', label: 'One supportive person', detail: 'Who could you text right now, just to say hi?' },
+  { icon: '🎵', label: 'A mood-shifting song', detail: 'Music, movement or fresh air for 2 minutes can shift your whole state.' },
+];
+
+function renderMind() {
+  const list = document.getElementById('mind-list');
+  if (list) list.innerHTML = MIND_PRACTICES.map(m => `
+    <div class="mind-card" onclick="${m.action}">
+      <div class="mini-anim"></div>
+      <div><div class="mind-name">${m.icon} ${m.name}</div><div class="mind-time">${m.time}</div><div class="mind-desc">${m.desc}</div></div>
+    </div>`).join('');
+  const rf = document.getElementById('reframe-list');
+  if (rf) rf.innerHTML = REFRAME_LIST.map(r => `
+    <div class="reframe-row">
+      <div class="reframe-old">✗ ${r.old}</div>
+      <div class="reframe-new">✓ ${r.fresh}</div>
+    </div>`).join('');
+  const kit = document.getElementById('kit-list');
+  if (kit) kit.innerHTML = EMERGENCY_KIT.map(k => `<span class="kit-pill" onclick="showToast('${k.detail.replace(/'/g,"\\'")}')">${k.icon} ${k.label}</span>`).join('');
+}
+
+function showSelfCompassionModal() {
+  showBreathModal('Self-Compassion Break', 'When a hard moment hits, try these three steps:<br><br><b>1. Acknowledge:</b> "This is a moment of suffering."<br><b>2. Remember:</b> "Suffering is part of life — I\'m not alone in this."<br><b>3. Offer kindness:</b> "May I be kind to myself right now."<br><br>Place a hand on your heart while you say these — touch itself is calming.', '🌿');
+}
+function showMirrorWorkModal() {
+  showBreathModal('Kind Mirror Work', 'Stand in front of a mirror for one minute.<br><br>• Look at yourself with the same kindness you\'d show a good friend<br>• Find one feature you genuinely appreciate today — it doesn\'t have to be about hair<br>• Use neutral or gentle self-talk, not criticism<br>• Avoid scrutinising or checking — just look, and let it be enough', '🪞');
+}
+function showLetterModal() {
+  showBreathModal('Letter From Your Wisest Self', 'Take 5 minutes and write a short letter to yourself, as if from your wisest, most loving friend. Include:<br><br>• An acknowledgment of what you\'re going through<br>• Understanding, without trying to fix anything<br>• A reminder of your real, lasting qualities<br>• A note of encouragement and hope for what\'s ahead<br><br>Keep it somewhere you can re-read on harder days.', '💌');
+}
+function showLovingKindnessModal() {
+  showBreathModal('Loving-Kindness Phrases', 'Repeat slowly, silently or aloud:<br><br>"May I be happy and healthy."<br>"May I accept myself as I am."<br>"May I find peace with my changing appearance."<br>"May I remember my worth goes far beyond how I look."<br><br>Even 60 seconds of this can shift your nervous system out of a stress response.', '🙌');
 }
 
 function switchHealTab(tab) {
@@ -1567,16 +2364,174 @@ const HAIRCARE_DATA = [
   { id: 'wide_comb', text: 'Wide-tooth comb only', examples: 'Never brush wet hair · Always start from ends upward' },
 ];
 
+// ── HAIR TYPE PROFILES (from Haircare Routines guide) ──────────────────────
+const HAIR_TYPES = [
+  { id: 'fine', label: 'Fine', emoji: '🪶',
+    chars: ['Gets oily faster', 'Shows damage more readily', 'Needs volume support', 'Requires gentle handling'],
+    morningTip: 'Dry shampoo at roots for volume · Lightweight leave-in on ends only · Volumizing mousse on damp hair · Air dry or low heat · Minimal product to avoid weighing hair down.' },
+  { id: 'thick', label: 'Thick', emoji: '🌾',
+    chars: ['Takes longer to get oily', 'Can handle more manipulation', 'Needs moisture and control', 'Benefits from intensive treatments'],
+    morningTip: 'Heavier leave-in throughout · Smoothing cream or oil for frizz · Section hair for thorough product application · May need higher heat settings · Focus on taming volume.' },
+  { id: 'curly', label: 'Curly / Textured', emoji: '🌀',
+    chars: ['Prone to dryness', 'Fragile when wet', 'Needs defined curl support', 'Benefits from protective styling'],
+    morningTip: 'Refresh with water + leave-in · Scrunch out crunch from previous gel · Curl cream on damp sections · Diffuse on low heat or air dry · Avoid brushing or combing when dry.' },
+  { id: 'chemical', label: 'Chemically Treated', emoji: '🧪',
+    chars: ['Higher porosity', 'Increased fragility', 'Needs protein/moisture balance', 'Requires specialized products'],
+    morningTip: 'Extra gentle detangling with conditioning spray · Protein or reconstructing leave-in treatment · Heat protectant is non-negotiable · Lower heat settings, less frequent heat styling.' },
+];
+
+// ── HAIRCARE ROUTINES LIBRARY (from Haircare Routines guide) ───────────────
+const HAIRCARE_LIB = {
+  morning: {
+    title: '5-Minute Express Morning Routine',
+    duration: '5 min',
+    steps: [
+      { title: 'Gentle Awakening', time: '1 min', items: 'Remove overnight protection (scarf/bonnet) · Assess hair condition and tangles · Decide styling approach based on hair state' },
+      { title: 'Scalp Stimulation', time: '2 min', items: 'Gentle fingertip massage in circular motions · Focus on hairline, crown, tense areas · Increases circulation for the day ahead' },
+      { title: 'Detangling & Smoothing', time: '1 min', items: 'Wide-tooth comb on tangles, starting from ends · Apply leave-in conditioner if needed · Be extra gentle — hair is vulnerable just after waking' },
+      { title: 'Styling Preparation', time: '1 min', items: 'Apply heat protectant if using hot tools · Choose products suited to hair type · Consider air-drying vs heat styling' },
+    ]
+  },
+  evening: {
+    title: 'Nourishing 10-Minute Evening Routine',
+    duration: '10 min',
+    steps: [
+      { title: "Day's End Assessment", time: '1 min', items: 'Remove hair accessories or elastics · Assess styling/environmental damage · Note any scalp tension or discomfort' },
+      { title: 'Gentle Cleansing', time: '2 min', items: 'If not washing: brush out styling products with a boar bristle brush · Remove build-up with gentle scalp massage' },
+      { title: 'Nourishing Treatment', time: '3 min', items: 'Apply evening treatment (oil, serum, mask) · Focus on scalp health and hair ends · More generous amounts than morning' },
+      { title: 'Relaxing Massage', time: '3 min', items: 'Thorough scalp massage with fingertips · Include neck and shoulder release · Practice mindfulness during massage' },
+      { title: 'Overnight Protection Setup', time: '1 min', items: 'Arrange hair to minimize friction during sleep · Apply silk scarf, bonnet, or use a silk pillowcase · Set up humidifier if air is dry' },
+    ]
+  },
+  weekly: {
+    title: 'Weekly Clarifying Session',
+    duration: '~45 min',
+    steps: [
+      { title: 'Pre-Cleansing Assessment', time: '5 min', items: 'Examine scalp for buildup, flakes, irritation · Check hair for product accumulation · Photograph for progress tracking' },
+      { title: 'Pre-Shampoo Treatment', time: '15 min', items: 'Apply clarifying pre-treatment (apple cider vinegar rinse) · Massage gently to loosen buildup · Cover with shower cap if oil-based' },
+      { title: 'Deep Cleansing Shampoo', time: '10 min', items: 'Use clarifying, sulfate-free shampoo · First wash on scalp/roots, second through length if needed · Rinse thoroughly with lukewarm water' },
+      { title: 'Intensive Conditioning', time: '15 min', items: 'Apply deep conditioning treatment generously · Comb through evenly · Apply heat (warm towel or processing cap) · Focus on damaged areas' },
+      { title: 'Cool Rinse & Protection', time: '5 min', items: 'Rinse with cool water to seal cuticles · Apply leave-in or protective serum · Style with minimal heat to avoid damage' },
+    ]
+  },
+  overnight: {
+    title: 'Overnight Hair Protection',
+    duration: 'Nightly',
+    steps: [
+      { title: 'Sleep Surface Optimization', time: '', items: 'Silk or satin pillowcases reduce friction · Bamboo pillowcases for temperature regulation · Wash pillowcases every 2–3 days' },
+      { title: 'Hair Protection Methods', time: '', items: 'Loose braids or twists to prevent tangling · Silk scarves or bonnets for full coverage · Medusa clipping for curly hair · Pineapple method to maintain curl pattern' },
+      { title: 'Environmental Considerations', time: '', items: 'Bedroom humidity 40–60% is optimal · Air circulation without direct drafts · Air purifiers for a clean sleeping environment' },
+    ]
+  },
+};
+
+const WEEKLY_TREATMENT_ROTATION = [
+  { week: 1, name: 'Protein Treatment', freq: 'Every 2–4 weeks', desc: 'Strengthens hair structure and reduces breakage. Best for damaged, chemically treated, or fragile hair. Try hydrolyzed protein treatments or keratin masks.' },
+  { week: 2, name: 'Deep Moisture Treatment', freq: 'Weekly for dry hair', desc: 'Restores hydration and improves elasticity. Best for dry, brittle, or environmentally damaged hair. Intensive conditioning masks and oil treatments.' },
+  { week: 3, name: 'Scalp Treatment', freq: 'Weekly', desc: 'Improves scalp health and circulation. Good for all hair types, especially scalp issues. Scalp serums, exfoliating treatments, essential oil blends.' },
+  { week: 4, name: 'Growth Stimulation Treatment', freq: '2–3x per week', desc: 'Promotes healthy growth and follicle function. Best for those experiencing thinning or slow growth. Growth serums and circulation-boosting treatments.' },
+];
+
+const HAIRCARE_TIPS = [
+  { emoji: '🌙', title: 'The Night Before', items: "Choose tomorrow's style before bed · Prepare and organize products and tools · Consider protective overnight styling · Set up your space with good lighting" },
+  { emoji: '⏱️', title: 'Multi-Tasking', items: 'Apply treatments while doing other morning tasks · Use hands-free styling tools when possible · Combine scalp massage with meditation or breathing' },
+  { emoji: '✨', title: 'Quick Fixes', items: 'Dry shampoo to extend time between washes · Hair accessories for less-than-perfect days · Texturizing spray for instant volume and grip · Silk scarves or headbands for elegant coverage' },
+];
+
 const MINDSET_DATA = [
   { id: 'gratitude_r', text: 'Gratitude — 3 things', examples: 'Write or speak 3 things you appreciate today. Studies show this lowers cortisol.' },
   { id: 'affirmation_r', text: 'Affirmation of the day', examples: 'Read today\'s affirmation on the Home tab and sit with it for 1 minute.' },
   { id: 'no_mirror', text: 'Avoid excessive scalp checking', examples: 'Checking obsessively raises anxiety. One mindful check in morning is enough.' },
   { id: 'self_kind', text: 'One act of self-kindness', examples: 'Rest, a hot shower, a walk, a favourite meal — treat yourself as a good friend.' },
-  { id: 'positive_talk', text: 'Neutral or positive self-talk', examples: 'Notice self-critical thoughts. Reframe to neutral: "I am healing" not "I am failing."' },
+  { id: 'positive_talk', text: 'Neutral or positive self-talk', examples: 'Notice one self-critical thought. Reframe: "My hair is thinning" → "My body is healing and I am supporting it every day."' },
+  { id: 'breath_m', text: '5-min breathwork (morning or evening)', examples: 'Box breathing 4-4-4-4 or 4-7-8 technique. Activates parasympathetic nervous system. Measurably lowers cortisol.' },
+];
+
+// ── REMEDIES DATA ─────────────────────────────────────────────────────────
+const REMEDIES_DATA = [
+  { id:'ginger_juice', name:'Fresh Ginger Juice', emoji:'🫚', tag:'Alternate Days', tagColor:'#E8962A',
+    why:"Our founder's signature remedy. Sulphur compounds stimulate keratin production and scalp circulation.",
+    ingredients:['Fresh ginger root (5cm piece)','1 tbsp carrier oil (optional)'],
+    steps:['Grate or juice the ginger — fresh only, not powder.','Apply to affected patches with fingertips.','Massage gently in circular motions for 2–3 minutes.','Leave on for 20–30 minutes.','Rinse thoroughly with cool water.'],
+    frequency:'Every alternate day', caution:'Avoid if scalp is broken or irritated. Patch test first.' },
+  { id:'rosemary_oil', name:'Rosemary Oil Blend', emoji:'🌿', tag:'2–3× per week', tagColor:'#258a42',
+    why:'Studies show rosemary is as effective as minoxidil. Improves circulation and blocks DHT at the follicle.',
+    ingredients:['4 drops rosemary essential oil','1 tbsp jojoba or coconut oil'],
+    steps:['Mix rosemary oil into carrier oil.','Apply to scalp, focus on patches.','Massage 5 minutes with circular motions.','Leave 30 min minimum (overnight is best).','Shampoo out gently.'],
+    frequency:'2–3 times per week', caution:'Never apply undiluted. Avoid during pregnancy.' },
+  { id:'aloe_vera', name:'Aloe Vera Scalp Treatment', emoji:'🪴', tag:'3× per week', tagColor:'#3dab60',
+    why:'Anti-inflammatory compounds in fresh aloe vera directly calm the autoimmune response at the scalp.',
+    ingredients:['1/4 cup fresh aloe vera gel (from leaf)','1 tbsp castor oil','2 drops lavender oil'],
+    steps:['Scoop fresh aloe gel — use within 2 hours.','Mix with castor oil and lavender oil.','Apply to scalp and patches.','Massage gently for 5 minutes.','Leave 30 minutes. Rinse with lukewarm water.'],
+    frequency:'3 times per week', caution:'Use fresh aloe only — bottled versions lose active compounds.' },
+  { id:'onion_juice', name:'Onion Juice Treatment', emoji:'🧅', tag:'3× per week', tagColor:'#E8962A',
+    why:'Rich in sulphur for keratin production. Studies show consistent use improves regrowth in alopecia areata.',
+    ingredients:['1 medium onion','Cotton ball or fingertips'],
+    steps:['Blend or grate onion and strain through cloth.','Apply juice to patches with cotton ball.','Leave 20–30 minutes (smell fades on drying).','Rinse thoroughly. Shampoo once.'],
+    frequency:'3 times per week', caution:'Strong smell is temporary. Rinse immediately if burning occurs.' },
+  { id:'egg_mask', name:'Egg Protein Hair Mask', emoji:'🥚', tag:'Once per week', tagColor:'#258a42',
+    why:'Complete protein + biotin + selenium. Strengthens the hair shaft and nourishes follicles from outside.',
+    ingredients:['2 whole eggs','1 tbsp honey','1 tbsp olive oil'],
+    steps:['Beat eggs until smooth.','Mix in honey and olive oil.','Apply to damp hair roots to ends.','Cover with shower cap.','Leave 20–30 minutes.','Rinse with COOL water only (hot water cooks egg).','Shampoo and condition normally.'],
+    frequency:'Once per week', caution:'COOL water only to rinse. Add 1 tbsp avocado for dry hair.' },
+  { id:'circulation_blend', name:'Circulation Stimulating Oil', emoji:'💫', tag:'2–3× per week', tagColor:'#E8962A',
+    why:'Peppermint causes vasodilation — increases blood flow to follicles. Cedarwood shown effective in AA studies.',
+    ingredients:['2 tbsp jojoba oil','4 drops rosemary oil','3 drops peppermint oil','2 drops cedarwood oil'],
+    steps:['Mix oils in small glass bottle and shake.','Apply to dry scalp in sections.','Massage 5–10 minutes.','Tingling/cooling = vasodilation working.','Leave 30 min to 2 hours. Shampoo out.'],
+    frequency:'2–3 times per week', caution:'Peppermint is very potent — never skip carrier oil dilution.' },
+  { id:'green_tea_rinse', name:'Green Tea Hair Rinse', emoji:'🍵', tag:'2–3× per week', tagColor:'#3dab60',
+    why:'Antioxidants reduce scalp inflammation and may block DHT. A no-rinse step after shampooing.',
+    ingredients:['2 green tea bags','2 cups hot water','1 tbsp honey','1 tsp lemon juice'],
+    steps:['Steep tea 10 minutes. Remove bags.','Add honey and lemon. Cool completely.','After shampooing, pour over scalp.','Massage 2 minutes.','Do NOT rinse out — let dry naturally.'],
+    frequency:'2–3 times per week', caution:'Cool fully before applying.' },
+  { id:'acv_rinse', name:'Apple Cider Vinegar Rinse', emoji:'🍎', tag:'Once per week', tagColor:'#258a42',
+    why:'Balances scalp pH and removes product buildup. Healthy pH creates the right environment for follicle function.',
+    ingredients:['1/4 cup apple cider vinegar','1 cup water','2–3 drops essential oil (optional)'],
+    steps:['Mix ACV and water.','After shampooing, apply to wet hair.','Massage into scalp 2–3 minutes.','Leave 2–3 minutes.','Rinse thoroughly with cool water.'],
+    frequency:'Once per week (max twice)', caution:'Always dilute. Avoid on broken or irritated scalp.' },
+];
+
+// ── MEAL PLANS (7 rotating) ────────────────────────────────────────────────
+const MEAL_PLANS = [
+  { day:1, theme:'Protein Foundation', emoji:'🥚',
+    breakfast:{ title:'Spinach & Egg Omelette', items:['2 whole eggs','Handful spinach','Whole grain toast','Warm lemon water'], note:'Iron from spinach + Vitamin C from lemon = 3x iron absorption. Most powerful morning combo.' },
+    lunch:{ title:'Quinoa & Chickpea Bowl', items:['1/2 cup cooked quinoa','1 cup boiled chickpeas','Cucumber + tomato','Tahini dressing'], note:'Complete protein + zinc + folate. Powerhouse hair-growth lunch.' },
+    dinner:{ title:'Baked Salmon with Roasted Vegetables', items:['150g salmon','1 sweet potato','Steamed broccoli','Olive oil + herbs'], note:'Omega-3 + Vitamin D + protein + selenium all in one meal.' },
+    snacks:['Greek yogurt + berries + walnuts','Handful pumpkin seeds'], waterGoal:8 },
+  { day:2, theme:'Anti-Inflammatory', emoji:'🌿',
+    breakfast:{ title:'Turmeric Smoothie Bowl', items:['1 banana','1/2 cup frozen mango','1 tsp turmeric + pinch black pepper','1 tbsp chia seeds','Coconut milk + walnuts'], note:'Black pepper activates curcumin absorption by 2000%.' },
+    lunch:{ title:'Lentil & Vegetable Soup', items:['1 cup red lentils','Spinach + carrot + tomato','Garlic + cumin','1 tsp lemon juice at end'], note:'High iron + protein + Vitamin C. Add lemon after cooking.' },
+    dinner:{ title:'Tofu Stir-Fry with Brown Rice', items:['100g firm tofu','Bell peppers + broccoli + mushrooms','1/2 cup brown rice','Ginger + garlic'], note:'Ginger boosts circulation. Mushrooms add natural Vitamin D.' },
+    snacks:['Amla (2 fresh) or amla juice with honey','Brazil nuts (1–2 only) + dark chocolate'], waterGoal:9 },
+  { day:3, theme:'Iron-Focus', emoji:'🌱',
+    breakfast:{ title:'Rajma Bowl with Vitamin C', items:['1 cup cooked rajma','Chopped onion + coriander','Squeeze lemon','2 whole grain rotis'], note:'Rajma = highest iron plant source. Lemon activates non-heme iron absorption.' },
+    lunch:{ title:'Tuna Salad with Avocado', items:['1 can tuna','1/2 avocado','Mixed greens','Cherry tomatoes','Olive oil + lemon'], note:'Selenium + omega-3. Healthy fats improve fat-soluble vitamin absorption.' },
+    dinner:{ title:'Palak Dal (Spinach Lentil Curry)', items:['1 cup masoor dal','2 cups spinach','Tomato + garlic + cumin','Brown rice','Lemon at end'], note:"A founder favorite — double iron hit with lemon for triple absorption." },
+    snacks:['Pomegranate (1/2 fruit)','Pumpkin seeds + sesame chikki'], waterGoal:8 },
+  { day:4, theme:'Vitamin D & Zinc', emoji:'☀️',
+    breakfast:{ title:'Egg & Mushroom Bhurji', items:['3 scrambled eggs','Sauteed mushrooms','Bell peppers','Turmeric + coriander','Whole grain toast'], note:'Eggs + mushrooms = Vitamin D double dose.' },
+    lunch:{ title:'Chickpea & Avocado Wrap', items:['3/4 cup roasted chickpeas','1/2 avocado','Shredded cabbage','Whole grain wrap','Hummus spread'], note:'Chickpeas: zinc + protein. Hummus (tahini): also zinc-rich.' },
+    dinner:{ title:'Mackerel Curry with Brown Rice', items:['150g mackerel or bangda','Coconut-tomato gravy','Brown rice','Side salad + lemon'], note:'Mackerel = highest natural Vitamin D fish. Also omega-3 + selenium.' },
+    snacks:['Cashews (10) + walnuts (4)','Sweet potato chaat'], waterGoal:8 },
+  { day:5, theme:'Biotin & B-Vitamins', emoji:'💊',
+    breakfast:{ title:'Almond & Banana Smoothie', items:['2 tbsp almond butter','1 banana','1 cup milk or almond milk','1 tbsp flaxseeds','1/2 tsp cinnamon'], note:'Almonds are the top biotin plant source. Flaxseeds add omega-3.' },
+    lunch:{ title:'Sweet Potato & Black Bean Bowl', items:['1 medium baked sweet potato','1/2 cup black beans','Corn + red onion','Greek yogurt','Lime juice'], note:'Sweet potato: biotin + Vitamin A. Black beans: iron + protein + B vitamins.' },
+    dinner:{ title:'Paneer / Chicken with Quinoa Salad', items:['150g grilled paneer or chicken','1/2 cup quinoa','Roasted zucchini + cherry tomatoes','Olive oil + basil'], note:'B12 + B6 + complete protein. B vitamins power hair growth cycles.' },
+    snacks:['Soaked almonds (10–12) — morning','Whole grain crackers + egg salad'], waterGoal:9 },
+  { day:6, theme:'Omega-3 & Antioxidants', emoji:'🐟',
+    breakfast:{ title:'Chia Seed Pudding with Berries', items:['3 tbsp chia seeds','1 cup coconut milk','Mixed berries','Drizzle honey','Topped with walnuts'], note:'Chia + walnuts = plant omega-3 from two sources. Berries: Vitamin C + antioxidants.' },
+    lunch:{ title:'Salmon / Sardine Salad Bowl', items:['150g salmon or 1 can sardines','Kale + spinach base','Cucumber + radish','Sesame dressing + seeds'], note:'Fatty fish twice this week. Kale: iron + calcium. Sesame: zinc + sulphur.' },
+    dinner:{ title:'Flaxseed Roti with Dal & Sabzi', items:['2 rotis (add 1 tbsp flaxseed flour to dough)','Any dal','Mixed vegetable sabzi','Plain curd'], note:"A favourite trick: adding flaxseed to roti dough invisibly adds omega-3 every day." },
+    snacks:['Walnut + dark chocolate piece','Guava (1) + pumpkin seeds'], waterGoal:9 },
+  { day:7, theme:'Gut Health & Recovery', emoji:'🌿',
+    breakfast:{ title:'Probiotic Yogurt Parfait', items:['1 cup Greek yogurt','Small handful granola','Mixed berries','1 tbsp flaxseeds','Drizzle honey'], note:'Gut health directly impacts nutrient absorption. Healthy gut = better uptake of all hair nutrients.' },
+    lunch:{ title:'Moong Dal Khichdi', items:['1/2 cup moong dal','1/2 cup rice','Turmeric + jeera + ghee','Curd','Lemon juice'], note:'Easy to digest and highly nutritious. Ghee helps absorb fat-soluble vitamins D, E, K.' },
+    dinner:{ title:'Vegetable Soup + Whole Grain Bread', items:['Mixed vegetables in broth','Garlic + ginger base','Handful green lentils','2 slices whole grain bread'], note:'Light on digestion while delivering iron, zinc and folate.' },
+    snacks:['Amla juice + 1 tsp turmeric in warm water','Fermented food: idli, dosa or curd rice'], waterGoal:10 },
 ];
 
 function renderRoutineContent() {
-  renderNutrition(); renderHairCare(); renderMindsetRoutine(); updateRoutineProgress();
+  renderNutrition(); renderHairCare(); renderMindsetRoutine(); renderRemediesTab(); renderMealPlanTab(); updateRoutineProgress();
 }
 
 function renderNutrition() {
@@ -1592,8 +2547,8 @@ function renderNutrition() {
       <div class="nutrient-group" style="margin:0">
         ${group.items.map(item => `
           <div class="checklist-item ${checked[item.id]?'checked':''}" onclick="toggleChecklist(this,'${item.id}')">
-            <div class="ci-box">${checked[item.id]?'✓':''}</div>
-            <div><div class="ci-text">${item.text}</div><div class="ci-examples">${item.examples}</div></div>
+            <div class="ci-box">${checked[item.id]?'\u2713':''}</div>
+            <div style="flex:1"><div class="ci-text">${item.text}</div><div class="ci-examples">${item.examples}</div></div>
           </div>`).join('')}
       </div>
     </div>`).join('');
@@ -1603,28 +2558,85 @@ function renderHairCare() {
   const el = document.getElementById('haircare-checklist');
   if (!el) return;
   const checked = load('routine_today', {});
-  el.innerHTML = `<div class="card">
-    <div class="section-label">Daily Hair Care</div>
-    ${HAIRCARE_DATA.map(item => `
-      <div class="checklist-item ${checked[item.id]?'checked':''}" onclick="toggleChecklist(this,'${item.id}')">
-        <div class="ci-box">${checked[item.id]?'✓':''}</div>
-        <div><div class="ci-text">${item.text}</div><div class="ci-examples">${item.examples}</div></div>
-      </div>`).join('')}
-  </div>`;
+  el.innerHTML = '<div class="card"><div class="section-label">Daily Hair Care Habits</div>' +
+    HAIRCARE_DATA.map(item =>
+      '<div class="checklist-item ' + (checked[item.id]?'checked':'') + '" onclick="toggleChecklist(this,\''+item.id+'\')"><div class="ci-box">' + (checked[item.id]?'\u2713':'') + '</div><div style="flex:1"><div class="ci-text">' + item.text + '</div><div class="ci-examples">' + item.examples + '</div></div></div>'
+    ).join('') + '</div>';
+  renderHairTypeRow();
+  renderHairTypeTip();
+  renderHaircareLib('morning');
+  renderHaircareTips();
+}
+
+function renderHairTypeRow() {
+  const el = document.getElementById('hairtype-row');
+  if (!el) return;
+  const selected = load('hair_type', null);
+  el.innerHTML = HAIR_TYPES.map(t =>
+    `<div class="hairtype-chip${selected===t.id?' selected':''}" onclick="selectHairType('${t.id}')">${t.emoji} ${t.label}</div>`
+  ).join('');
+}
+
+function selectHairType(id) {
+  save('hair_type', id);
+  renderHairTypeRow();
+  renderHairTypeTip();
+}
+
+function renderHairTypeTip() {
+  const el = document.getElementById('hairtype-tip-box');
+  if (!el) return;
+  const selected = load('hair_type', null);
+  const t = HAIR_TYPES.find(h => h.id === selected);
+  if (!t) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="hairtype-tip"><b>${t.emoji} ${t.label} hair:</b> ${t.chars.join(' · ')}<br><br><b>Morning tip:</b> ${t.morningTip}</div>`;
+}
+
+function switchHaircareLib(tab) {
+  document.querySelectorAll('#routine-haircare .routine-toggle .routine-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('hctab-'+tab)?.classList.add('active');
+  renderHaircareLib(tab);
+}
+
+function renderHaircareLib(tab) {
+  const el = document.getElementById('haircare-lib-content');
+  if (!el) return;
+  if (tab === 'weekly') {
+    const today = new Date();
+    const weekOfMonth = Math.min(4, Math.ceil(today.getDate() / 7));
+    el.innerHTML = `<div class="routine-acc open"><div class="routine-acc-head" onclick="toggleAcc(this)"><div class="routine-acc-title"><span class="routine-acc-emoji">📅</span>${HAIRCARE_LIB.weekly.title}</div><div class="routine-acc-dur">${HAIRCARE_LIB.weekly.duration}</div></div><div class="routine-acc-body">` +
+      HAIRCARE_LIB.weekly.steps.map((s,i) => `<div class="routine-step"><div class="routine-step-num">${i+1}</div><div class="routine-step-content"><div class="routine-step-title">${s.title}${s.time?` <span style="color:var(--text-muted);font-weight:400">· ${s.time}</span>`:''}</div><div class="routine-step-items">${s.items}</div></div></div>`).join('') +
+      `</div></div>` +
+      `<div style="margin-top:14px"><div class="section-label" style="margin-bottom:8px">4-Week Treatment Rotation</div>` +
+      WEEKLY_TREATMENT_ROTATION.map(w => `<div class="weekly-rot-card${w.week===weekOfMonth?' active-week':''}"><div class="weekly-rot-head"><div class="weekly-rot-name">Week ${w.week}: ${w.name}${w.week===weekOfMonth?' 🌟':''}</div><div class="weekly-rot-freq">${w.freq}</div></div><div class="weekly-rot-desc">${w.desc}</div></div>`).join('') +
+      `</div>`;
+    return;
+  }
+  const lib = HAIRCARE_LIB[tab];
+  if (!lib) return;
+  el.innerHTML = `<div class="routine-acc open"><div class="routine-acc-head" onclick="toggleAcc(this)"><div class="routine-acc-title"><span class="routine-acc-emoji">${tab==='morning'?'🌅':tab==='evening'?'🌙':'🛏️'}</span>${lib.title}</div><div class="routine-acc-dur">${lib.duration}</div></div><div class="routine-acc-body">` +
+    lib.steps.map((s,i) => `<div class="routine-step"><div class="routine-step-num">${i+1}</div><div class="routine-step-content"><div class="routine-step-title">${s.title}${s.time?` <span style="color:var(--text-muted);font-weight:400">· ${s.time}</span>`:''}</div><div class="routine-step-items">${s.items}</div></div></div>`).join('') +
+    `</div></div>`;
+}
+
+function toggleAcc(headEl) {
+  headEl.parentElement.classList.toggle('open');
+}
+
+function renderHaircareTips() {
+  const el = document.getElementById('haircare-tips-list');
+  if (!el) return;
+  el.innerHTML = HAIRCARE_TIPS.map(t => `<div class="routine-substep"><div class="routine-substep-title">${t.emoji} ${t.title}</div><div class="routine-substep-list">${t.items}</div></div>`).join('');
 }
 
 function renderMindsetRoutine() {
   const el = document.getElementById('mindset-checklist');
   if (!el) return;
   const checked = load('routine_today', {});
-  el.innerHTML = `<div class="card">
-    <div class="section-label">Morning Mindset</div>
-    ${MINDSET_DATA.map(item => `
-      <div class="checklist-item ${checked[item.id]?'checked':''}" onclick="toggleChecklist(this,'${item.id}')">
-        <div class="ci-box">${checked[item.id]?'✓':''}</div>
-        <div><div class="ci-text">${item.text}</div><div class="ci-examples">${item.examples}</div></div>
-      </div>`).join('')}
-  </div>`;
+  el.innerHTML = '<div class="card"><div class="section-label">Daily Mindset Practice</div>' +
+    MINDSET_DATA.map(item =>
+      '<div class="checklist-item ' + (checked[item.id]?'checked':'') + '" onclick="toggleChecklist(this,\''+item.id+'\')"><div class="ci-box">' + (checked[item.id]?'\u2713':'') + '</div><div style="flex:1"><div class="ci-text">' + item.text + '</div><div class="ci-examples">' + item.examples + '</div></div></div>'
+    ).join('') + '</div>';
 }
 
 function toggleChecklist(el, id) {
@@ -1652,10 +2664,127 @@ function switchRoutineTab(tab) {
   state.routineTab = tab;
   document.querySelectorAll('.routine-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('rtab-'+tab)?.classList.add('active');
-  document.getElementById('routine-daily').style.display = tab==='daily' ? 'block' : 'none';
-  document.getElementById('routine-haircare').style.display = tab==='haircare' ? 'block' : 'none';
-  document.getElementById('routine-mindset').style.display = tab==='mindset' ? 'block' : 'none';
+  ['daily','remedies','meals','haircare','mindset'].forEach(t => {
+    const el = document.getElementById('routine-'+t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
 }
+
+// ── REMEDIES RENDERER ─────────────────────────────────────────────────────
+function renderRemediesTab() {
+  const el = document.getElementById('remedies-checklist');
+  if (!el) return;
+  const checked = load('routine_today', {});
+  const today = new Date();
+  const dayIndex = today.getDay(); // 0–6
+  // Show 3 options for user to choose from — rotate by day of week
+  const start = (dayIndex * 3) % REMEDIES_DATA.length;
+  const options = [
+    REMEDIES_DATA[start % REMEDIES_DATA.length],
+    REMEDIES_DATA[(start+1) % REMEDIES_DATA.length],
+    REMEDIES_DATA[(start+2) % REMEDIES_DATA.length],
+  ];
+  el.innerHTML = options.map(r => {
+    const allSteps = r.steps.map((s,i) => {
+      const sid = `rem_${r.id}_s${i}`;
+      const done = checked[sid];
+      return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${sid}')" style="margin-bottom:6px;padding:9px 12px">
+        <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
+        <span style="font-size:13px;color:var(--text-soft)">${i+1}. ${s}</span>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--bg-section);border:1.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:22px">${r.emoji}</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;color:var(--green-deep)">${r.name}</div>
+          <span style="font-size:10px;font-weight:600;color:${r.tagColor};background:${r.tagColor}18;padding:2px 8px;border-radius:20px">${r.tag}</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">${r.why}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Ingredients</div>
+      <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px">${r.ingredients.map(i=>`• ${i}`).join('<br>')}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Steps — tap each to mark done</div>
+      ${allSteps}
+      <div style="margin-top:8px;font-size:11px;color:var(--text-muted);background:#fff8ed;border-radius:8px;padding:7px 10px">⚠️ ${r.caution}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MEAL PLAN RENDERER ─────────────────────────────────────────────────────
+function renderMealPlanTab() {
+  const el = document.getElementById('meal-plan-card');
+  if (!el) return;
+  const checked = load('routine_today', {});
+  const dayIndex = ((new Date().getDay()) + 6) % 7; // Mon=0
+  const plan = MEAL_PLANS[dayIndex % MEAL_PLANS.length];
+  const waterGoal = plan.waterGoal || 8;
+  const waterLogged = parseInt(load('water_today', 0));
+
+  const mealBlock = (label, meal, prefix) => {
+    const items = meal.items.map((item, i) => {
+      const id = `${prefix}_${i}`;
+      const done = checked[id];
+      return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${id}')" style="margin-bottom:5px;padding:8px 12px">
+        <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
+        <span style="font-size:13px;color:var(--text-soft)">${item}</span>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--bg-section);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">${label}</div>
+      <div style="font-size:14px;font-weight:500;color:var(--green-deep);margin-bottom:8px">${meal.title}</div>
+      ${items}
+      <div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:6px;padding:6px 8px;background:#f6fbf4;border-radius:8px">💡 ${meal.note}</div>
+    </div>`;
+  };
+
+  const snackItems = plan.snacks.map((s, i) => {
+    const id = `snack_${i}`;
+    const done = checked[id];
+    return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${id}')" style="margin-bottom:5px;padding:8px 12px">
+      <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
+      <span style="font-size:13px;color:var(--text-soft)">${s}</span>
+    </div>`;
+  }).join('');
+
+  const waterPct = Math.min(100, Math.round((waterLogged / waterGoal) * 100));
+  const cups = Array.from({length: waterGoal}, (_, i) => {
+    const filled = i < waterLogged;
+    return `<div onclick="logWaterCup(${i+1})" style="width:28px;height:34px;border-radius:6px;border:1.5px solid ${filled?'var(--green-mid)':'var(--border)'};background:${filled?'var(--green-mist)':'#fff'};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .2s">${filled?'💧':'○'}</div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:24px">${plan.emoji}</span>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:var(--green-deep)">${plan.theme}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Day ${plan.day} of 7 · Rotating weekly</div>
+      </div>
+    </div>
+    ${mealBlock('Breakfast', plan.breakfast, 'bf')}
+    ${mealBlock('Lunch', plan.lunch, 'ln')}
+    ${mealBlock('Dinner', plan.dinner, 'dn')}
+    <div style="background:var(--bg-section);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Snacks</div>
+      ${snackItems}
+    </div>
+    <div style="background:var(--bg-section);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--green-mid);letter-spacing:.08em;text-transform:uppercase">💧 Water Today</div>
+        <div style="font-size:12px;color:var(--green-deep);font-weight:500">${waterLogged} / ${waterGoal} cups</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">${cups}</div>
+      <div style="height:4px;background:var(--border);border-radius:4px"><div style="height:4px;background:var(--green-mid);border-radius:4px;width:${waterPct}%;transition:width .3s"></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Goal: ${waterGoal} cups (${waterGoal * 250}ml) — tap cups above to log</div>
+    </div>`;
+}
+
+window.logWaterCup = function(n) {
+  save('water_today', n);
+  renderMealPlanTab();
+};
+
+
 
 function saveRoutine() {
   const checked = load('routine_today', {});
@@ -1756,10 +2885,20 @@ function renderPricing() {
   const el = document.getElementById('pricing-content');
   if (!el) return;
   const intl = isInternational();
+  const { isPaid, plan: activePlan } = getTrialInfo();
+  const isQuarterlyActive = isPaid && activePlan === 'quarterly';
+  const isAnnualActive    = isPaid && (activePlan === 'premium' || activePlan === 'annual' || activePlan === 'basic');
+  const currentPlanBanner = isPaid ? `
+    <div style="background:var(--green-mist);border:1px solid var(--green-pale);border-radius:var(--r-md);padding:14px 16px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:20px">✓</div>
+      <div><div style="font-size:13px;font-weight:700;color:var(--green-deep)">You're on the ${isQuarterlyActive ? 'Seasonal' : 'Full Year'} Plan</div>
+      <div style="font-size:11px;color:var(--text-soft)">You already have full access — no need to purchase again</div></div>
+    </div>` : '';
   el.innerHTML = `
+    ${currentPlanBanner}
     <div style="background:var(--bg-section);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px">
       <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--green-mid);margin-bottom:6px">YOUR JOURNEY, YOUR PACE</div>
-      <div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">Full access to all 8 modules, unlimited AI companion, Heal & Recharge practices, and Harshitha's 260-page ebook.</div>
+      <div style="font-size:13px;color:var(--text-mid);font-weight:400;line-height:1.65">Full access to all 8 modules, unlimited AI companion, Heal & Recharge practices, and the 260-page recovery ebook.</div>
     </div>
 
     <!-- Currency display -->
@@ -1784,7 +2923,11 @@ function renderPricing() {
         <div class="feature-item"><span class="fi-check">✓</span> Full daily routines & tracker</div>
         <div class="feature-item"><span class="fi-check">✓</span> WhatsApp community access</div>
       </div>
-      <button onclick="startPayment('quarterly',${intl})" class="btn-outline">Choose Seasonal Plan →</button>
+      ${isQuarterlyActive
+        ? `<button disabled class="btn-outline" style="opacity:0.6;cursor:default">✓ Your Current Plan</button>`
+        : isAnnualActive
+          ? `<button disabled class="btn-outline" style="opacity:0.4;cursor:default">Included in your Annual Plan</button>`
+          : `<button onclick="startPayment('quarterly',${intl})" class="btn-outline">Choose Seasonal Plan →</button>`}
     </div>
 
     <!-- Annual (featured) -->
@@ -1803,11 +2946,13 @@ function renderPricing() {
       <div style="display:flex;flex-direction:column;margin-bottom:18px">
         <div class="feature-item"><span class="fi-check">✓</span> Everything in Seasonal Plan</div>
         <div class="feature-item"><span class="fi-check">✓</span> 260-page Recovery Ebook <span style="color:var(--green-deep);font-size:10px;margin-left:4px">FREE</span></div>
-        <div class="feature-item"><span class="fi-check">✓</span> 1:1 Discovery call with Harshitha</div>
+        <div class="feature-item"><span class="fi-check">✓</span> 1:1 Discovery call with our founder</div>
         <div class="feature-item"><span class="fi-check">✓</span> All future features included</div>
         <div class="feature-item"><span class="fi-check">✓</span> Priority email support</div>
       </div>
-      <button onclick="startPayment('annual',${intl})" class="btn-gold">Choose Full Year Plan →</button>
+      ${isAnnualActive
+        ? `<button disabled class="btn-gold" style="opacity:0.6;cursor:default">✓ Your Current Plan</button>`
+        : `<button onclick="startPayment('annual',${intl})" class="btn-gold">Choose Full Year Plan →</button>`}
     </div>
 
     <!-- Testimonials -->
@@ -1815,7 +2960,7 @@ function renderPricing() {
       <div class="section-label">What Members Say</div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="card"><div style="font-size:13px;color:var(--text-soft);font-style:italic;font-family:var(--font-serif);line-height:1.7;margin-bottom:6px">"Noticed less shedding by week 3. First time being consistent for months."</div><div style="font-size:11px;color:var(--green-mid);font-weight:700">Sarah M. · Toronto</div></div>
-        <div class="card"><div style="font-size:13px;color:var(--text-soft);font-style:italic;font-family:var(--font-serif);line-height:1.7;margin-bottom:6px">"New growth appeared in month 4. Harshitha's experience made me trust this."</div><div style="font-size:11px;color:var(--green-mid);font-weight:700">Nimal P. · Colombo</div></div>
+        <div class="card"><div style="font-size:13px;color:var(--text-soft);font-style:italic;font-family:var(--font-serif);line-height:1.7;margin-bottom:6px">"New growth appeared in month 4. Real, lived experience made me trust this."</div><div style="font-size:11px;color:var(--green-mid);font-weight:700">Nimal P. · Colombo</div></div>
       </div>
     </div>
 
@@ -1878,6 +3023,15 @@ function renderProfile() {
     if (isPaid) ebookSub.textContent = 'Included in your Annual plan · Tap to open';
     else ebookSub.textContent = 'Included in Annual plan';
   }
+
+  const upgradeSub = document.getElementById('upgrade-sub');
+  if (upgradeSub) {
+    if (isPaid) {
+      upgradeSub.textContent = (currentPlan === 'quarterly') ? "You're on the Seasonal Plan · View or change" : "You're on the Annual Plan · All modules unlocked";
+    } else {
+      upgradeSub.textContent = 'View Quarterly & Annual plans';
+    }
+  }
 }
 
 function handleEbookOpen() {
@@ -1893,7 +3047,7 @@ function handleEbookOpen() {
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:40px;margin-bottom:8px">📖</div>
       <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--green-deep);margin-bottom:6px">Recovery Ebook</div>
-      <div style="font-size:13px;color:var(--text-soft)">260 pages · Harshitha's complete natural recovery guide</div>
+      <div style="font-size:13px;color:var(--text-soft)">260 pages · A complete natural recovery guide</div>
     </div>
     <div style="background:var(--green-mist);border:1px solid var(--green-pale);border-radius:var(--r-md);padding:14px 16px;margin-bottom:16px">
       <div style="font-size:12px;color:var(--text-mid);line-height:1.7">
@@ -1950,7 +3104,7 @@ function searchKnowledgeBase(question) {
     if (questionWords.some(w=>l.includes(w)) && line.trim().length>15) matched.push(line.trim());
   }
   if (!matched.length) return `That's a thoughtful question 💚\n\nFrom my 20+ year journey with alopecia, healing is truly holistic — it involves consistent care across nutrition, scalp practices, sleep, and stress management together. No single cure, but many small things that compound beautifully over time.\n\nAsk me anything specific about remedies, nutrition, haircare or managing stress and I'll share what I've learned 🌿\n\n— Personal experience, not medical advice. Please consult a dermatologist for your specific case.`;
-  return `Here's what I've learned on my own journey 💚\n\n${matched.slice(0,5).join('\n')}\n\n🌿 Remember — consistency matters more than perfection. Keep going!\n\n— Harshitha's personal experience, not medical advice.`;
+  return `Here's what I've learned on my own journey 💚\n\n${matched.slice(0,5).join('\n')}\n\n🌿 Remember — consistency matters more than perfection. Keep going!\n\n— Personal experience shared here, not medical advice.`;
 }
 
 async function sendChat() {
@@ -2070,13 +3224,13 @@ function showConsultationModal() {
   el.innerHTML = `<div class="paywall-inner" style="overflow-y:auto;max-height:90vh">
     <div style="text-align:center;margin-bottom:18px">
       <div style="font-size:32px;margin-bottom:8px">🌿</div>
-      <div style="font-family:var(--font-display);font-size:16px;letter-spacing:1px;color:var(--green-deep)">CHAT WITH HARSHITHA</div>
+      <div style="font-family:var(--font-display);font-size:16px;letter-spacing:1px;color:var(--green-deep)">BOOK A WELLNESS SESSION</div>
       <div style="font-size:13px;color:var(--text-muted);margin-top:6px;font-weight:300">A personal 30-minute session about your recovery journey</div>
     </div>
     <div style="background:var(--green-mist);border:1px solid var(--green-pale);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px">
       <div style="font-size:12px;color:var(--text-soft);line-height:1.8;font-weight:300">🌱 Your current routine and what's working<br>🥗 Nutrition and lifestyle patterns<br>💤 Sleep and stress factors<br>🔍 What to focus on next</div>
     </div>
-    <div style="background:rgba(139,58,42,0.1);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">⚠️ Not a medical consultation. Harshitha shares personal experience with natural methods — not medical advice.</div>
+    <div style="background:rgba(139,58,42,0.1);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">⚠️ Not a medical consultation. This is personal experience with natural methods, shared — not medical advice.</div>
     <button onclick="this.closest('.paywall-sheet').remove();_triggerConsultationPayment()" class="btn-gold" style="width:100%;margin-bottom:10px">Book & Pay Securely — ₹499 / $7 →</button>
     <button onclick="this.closest('.paywall-sheet').remove()" class="btn-outline" style="font-size:13px">Maybe later</button>
   </div>`;
@@ -2092,11 +3246,11 @@ function _triggerConsultationPayment() {
       amount: intl ? 700 : 49900,
       currency: intl ? 'USD' : 'INR',
       name: 'HappiHeal',
-      description: '1:1 Wellness Session with Harshitha (30 min)',
+      description: '1:1 Wellness Session (30 min)',
       prefill: { email: currentUser.email, name: currentUser.user_metadata?.full_name || '' },
       theme: { color: '#258a42' },
       handler: async function(response) {
-        showToast('Booking confirmed! Harshitha will reach out within 24 hrs 🌿');
+        showToast('Booking confirmed! We will reach out within 24 hrs 🌿');
         try {
           await fetch('https://formspree.io/f/xdoqpnnk', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
