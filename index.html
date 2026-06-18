@@ -790,8 +790,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 
 /* ── HEAL & RECHARGE ── */
 .heal-content { padding: 20px 16px 0; display: flex; flex-direction: column; gap: 16px; }
-.heal-section-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-.heal-section-tabs::-webkit-scrollbar { display: none; }
+.heal-section-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
 .heal-tab { white-space: nowrap; padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; background: var(--white); border: 1.5px solid var(--border); color: var(--text-soft); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
 .heal-tab.active { background: var(--green-mid); border-color: var(--green-mid); color: var(--white); }
 .heal-panel { display: none; }
@@ -1563,7 +1562,6 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">🧘 Yoga done</div>
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">🫁 Breathwork</div>
         <div class="symptom-chip" onclick="this.classList.toggle('selected')">💚 Mind practice</div>
-        <div class="symptom-chip" onclick="this.classList.toggle('selected')">🛁 Oil applied</div>
       </div>
       <button onclick="saveHealLog()" class="btn-gold" style="font-size:13px;padding:12px">Save Today's Heal Log ✓</button>
     </div>
@@ -1584,15 +1582,15 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
   <div class="routine-content">
     <!-- Tab switcher -->
     <div class="routine-toggle" style="overflow-x:auto;white-space:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch">
-      <button class="routine-tab active" id="rtab-daily" onclick="switchRoutineTab('daily')">🥗 Nutrition</button>
+      <button class="routine-tab active" id="rtab-mindset" onclick="switchRoutineTab('mindset')">🧘 Mindset</button>
+      <button class="routine-tab" id="rtab-daily" onclick="switchRoutineTab('daily')">🥗 Nutrition</button>
       <button class="routine-tab" id="rtab-remedies" onclick="switchRoutineTab('remedies')">🫚 Remedies</button>
       <button class="routine-tab" id="rtab-meals" onclick="switchRoutineTab('meals')">🍽️ Meal Plan</button>
       <button class="routine-tab" id="rtab-haircare" onclick="switchRoutineTab('haircare')">💆 Hair Care</button>
-      <button class="routine-tab" id="rtab-mindset" onclick="switchRoutineTab('mindset')">🧘 Mindset</button>
     </div>
 
     <!-- NUTRITION TAB -->
-    <div id="routine-daily">
+    <div id="routine-daily" style="display:none">
       <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:4px;border:1px solid #ede8e0">
         <div style="font-family:var(--font-serif);font-size:14px;font-style:italic;color:var(--text-mid)">"Eat any of the items below today. Each nutrient plays a specific role in scalp health and follicle repair. Daily doses are shown — aim for all 8 nutrients across your day."</div>
       </div>
@@ -1603,7 +1601,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
     <div id="routine-remedies" style="display:none">
       <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:12px;border:1px solid #ede8e0">
         <div style="font-size:13px;font-weight:500;color:var(--green-deep);margin-bottom:4px">Choose your remedy for today</div>
-        <div style="font-size:12px;color:var(--text-muted)">Pick 1–2 options that suit your schedule. Mark each step as you complete it. Consistency over weeks is what creates regrowth.</div>
+        <div style="font-size:12px;color:var(--text-muted)">Pick 1–2 options that suit your schedule. Consistency over weeks is what creates regrowth.</div>
       </div>
       <div id="remedies-checklist"></div>
     </div>
@@ -1649,7 +1647,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 
 
     <!-- MINDSET TAB -->
-    <div id="routine-mindset" style="display:none">
+    <div id="routine-mindset">
       <div style="background:var(--sand);border-radius:var(--r-md);padding:14px;margin-bottom:4px;border:1px solid #ede8e0">
         <div style="font-size:12px;color:var(--text-muted)">Mental wellness is not optional in alopecia recovery — chronic stress directly raises cortisol which triggers and worsens hair loss. These small daily practices matter.</div>
       </div>
@@ -1841,7 +1839,7 @@ let state = {
   currentScreen: 'home',
   profileOpen: false,
   affirmIdx: 0,
-  routineTab: 'daily',
+  routineTab: 'mindset',
   healTab: 'massage',
   chatHistory: [],
   navStack: ['home'],  // navigation history for back button
@@ -2664,7 +2662,7 @@ function switchRoutineTab(tab) {
   state.routineTab = tab;
   document.querySelectorAll('.routine-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('rtab-'+tab)?.classList.add('active');
-  ['daily','remedies','meals','haircare','mindset'].forEach(t => {
+  ['mindset','daily','remedies','meals','haircare'].forEach(t => {
     const el = document.getElementById('routine-'+t);
     if (el) el.style.display = t===tab ? 'block' : 'none';
   });
@@ -2686,11 +2684,9 @@ function renderRemediesTab() {
   ];
   el.innerHTML = options.map(r => {
     const allSteps = r.steps.map((s,i) => {
-      const sid = `rem_${r.id}_s${i}`;
-      const done = checked[sid];
-      return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${sid}')" style="margin-bottom:6px;padding:9px 12px">
-        <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
-        <span style="font-size:13px;color:var(--text-soft)">${i+1}. ${s}</span>
+      return `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;padding:2px 0">
+        <div style="min-width:20px;font-size:12px;font-weight:700;color:var(--green-mid)">${i+1}.</div>
+        <span style="font-size:13px;color:var(--text-soft);line-height:1.5">${s}</span>
       </div>`;
     }).join('');
     return `<div style="background:var(--bg-section);border:1.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;margin-bottom:14px">
@@ -2704,7 +2700,7 @@ function renderRemediesTab() {
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">${r.why}</div>
       <div style="font-size:11px;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Ingredients</div>
       <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px">${r.ingredients.map(i=>`• ${i}`).join('<br>')}</div>
-      <div style="font-size:11px;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Steps — tap each to mark done</div>
+      <div style="font-size:11px;font-weight:600;color:var(--green-mid);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Steps</div>
       ${allSteps}
       <div style="margin-top:8px;font-size:11px;color:var(--text-muted);background:#fff8ed;border-radius:8px;padding:7px 10px">⚠️ ${r.caution}</div>
     </div>`;
@@ -2723,11 +2719,9 @@ function renderMealPlanTab() {
 
   const mealBlock = (label, meal, prefix) => {
     const items = meal.items.map((item, i) => {
-      const id = `${prefix}_${i}`;
-      const done = checked[id];
-      return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${id}')" style="margin-bottom:5px;padding:8px 12px">
-        <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
-        <span style="font-size:13px;color:var(--text-soft)">${item}</span>
+      return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
+        <div style="min-width:18px;font-size:12px;font-weight:700;color:var(--green-mid)">${i+1}.</div>
+        <span style="font-size:13px;color:var(--text-soft);line-height:1.5">${item}</span>
       </div>`;
     }).join('');
     return `<div style="background:var(--bg-section);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
@@ -2739,11 +2733,9 @@ function renderMealPlanTab() {
   };
 
   const snackItems = plan.snacks.map((s, i) => {
-    const id = `snack_${i}`;
-    const done = checked[id];
-    return `<div class="checklist-item${done?' checked':''}" onclick="toggleChecklist(this,'${id}')" style="margin-bottom:5px;padding:8px 12px">
-      <div class="ci-box" style="min-width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green-deep);background:${done?'var(--green-mist)':'#fff'}">${done?'✓':''}</div>
-      <span style="font-size:13px;color:var(--text-soft)">${s}</span>
+    return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
+      <div style="min-width:18px;font-size:12px;font-weight:700;color:var(--green-mid)">${i+1}.</div>
+      <span style="font-size:13px;color:var(--text-soft);line-height:1.5">${s}</span>
     </div>`;
   }).join('');
 
