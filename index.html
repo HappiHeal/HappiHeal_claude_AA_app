@@ -3235,10 +3235,10 @@ function _triggerConsultationPayment() {
   try {
     const rzp = new Razorpay({
       key: RAZORPAY_KEY,
-      amount: intl ? 700 : 49900,
+      amount: intl ? 1100 : 49900,
       currency: intl ? 'USD' : 'INR',
       name: 'HappiHeal',
-      description: '1:1 Wellness Session (30 min)',
+      description: '1:1 Wellness Session (20 min)',
       prefill: { email: currentUser.email, name: currentUser.user_metadata?.full_name || '' },
       theme: { color: '#258a42' },
       handler: async function(response) {
