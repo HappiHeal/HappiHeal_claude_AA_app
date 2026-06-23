@@ -3585,13 +3585,13 @@ function showConsultationModal() {
     <div style="text-align:center;margin-bottom:18px">
       <div style="font-size:32px;margin-bottom:8px">🌿</div>
       <div style="font-family:var(--font-display);font-size:16px;letter-spacing:1px;color:var(--green-deep)">BOOK A WELLNESS SESSION</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:6px;font-weight:300">A personal 30-minute session about your recovery journey</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:6px;font-weight:300">A personal 20-minute session about your recovery journey</div>
     </div>
     <div style="background:var(--green-mist);border:1px solid var(--green-pale);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px">
       <div style="font-size:12px;color:var(--text-soft);line-height:1.8;font-weight:300">🌱 Your current routine and what's working<br>🥗 Nutrition and lifestyle patterns<br>💤 Sleep and stress factors<br>🔍 What to focus on next</div>
     </div>
     <div style="background:rgba(139,58,42,0.1);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--text-muted)">⚠️ Not a medical consultation. This is personal experience with natural methods, shared — not medical advice.</div>
-    <button onclick="this.closest('.paywall-sheet').remove();_triggerConsultationPayment()" class="btn-gold" style="width:100%;margin-bottom:10px">Book & Pay Securely — ₹499 / $7 →</button>
+    <button onclick="this.closest('.paywall-sheet').remove();_triggerConsultationPayment()" class="btn-gold" style="width:100%;margin-bottom:10px">Book & Pay Securely — ₹499 / $11 →</button>
     <button onclick="this.closest('.paywall-sheet').remove()" class="btn-outline" style="font-size:13px">Maybe later</button>
   </div>`;
   document.body.appendChild(el); el.addEventListener('click',e=>{if(e.target===el)el.remove();});
@@ -3603,10 +3603,10 @@ function _triggerConsultationPayment() {
   try {
     const rzp = new Razorpay({
       key: RAZORPAY_KEY,
-      amount: intl ? 700 : 49900,
+      amount: intl ? 1100 : 49900,
       currency: intl ? 'USD' : 'INR',
       name: 'HappiHeal',
-      description: '1:1 Wellness Session (30 min)',
+      description: '1:1 Wellness Session (20 min)',
       prefill: { email: currentUser.email, name: currentUser.user_metadata?.full_name || '' },
       theme: { color: '#258a42' },
       handler: async function(response) {
