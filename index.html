@@ -4,11 +4,82 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="theme-color" content="#0b2117"/>
-<meta name="description" content="HappiHeal — Hair Wellness app by HappiLoot. Natural remedies, nutrition tracker, AI companion & 260-page guide."/>
-<meta property="og:title" content="HappiHeal — Alopecia Hair Wellness Tracker"/>
+<meta name="description" content="HappiHeal — Natural alopecia areata recovery app by Harshitha MV. Built from 20+ years of lived experience. Nutrition, scalp care, AI companion & 260-page recovery guide. Free trial — no credit card needed."/>
+<meta name="keywords" content="alopecia areata natural treatment, alopecia recovery app, hair loss natural remedies, alopecia areata India, autoimmune hair loss, natural hair regrowth, alopecia nutrition, gut health hair loss, alopecia areata recovery, HappiHeal"/>
+<meta name="author" content="Harshitha MV, HappiHeal"/>
+<meta name="robots" content="index, follow"/>
+
+<!-- Open Graph / Social -->
+<meta property="og:title" content="HappiHeal — Natural Alopecia Recovery App"/>
+<meta property="og:description" content="Built by someone who's lived with alopecia for 20+ years. Natural recovery through nutrition, scalp care, gut health & mindset. Free trial available."/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://happiheal.happiloot.com"/>
-<title>HappiHeal — Alopecia Hair Wellness Tracker</title>
+<meta property="og:site_name" content="HappiHeal"/>
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="HappiHeal — Natural Alopecia Recovery"/>
+<meta name="twitter:description" content="20+ years of lived experience with alopecia, turned into a recovery app. Nutrition, scalp care, AI companion & ebook."/>
+
+<title>HappiHeal — Natural Alopecia Areata Recovery App | Built from Lived Experience</title>
+
+<!-- Structured Data — App + Articles -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "HappiHeal",
+      "url": "https://happiheal.happiloot.com",
+      "description": "Natural alopecia areata recovery app built from 20+ years of lived experience. Covers nutrition, scalp care, gut health, stress management and mindset.",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "author": {
+        "@type": "Person",
+        "name": "Harshitha MV",
+        "jobTitle": "Founder, HappiHeal",
+        "address": { "@type": "PostalAddress", "addressLocality": "Bengaluru", "addressCountry": "IN" }
+      },
+      "offers": [
+        { "@type": "Offer", "name": "Free Trial", "price": "0", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Quarterly Plan", "price": "999", "priceCurrency": "INR" },
+        { "@type": "Offer", "name": "Annual Plan", "price": "3499", "priceCurrency": "INR" }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Your Gut Is Running Your Immune System — And Your Hair Knows It",
+      "description": "The science behind the gut-hair connection in alopecia areata. How gut microbiome health affects autoimmune hair loss and what to do about it.",
+      "author": { "@type": "Person", "name": "Harshitha MV" },
+      "publisher": { "@type": "Organization", "name": "HappiHeal" },
+      "url": "https://happiheal.happiloot.com/#article-gut-hair",
+      "datePublished": "2025-01-01",
+      "keywords": "alopecia areata gut health, autoimmune hair loss gut, gut microbiome alopecia"
+    },
+    {
+      "@type": "Article",
+      "headline": "The 4 Deficiencies Nobody Checked in My 15 Years of Alopecia Treatment",
+      "description": "Iron, Vitamin D, zinc, and omega-3 — the four micronutrients most studied in alopecia areata, and how to get tested properly.",
+      "author": { "@type": "Person", "name": "Harshitha MV" },
+      "publisher": { "@type": "Organization", "name": "HappiHeal" },
+      "url": "https://happiheal.happiloot.com/#article-deficiencies",
+      "datePublished": "2025-01-01",
+      "keywords": "alopecia areata vitamin D, alopecia iron deficiency, ferritin hair loss, zinc alopecia"
+    },
+    {
+      "@type": "Article",
+      "headline": "Why I Stopped Fighting My Alopecia — And What Finally Changed",
+      "description": "After 15 years of conventional treatments, founder Harshitha MV shares the mindset shift that led to her natural alopecia recovery.",
+      "author": { "@type": "Person", "name": "Harshitha MV" },
+      "publisher": { "@type": "Organization", "name": "HappiHeal" },
+      "url": "https://happiheal.happiloot.com/#article-founder-story",
+      "datePublished": "2025-01-01",
+      "keywords": "alopecia natural recovery, alopecia mindset, stop fighting alopecia, natural alopecia healing India"
+    }
+  ]
+}
+</script>
 <link rel="manifest" href="/manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=DM+Sans:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
@@ -936,6 +1007,30 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 .menu-arrow { font-size: 16px; color: var(--text-muted); }
 .founder-quote { background: var(--sand); border-left: 4px solid var(--green-mid); border-radius: var(--r-md); padding: 18px 20px; }
 .fq-text { font-family: var(--font-serif); font-size: 15px; font-style: italic; color: var(--text-mid); line-height: 1.7; }
+
+/* ── ARTICLE CARDS ── */
+.article-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px 18px; cursor: pointer; transition: all 0.18s; box-shadow: var(--shadow-sm); }
+.article-card:active { transform: scale(0.98); background: var(--green-mist); }
+.article-tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--green-mid); background: var(--green-mist); border-radius: 99px; padding: 3px 9px; margin-bottom: 8px; }
+.article-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+.article-excerpt { font-size: 12px; color: var(--text-soft); line-height: 1.65; font-weight: 300; }
+.article-meta { font-size: 10px; color: var(--text-muted); margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+
+/* ── ARTICLE READER SCREEN ── */
+#screen-article { display:none; position:fixed; inset:0; z-index:100; background:var(--bg); overflow-y:auto; padding-bottom:40px; }
+.article-reader-topbar { position:sticky; top:0; z-index:10; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:14px 16px; gap:12px; }
+.article-body { padding: 24px 20px 40px; max-width: 640px; margin: 0 auto; }
+.article-body h1 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--green-deep); line-height: 1.3; margin-bottom: 8px; }
+.article-body .byline { font-size: 11px; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.article-body h2 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text); margin: 24px 0 10px; }
+.article-body p { font-size: 14px; color: var(--text-mid); line-height: 1.8; margin-bottom: 16px; font-weight: 300; }
+.article-body ul { padding-left: 18px; margin-bottom: 16px; }
+.article-body ul li { font-size: 14px; color: var(--text-mid); line-height: 1.8; margin-bottom: 6px; font-weight: 300; }
+.article-body .pull-quote { background: var(--sand); border-left: 4px solid var(--green-mid); border-radius: var(--r-md); padding: 16px 20px; margin: 24px 0; font-family: var(--font-serif); font-size: 15px; font-style: italic; color: var(--text-mid); line-height: 1.7; }
+.article-body .article-cta { background: var(--green-mist); border: 1px solid var(--green-pale); border-radius: var(--r-md); padding: 18px; margin-top: 32px; text-align: center; }
+.article-body .article-cta p { color: var(--green-deep); font-weight: 500; margin-bottom: 12px; font-size: 13px; }
+.article-share-row { display:flex; gap:10px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
+.article-share-row button { flex:1; padding:10px; border-radius:var(--r-sm); font-size:12px; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--text-mid); }
 .fq-sig  { font-size: 12px; color: var(--green-deep); margin-top: 10px; font-weight: 700; }
 
 /* ── AUTH MODAL ── */
@@ -1743,6 +1838,20 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
   <div class="learn-content" id="module-list"></div>
 </div>
 
+<!-- ── JOURNAL (From Harshitha's Journal) ── -->
+<div id="screen-journal" class="screen">
+  <div class="app-topbar">
+    <button onclick="goBack()" style="color:var(--text-muted);font-size:22px;padding:0 6px;font-weight:300">←</button>
+    <div class="topbar-brand">JOURNAL</div>
+    <div class="topbar-profile" onclick="openProfile()">👤</div>
+  </div>
+  <div class="page-hero" style="padding:24px 24px 20px">
+    <h1>From Harshitha's Journal</h1>
+    <p>Honest writing on alopecia, healing & what actually works</p>
+  </div>
+  <div class="learn-content" id="journal-list"></div>
+</div>
+
 <!-- ── PRICING (accessed via Profile or upgrade nudge) ── -->
 <div id="screen-pricing" class="screen">
   <div class="app-topbar">
@@ -1799,6 +1908,7 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
 
     <!-- Menu items -->
     <div class="menu-list">
+      <div class="menu-item" onclick="closeProfile();setTimeout(()=>goTo('journal'),50)"><span class="menu-icon">✍️</span><div style="flex:1"><div class="menu-label">From Harshitha's Journal</div><div class="menu-sub">3 articles · gut health, nutrition & recovery</div></div><span class="menu-arrow">›</span></div>
       <div class="menu-item" onclick="closeProfile();setTimeout(()=>goTo('learn'),50)"><span class="menu-icon">📚</span><div style="flex:1"><div class="menu-label">Learning Modules</div><div class="menu-sub">8 modules · M1 free</div></div><span class="menu-arrow">›</span></div>
       <div class="menu-item" onclick="closeProfile();setTimeout(()=>goTo('pricing'),50)"><span class="menu-icon">⭐</span><div style="flex:1"><div class="menu-label">Upgrade Plan</div><div class="menu-sub" id="upgrade-sub">View Quarterly &amp; Annual plans</div></div><span class="menu-arrow">›</span></div>
       <div class="menu-item" onclick="showConsultationModal()"><span class="menu-icon">📞</span><div style="flex:1"><div class="menu-label">Book a 1:1 Session</div><div class="menu-sub">Personal wellness session with our founder</div></div><span class="menu-arrow">›</span></div>
@@ -1819,6 +1929,16 @@ textarea.log-notes::placeholder { color: var(--text-muted); }
       <span style="color:var(--green-mid)">happiheal.happiloot.com</span>
     </div>
   </div>
+</div>
+
+<!-- ── ARTICLE READER SCREEN ── -->
+<div id="screen-article">
+  <div class="article-reader-topbar">
+    <button onclick="closeArticle()" style="font-size:20px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0 4px">←</button>
+    <div style="flex:1;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);text-align:center">HappiHeal Journal</div>
+    <button onclick="shareCurrentArticle()" style="font-size:18px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0 4px">↗</button>
+  </div>
+  <div class="article-body" id="article-body-content"></div>
 </div>
 
 <!-- ── BOTTOM NAV (5 tabs) ── -->
@@ -1937,6 +2057,7 @@ function goTo(screen) {
   if (screen === 'routine') renderRoutineContent();
   if (screen === 'heal')    renderHeal();
   if (screen === 'learn')   renderLearn();
+  if (screen === 'journal') renderJournal();
   if (screen === 'pricing') renderPricing();
   if (screen === 'ai')      document.getElementById('chat-messages')?.scrollTo(0,99999);
   window.scrollTo(0,0);
@@ -1971,6 +2092,7 @@ function goBack() {
     if (prev === 'routine') renderRoutineContent();
     if (prev === 'heal')    renderHeal();
     if (prev === 'learn')   renderLearn();
+    if (prev === 'journal') renderJournal();
     if (prev === 'pricing') renderPricing();
     window.scrollTo(0, 0);
   }
@@ -1996,6 +2118,233 @@ function closeProfile() {
   state.profileOpen = false;
   document.getElementById('screen-profile').style.display = 'none';
 }
+
+/* ── ARTICLES ── */
+const ARTICLES = {
+  'gut-hair': {
+    id: 'gut-hair',
+    title: 'Your Gut Is Running Your Immune System — And Your Hair Knows It',
+    tag: 'Gut Health · Immunity',
+    readTime: '5 min read',
+    url: 'https://happiheal.happiloot.com/#article-gut-hair',
+    body: `
+      <h1>Your Gut Is Running Your Immune System — And Your Hair Knows It</h1>
+      <div class="byline">By Harshitha MV, Founder HappiHeal &nbsp;·&nbsp; 5 min read</div>
+
+      <p>For fifteen years, I treated my scalp like the problem. Every appointment, every topical, every injection — all aimed at the patch of skin where the hair had stopped growing. It made sense on the surface. That was where the loss was visible.</p>
+
+      <p>What I didn't know — what nobody told me — was that the actual problem was happening much further south. In my gut.</p>
+
+      <div class="pull-quote">"The gut doesn't just affect digestion. It is the headquarters of your immune regulation."</div>
+
+      <h2>Why this isn't alternative medicine</h2>
+      <p>The gut-hair connection isn't a wellness trend. It's immunology. Your gut microbiome — the ecosystem of bacteria living in your digestive tract — trains and regulates your immune system from the day you're born. In autoimmune conditions like alopecia areata, a disrupted gut means a dysregulated immune response. Which means your immune cells keep attacking your own hair follicles, often long after any obvious trigger has passed.</p>
+
+      <p>Research has found that people with alopecia areata show significantly different gut microbiome profiles compared to those without it — lower levels of beneficial bacteria like <em>Lactobacillus</em> and <em>Bifidobacterium</em>, and higher levels of inflammatory strains. This isn't correlation — it's a pathway. Gut dysbiosis → immune dysregulation → follicle attack.</p>
+
+      <h2>What I actually changed</h2>
+      <p>I didn't overhaul everything overnight. I made changes slowly, with intention — and tracked what happened.</p>
+      <ul>
+        <li><strong>Removed refined sugar and ultra-processed foods</strong> — both linked to increased systemic inflammation and gut lining damage.</li>
+        <li><strong>Reduced gluten</strong> — not eliminated, but reduced. Some research connects gluten to intestinal permeability ("leaky gut") and heightened autoimmune activity in sensitive individuals.</li>
+        <li><strong>Added fermented foods daily</strong> — curd, idli, kanji, dosa. Things already in my South Indian kitchen that I'd never thought of as medicinal. They are.</li>
+        <li><strong>Increased leafy greens and fibre</strong> — prebiotic foods that feed the beneficial bacteria already present.</li>
+        <li><strong>Added turmeric and ginger consistently</strong> — both have solid anti-inflammatory evidence, and both are already in Indian cooking for good reason.</li>
+      </ul>
+
+      <h2>What happened</h2>
+      <p>Nothing happened overnight. I want to be honest about that — anyone who promises quick results with gut healing is selling something. But three months in, the cycling stopped. The patches stabilised. That hadn't happened in years of conventional treatment.</p>
+
+      <p>More than the physical change, I started understanding my body instead of fighting it. I started seeing food as immune information, not just fuel. That shift changed how I approached every other part of my recovery.</p>
+
+      <h2>Where to start</h2>
+      <p>If you haven't had a comprehensive micronutrient panel done, start there. Ask specifically for ferritin, Vitamin D (25-OH), zinc, and B12. I'll write more about what those numbers actually mean for alopecia in a future post.</p>
+
+      <p>For gut health specifically: remove what's causing inflammation before adding supplements. The most powerful thing I did wasn't a probiotic — it was removing the sugar that was disrupting my microbiome in the first place.</p>
+
+      <div class="article-cta">
+        <p>HappiHeal's Nutrition module covers the anti-inflammatory eating approach in detail — what to add, what to reduce, and how to make it work in an Indian kitchen.</p>
+        <button onclick="closeArticle();closeProfile();setTimeout(()=>goTo('routine'),80)" class="btn-gold" style="font-size:13px;padding:10px 20px">Explore Nutrition Module →</button>
+      </div>
+
+      <div class="article-share-row">
+        <button onclick="shareCurrentArticle()">↗ Share this article</button>
+        <button onclick="openArticle('deficiencies')">Next article →</button>
+      </div>
+    `
+  },
+
+  'deficiencies': {
+    id: 'deficiencies',
+    title: 'The 4 Deficiencies Nobody Checked in My 15 Years of Treatment',
+    tag: 'Nutrition · Blood Tests',
+    readTime: '6 min read',
+    url: 'https://happiheal.happiloot.com/#article-deficiencies',
+    body: `
+      <h1>The 4 Deficiencies Nobody Checked in My 15 Years of Treatment</h1>
+      <div class="byline">By Harshitha MV, Founder HappiHeal &nbsp;·&nbsp; 6 min read</div>
+
+      <p>When I finally got a comprehensive micronutrient panel done, I was already six months into my natural recovery. The results came back and I sat with them for a long time.</p>
+
+      <p>I was significantly deficient in Vitamin D. Borderline on ferritin. Low-normal on zinc. After fifteen years of dermatology appointments, specialist consultations, and treatments of every kind — nobody had ever run a full micronutrient panel. Not once.</p>
+
+      <div class="pull-quote">"I had been managing a condition with known nutritional links for fifteen years, without ever checking if I had the basic building blocks my follicles needed."</div>
+
+      <h2>Why this matters for alopecia specifically</h2>
+      <p>Alopecia areata is an autoimmune condition. Autoimmune conditions have known nutritional components — not as cures, but as factors that influence how the immune system behaves, how well it regulates itself, and how effectively the body can support healthy tissue growth. Hair follicles are metabolically active structures. They need specific inputs to function.</p>
+
+      <p>Here are the four most studied nutrients in alopecia areata research:</p>
+
+      <h2>1. Iron (Ferritin)</h2>
+      <p>Iron deficiency is one of the most common findings in women with hair loss of any kind, including alopecia. The key is <strong>ferritin</strong> — stored iron — not just haemoglobin. You can have "normal" haemoglobin and still be low on ferritin.</p>
+      <p>Most labs flag ferritin deficiency below 12–15 ng/mL. For hair health, many practitioners now aim for above 70 ng/mL. If you've only been told your iron is "fine," ask specifically for your ferritin number.</p>
+      <p><em>Food sources:</em> lentils, rajma, spinach, sesame seeds, jaggery, liver if you eat meat.</p>
+
+      <h2>2. Vitamin D</h2>
+      <p>Multiple peer-reviewed studies have found significantly lower Vitamin D levels in people with alopecia areata compared to controls. Vitamin D plays a role in regulating the immune response and hair follicle cycling — both directly relevant to alopecia.</p>
+      <p>Standard labs flag deficiency below 20 ng/mL. Practitioners working with autoimmune conditions often aim for 50–70 ng/mL. Most people in India — despite our sunshine — are deficient, partly due to time indoors and skin tone affecting synthesis.</p>
+
+      <h2>3. Zinc</h2>
+      <p>Zinc is involved in immune function, protein synthesis, and cell division — all directly relevant to hair follicle health. Studies have found lower serum zinc levels in alopecia areata patients. Importantly, zinc supplementation has shown improvement in some studies, though results vary.</p>
+      <p><em>Food sources:</em> pumpkin seeds, lentils, chickpeas, cashews, hemp seeds.</p>
+
+      <h2>4. Omega-3 Fatty Acids</h2>
+      <p>Omega-3s are anti-inflammatory by nature. They help modulate the immune response — shifting it away from the pro-inflammatory state that characterises autoimmune flares. Most modern diets are heavily weighted toward omega-6 fatty acids (found in refined vegetable oils), which are pro-inflammatory.</p>
+      <p><em>Food sources:</em> oily fish, flaxseeds, walnuts, chia seeds. Flaxseed oil is one of the most concentrated plant sources.</p>
+
+      <h2>What to actually ask your doctor</h2>
+      <p>Request these specific tests by name:</p>
+      <ul>
+        <li><strong>Ferritin</strong> (not just haemoglobin or "iron levels")</li>
+        <li><strong>25-OH Vitamin D</strong> (the active form)</li>
+        <li><strong>Serum Zinc</strong></li>
+        <li><strong>TSH</strong> (thyroid — often co-occurs with autoimmune conditions)</li>
+        <li><strong>B12</strong> (especially if vegetarian)</li>
+      </ul>
+
+      <p>I am not prescribing anything here. I'm sharing what I found, and what I wish I'd known to ask for years earlier. The information was available. I just hadn't been pointed toward it.</p>
+
+      <div class="article-cta">
+        <p>HappiHeal includes a blood test tracker to log your key markers over time and see trends across your recovery journey.</p>
+        <button onclick="closeArticle();closeProfile();setTimeout(()=>goTo('journey'),80)" class="btn-gold" style="font-size:13px;padding:10px 20px">Open Journey Tracker →</button>
+      </div>
+
+      <div class="article-share-row">
+        <button onclick="shareCurrentArticle()">↗ Share this article</button>
+        <button onclick="openArticle('founder-story')">Next article →</button>
+      </div>
+    `
+  },
+
+  'founder-story': {
+    id: 'founder-story',
+    title: 'Why I Stopped Fighting My Alopecia — And What Finally Changed',
+    tag: 'Founder Story · Mindset',
+    readTime: '7 min read',
+    url: 'https://happiheal.happiloot.com/#article-founder-story',
+    body: `
+      <h1>Why I Stopped Fighting My Alopecia — And What Finally Changed</h1>
+      <div class="byline">By Harshitha MV, Founder HappiHeal &nbsp;·&nbsp; 7 min read</div>
+
+      <p>I used to check my pillow before I even opened my eyes.</p>
+
+      <p>Every single morning. Before I looked at my phone, before I thought about the day ahead, my hands would go to my scalp. Counting. Assessing. Bracing for what I'd find.</p>
+
+      <p>I've had alopecia areata since I was around ten years old. For anyone who doesn't know, it's an autoimmune condition where the immune system attacks its own hair follicles. Patches appear. Sometimes they fill back in. Sometimes they don't. Sometimes new ones show up just when you thought you were getting somewhere.</p>
+
+      <p>I live in India, where a woman's hair is wrapped up in ideas about identity, health, femininity, and worth in ways that are hard to overstate. Losing mine wasn't just a health thing. It was an everything thing.</p>
+
+      <div class="pull-quote">"For fifteen years, I tried to fix it. I did everything you're supposed to do. And I got inconsistent results at best."</div>
+
+      <h2>Fifteen years of trying</h2>
+      <p>Dermatologist visits. Corticosteroid injections directly into my scalp — yes, exactly as fun as it sounds. Topical treatments. Oral medications. Supplements I'd read about at 1am and ordered by 1:05am. I kept meticulous notes. I was, by any measure, a very committed patient.</p>
+
+      <p>The thing about alopecia areata that nobody tells you upfront is that it's wildly unpredictable. It can improve on its own. It can worsen with no warning. So you genuinely cannot tell if a treatment is working or if your body just decided to take a break from attacking itself for a while. You're always chasing something that keeps moving.</p>
+
+      <p>Somewhere in there, without noticing it happen, I stopped thinking of my body as mine. It had become a separate, unreliable thing that kept failing me. My mood on any given day depended entirely on what I saw in the mirror.</p>
+
+      <h2>The day I stopped</h2>
+      <p>Six years ago, I hit a wall. Not dramatically. Just quietly ran out of fight. I was tired in a way that sleep didn't fix — tired of the appointments, the hoping, the disappointment, the relentless cycle of it all.</p>
+
+      <p>And I made a decision that felt almost reckless at the time: I stopped. Stopped the treatments. Stopped the midnight research spirals. Stopped measuring my worth in how many strands were on my pillow.</p>
+
+      <p>Instead of looking for the next thing to try, I got curious about what was actually going on inside my body. That shift — from desperate to curious — turned out to be everything.</p>
+
+      <h2>What actually changed</h2>
+      <p>I started reading about the gut-immune connection. About how chronic stress signals the body to redirect resources away from functions it considers non-essential — and to a stressed nervous system, growing hair is not essential. About the role of specific nutrients, anti-inflammatory foods, and sleep in regulating immune function.</p>
+
+      <p>None of this was magic. None of it promised a cure. But for the first time, I wasn't looking for a cure. I was looking to understand.</p>
+
+      <p>Three shifts that made the most difference:</p>
+      <ul>
+        <li><strong>Replace "What is wrong with me?" with "What does my body need?"</strong> — One starts from deficit and blame. The other starts from curiosity and care. Changing this question changed every decision I made.</li>
+        <li><strong>Measure progress in more than one dimension</strong> — When hair is the only metric, every bad day feels like failure. I started tracking energy, digestion, mood, inflammation alongside hair. The fuller picture kept me going.</li>
+        <li><strong>Process the grief instead of bypassing it</strong> — I had twenty years of unprocessed emotion about my hair, my years of struggle, the version of myself I thought I'd lost. Allowing myself to actually feel that created space for something gentler to emerge.</li>
+      </ul>
+
+      <h2>What happened</h2>
+      <p>The recovery, when it came, was not dramatic. It was steady. Gradual. Real. And one morning I realised I hadn't checked my pillow. Not because I was trying not to. Just because it wasn't where my head went anymore.</p>
+
+      <p>That's when I knew something had fundamentally changed.</p>
+
+      <p>The app I built — HappiHeal — is the structured version of everything I learned across those six years. It exists because I spent twenty years wishing something like it had existed for me.</p>
+
+      <div class="article-cta">
+        <p>If you're at the beginning of this shift, HappiHeal is built to walk alongside you. Free trial — no credit card needed.</p>
+        <button onclick="closeArticle();closeProfile();" class="btn-gold" style="font-size:13px;padding:10px 20px">Start Your Recovery Journey →</button>
+      </div>
+
+      <div class="article-share-row">
+        <button onclick="shareCurrentArticle()">↗ Share this article</button>
+        <button onclick="openArticle('gut-hair')">Read more →</button>
+      </div>
+    `
+  }
+};
+
+let currentArticleId = null;
+
+function openArticle(id) {
+  const article = ARTICLES[id];
+  if (!article) return;
+  currentArticleId = id;
+  // Track where we came from so back works correctly
+  state.articleFrom = state.currentScreen === 'journal' ? 'journal' : 'profile';
+  document.getElementById('article-body-content').innerHTML = article.body;
+  const screen = document.getElementById('screen-article');
+  screen.style.display = 'block';
+  screen.scrollTop = 0;
+  // Hide whatever was showing
+  document.getElementById('screen-profile').style.display = 'none';
+}
+
+function closeArticle() {
+  document.getElementById('screen-article').style.display = 'none';
+  currentArticleId = null;
+  if (state.articleFrom === 'profile') {
+    document.getElementById('screen-profile').style.display = 'block';
+  } else {
+    // Go back to journal screen via goTo so nav state is correct
+    goTo('journal');
+  }
+  state.articleFrom = null;
+}
+
+function shareCurrentArticle() {
+  const article = currentArticleId ? ARTICLES[currentArticleId] : null;
+  const title = article ? article.title : 'HappiHeal Journal';
+  const url = article ? article.url : 'https://happiheal.happiloot.com';
+  const text = article
+    ? `"${article.title}" — by Harshitha MV, Founder of HappiHeal\n\n${url}`
+    : 'Check out HappiHeal — natural alopecia recovery built from 20+ years of lived experience.\nhappiheal.happiloot.com';
+  if (navigator.share) {
+    navigator.share({ title, text, url });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Link copied ✓'));
+  }
+}
+
+
 
 /* ── HOME ── */
 function getDailyTip() {
@@ -2153,6 +2502,25 @@ function renderLearn() {
       ${locked ? '<div class="lock-icon">🔒</div>' : ''}
     </div>`;
   }).join('');
+}
+
+/* ── JOURNAL ── */
+function renderJournal() {
+  const el = document.getElementById('journal-list');
+  if (!el) return;
+  el.innerHTML = Object.values(ARTICLES).map(a => `
+    <div class="module-card" onclick="openArticle('${a.id}')" style="align-items:flex-start;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px;width:100%">
+        <div class="module-emoji">✍️</div>
+        <div class="module-info" style="flex:1">
+          <div class="module-title">${a.title}</div>
+          <div class="module-desc" style="margin-top:4px">${a.readTime} · ${a.tag}</div>
+          <div class="module-tag" style="color:var(--green-soft)">✓ FREE · Open to all</div>
+        </div>
+        <div style="font-size:18px;color:var(--text-muted)">›</div>
+      </div>
+    </div>
+  `).join('');
 }
 
 async function openModule(id) {
@@ -3235,10 +3603,10 @@ function _triggerConsultationPayment() {
   try {
     const rzp = new Razorpay({
       key: RAZORPAY_KEY,
-      amount: intl ? 1100 : 49900,
+      amount: intl ? 700 : 49900,
       currency: intl ? 'USD' : 'INR',
       name: 'HappiHeal',
-      description: '1:1 Wellness Session (20 min)',
+      description: '1:1 Wellness Session (30 min)',
       prefill: { email: currentUser.email, name: currentUser.user_metadata?.full_name || '' },
       theme: { color: '#258a42' },
       handler: async function(response) {
