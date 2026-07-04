@@ -206,7 +206,7 @@ async function loadUserPlan(user) {
   const savedPlan = localStorage.getItem('hh_user_plan');
   if (savedPlan && savedPlan !== 'free') currentPlan = savedPlan;
   try {
-    const { data } = await getSupabase().from('profiles').select('plan, plan_expiry').eq('id', user.id).single();
+    const { data } = await getSupabase().from('profiles').select('plan, plan_expiry, trial_expiry').eq('id', user.id).single();
     if (data) {
       let activePlan = data.plan || 'free';
       if (data.plan_expiry && (activePlan === 'basic' || activePlan === 'premium' || activePlan === 'quarterly')) {
@@ -216,6 +216,14 @@ async function loadUserPlan(user) {
         } else {
           localStorage.setItem('hh_plan_expiry', data.plan_expiry);
         }
+      }
+      // Account-level trial extension (e.g. affiliates given 30 days of
+      // free-tier access instead of the standard 3). Only relevant while
+      // still on the free plan — paid plans already bypass trial gating.
+      if (data.trial_expiry && new Date(data.trial_expiry) > new Date()) {
+        localStorage.setItem('hh_trial_expiry', data.trial_expiry);
+      } else {
+        localStorage.removeItem('hh_trial_expiry');
       }
       currentPlan = activePlan;
       localStorage.setItem('hh_user_plan', activePlan);
@@ -2104,6 +2112,21 @@ function getTrialInfo() {
   const plan = currentPlan || localStorage.getItem('hh_user_plan') || 'free';
   const isPaid = plan === 'basic' || plan === 'premium' || plan === 'quarterly';
   if (currentUser?.email === 'happiloot.store@gmail.com') return { daysLeft: 999, daysPassed: 0, isPaid: false, isExpired: false, plan: 'trial' };
+
+  // Account-level extended trial (e.g. affiliates granted 30 days of
+  // free-tier access). Checked before the standard device-based trial,
+  // and only matters if the account isn't already on a paid plan.
+  if (!isPaid) {
+    const trialExpiryStr = localStorage.getItem('hh_trial_expiry');
+    if (trialExpiryStr) {
+      const trialExpiry = new Date(trialExpiryStr);
+      if (trialExpiry > new Date()) {
+        const daysLeft = Math.max(0, Math.ceil((trialExpiry - new Date()) / 86400000));
+        return { daysLeft, daysPassed: 0, isPaid: false, isExpired: false, plan: 'trial' };
+      }
+    }
+  }
+
   const installStr = load('install_date', null);
   if (!installStr) return isPaid ? { daysLeft:0, daysPassed:0, isPaid:true, isExpired:false, plan } : { daysLeft:TRIAL_DAYS, daysPassed:0, isPaid:false, isExpired:false, plan:'trial' };
   const daysPassed = Math.floor((new Date() - new Date(installStr)) / 86400000);
