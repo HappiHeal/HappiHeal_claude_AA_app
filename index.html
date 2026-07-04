@@ -228,9 +228,29 @@ async function loadUserPlan(user) {
 }
 
 async function initAuth() {
+  // Ask the browser not to evict this app's local storage (session, plan
+  // cache, etc.) under storage pressure. Supported on Chrome/Android;
+  // silently ignored on browsers that don't support it (e.g. older Safari).
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      await navigator.storage.persist();
+    }
+  } catch(e){}
+
   try {
     const { data: { session } } = await getSupabase().auth.getSession();
-    if (session?.user) await loadUserPlan(session.user);
+    if (session?.user) {
+      await loadUserPlan(session.user);
+    } else if (localStorage.getItem('hh_user_email')) {
+      // No active session found, but this device has signed in before —
+      // attempt a silent session recovery before falling back to the
+      // login screen. Handles edge cases where the access token expired
+      // but a valid refresh token still exists in storage.
+      try {
+        const { data: refreshed } = await getSupabase().auth.refreshSession();
+        if (refreshed?.session?.user) await loadUserPlan(refreshed.session.user);
+      } catch(e){}
+    }
   } catch(e){}
   getSupabase().auth.onAuthStateChange((event, session) => {
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && session.user.id !== currentUser?.id) {
