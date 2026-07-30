@@ -235,6 +235,44 @@ async function loadUserPlan(user) {
   restoreProgressFromSupabase();
 }
 
+// True only once we've actually confirmed there's no session — as opposed
+// to "we haven't finished checking yet" or "the check failed". Render code
+// can check this before showing a logged-out state, so a slow/failed
+// network check on refresh never gets mistaken for a real sign-out.
+let authRestoreComplete = false;
+
+async function tryGetSession() {
+  // getSession()/refreshSession() can fail on a flaky mobile connection.
+  // Retry once after a short delay before giving up, and log real errors
+  // instead of swallowing them — silent catches are exactly why this bug
+  // was invisible.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data: { session }, error } = await getSupabase().auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (e) {
+      console.warn('[HappiHeal] getSession failed (attempt ' + (attempt + 1) + ')', e);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  return null;
+}
+
+async function tryRefreshSession() {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data, error } = await getSupabase().auth.refreshSession();
+      if (error) throw error;
+      return data?.session || null;
+    } catch (e) {
+      console.warn('[HappiHeal] refreshSession failed (attempt ' + (attempt + 1) + ')', e);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  return null;
+}
+
 async function initAuth() {
   // Ask the browser not to evict this app's local storage (session, plan
   // cache, etc.) under storage pressure. Supported on Chrome/Android;
@@ -245,23 +283,33 @@ async function initAuth() {
     }
   } catch(e){}
 
-  try {
-    const { data: { session } } = await getSupabase().auth.getSession();
-    if (session?.user) {
-      await loadUserPlan(session.user);
-    } else if (localStorage.getItem('hh_user_email')) {
-      // No active session found, but this device has signed in before —
-      // attempt a silent session recovery before falling back to the
-      // login screen. Handles edge cases where the access token expired
-      // but a valid refresh token still exists in storage.
-      try {
-        const { data: refreshed } = await getSupabase().auth.refreshSession();
-        if (refreshed?.session?.user) await loadUserPlan(refreshed.session.user);
-      } catch(e){}
-    }
-  } catch(e){}
+  const hasKnownAccount = !!localStorage.getItem('hh_user_email');
+
+  let session = await tryGetSession();
+  if (!session?.user && hasKnownAccount) {
+    // No active session found, but this device has signed in before —
+    // attempt session recovery (with retry) before falling back to the
+    // login screen. Handles the case where the access token expired but
+    // a valid refresh token still exists in storage, and the case where
+    // the initial check simply failed due to a network blip.
+    session = await tryRefreshSession();
+  }
+
+  if (session?.user) {
+    await loadUserPlan(session.user);
+  } else if (hasKnownAccount) {
+    // We genuinely could not restore a session after retrying. Log it so
+    // it's diagnosable, but don't wipe the locally cached plan/email —
+    // leave that to an explicit Sign Out.
+    console.warn('[HappiHeal] Could not restore session for a known account after refresh.');
+  }
+
+  authRestoreComplete = true;
+  if (state.currentScreen === 'home')    renderHome();
+  if (state.currentScreen === 'profile') renderProfile();
+
   getSupabase().auth.onAuthStateChange((event, session) => {
-    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && session.user.id !== currentUser?.id) {
+    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user && session.user.id !== currentUser?.id) {
       loadUserPlan(session.user);
     } else if (event === 'SIGNED_OUT') {
       currentUser = null; currentPlan = 'free';
@@ -3509,6 +3557,11 @@ function renderProfile() {
   if (authArea) {
     if (currentUser) {
       authArea.innerHTML = `<div style="font-size:12px;color:var(--text-soft);margin-bottom:8px">Signed in as ${currentUser.email}</div><button onclick="signOut()" style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;color:var(--text-mid);cursor:pointer">Sign Out</button>`;
+    } else if (!authRestoreComplete && localStorage.getItem('hh_user_email')) {
+      // This device has signed in before and we're still confirming the
+      // session on this refresh — show a neutral state instead of "Sign
+      // In", so a slow network check never looks like a real sign-out.
+      authArea.innerHTML = `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">Restoring your session…</div>`;
     } else {
       authArea.innerHTML = `<button onclick="showAuthModal('signin')" class="btn-gold" style="font-size:13px;padding:12px;margin-bottom:8px">Sign In</button><button onclick="showAuthModal('signup')" class="btn-outline" style="font-size:13px;padding:11px">Create Account</button>`;
     }
@@ -3882,7 +3935,11 @@ function showInfoModal(title, content) { showLegalModal(title, "ℹ️", "<p>" +
 
 function clearAllData() {
   if (!confirm('This will permanently delete all your progress data. Continue?')) return;
-  Object.keys(localStorage).filter(k=>k.startsWith('hh_')).forEach(k=>localStorage.removeItem(k));
+  // Never touch the Supabase session key (hh_session) or the user's own
+  // sign-in bookkeeping here — this button clears progress data, it should
+  // not sign the user out as a side effect.
+  const KEEP = new Set(['hh_session', 'hh_user_email', 'hh_user_name', 'hh_user_plan', 'hh_plan_expiry', 'hh_trial_expiry', 'hh_affiliate_code']);
+  Object.keys(localStorage).filter(k=>k.startsWith('hh_') && !KEEP.has(k)).forEach(k=>localStorage.removeItem(k));
   showToast('Data cleared. Fresh start 🌱');
   goTo('home'); renderHome();
 }
