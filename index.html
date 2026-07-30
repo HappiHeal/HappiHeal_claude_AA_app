@@ -3947,6 +3947,16 @@ function clearAllData() {
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', async function() {
   await initAuth();
+  // The splash screen ("Tap to begin") is only meant for a visitor's very
+  // first-ever load. It was previously showing on EVERY page load/refresh
+  // because nothing dismissed it automatically — it required a manual tap
+  // every time, which looked and felt exactly like being signed out. For
+  // anyone who has already finished onboarding (or already has an account),
+  // skip it immediately and land straight on Home.
+  if (load('ob_done', false) || currentUser || localStorage.getItem('hh_user_email')) {
+    const s1 = document.getElementById('screen-splash');
+    if (s1) s1.style.display = 'none';
+  }
   renderHome();
   renderLearn();
   renderRoutineContent();
@@ -3955,6 +3965,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const today = dateKey(new Date()); const savedDate = load('routine_date', null);
   if (savedDate !== today) { save('routine_today', {}); save('routine_date', today); }
 });
+
 </script>
 </body>
 </html>
