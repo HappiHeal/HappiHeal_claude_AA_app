@@ -3969,6 +3969,14 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (savedDate !== today) { save('routine_today', {}); save('routine_date', today); }
 });
 
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/service-worker.js').catch(function(err) {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
