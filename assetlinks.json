@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.happiloot.happiheal.twa",
-        "sha256_cert_fingerprints": ["49:A1:4C:67:C8:49:56:20:92:34:CF:9A:A7:43:50:46:AE:3A:21:0C:EF:2E:EE:C6:78:FB:B5:4C:6A:41:49:D7"]
-      }
-    }]
